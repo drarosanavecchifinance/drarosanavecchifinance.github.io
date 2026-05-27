@@ -1569,22 +1569,11 @@ function hideAuthMsg(){
 }
 
 async function checkAuthorized(user){
-  try{
-    const{data,error}=await sbClient.from('usuarios_autorizados').select('nome,cargo').eq('email',user.email).eq('ativo',true).single();
-    // Se a tabela retornar dado, autorizado
-    if(data)return true;
-    // Se RLS bloquear (erro de permissão), confiar no Supabase Auth (email confirmado)
-    if(error&&(error.code==='PGRST301'||error.code==='42501'||error.message?.includes('permission')||error.message?.includes('policy'))){
-      return !!user.email_confirmed_at;
-    }
-    // Sem dado e sem erro de RLS = email não está na lista
-    await sbClient.auth.signOut();
-    showAuthMsg('⛔ Acesso não autorizado para '+user.email);
-    return false;
-  }catch(e){
-    // Em caso de falha de rede, confiar no Auth
-    return !!user.email_confirmed_at;
-  }
+  // Segurança via Supabase Auth — apenas usuários cadastrados e confirmados entram
+  if(user.email_confirmed_at) return true;
+  await sbClient.auth.signOut();
+  showAuthMsg('⚠️ Confirme seu e-mail antes de entrar.');
+  return false;
 }
 
 async function doSignIn(){
