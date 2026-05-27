@@ -1,0 +1,1664 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V.A.I System — NatureFace & Rosana Vecchi Academy</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  /* Sidebar marsala */
+  --sb:#28090A;--sb2:#3A1214;--sb-t:rgba(255,255,255,.88);--sb-m:rgba(255,255,255,.44);
+  --sb-b:rgba(255,255,255,.09);--sb-h:rgba(255,255,255,.08);--sb-a:rgba(255,255,255,.15);
+  /* Main — branco quente */
+  --bg:#F2EAEA;--card:#FFFFFF;--bdr:#E0D2D2;--bdr2:#CBBABA;--top:#FFFFFF;
+  /* Marsala */
+  --m:#955251;--ml:#C4807F;--md:#6B2F2E;--mp:rgba(149,82,81,.1);
+  /* Text */
+  --t1:#1A0707;--t2:#5C3535;--t3:#A07070;--t4:#C8A0A0;
+  /* Status */
+  --gr:#2A7A52;--grb:rgba(42,122,82,.1);
+  --or:#A05E18;--orb:rgba(160,94,24,.1);
+  --re:#B83030;--reb:rgba(184,48,48,.1);
+  --bl:#2E5EA0;--blb:rgba(46,94,160,.1);
+  --pu:#6A3A9A;--pub:rgba(106,58,154,.1);
+  /* Layout */
+  --sb-w:262px;--r:12px;--rl:16px;
+  --num:'Montserrat',sans-serif;
+}
+html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background:var(--bg);color:var(--t1);overflow:hidden}
+#app{display:flex;height:100vh}
+
+/* ===== SIDEBAR ===== */
+.sb{width:var(--sb-w);height:100vh;background:var(--sb);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sb::-webkit-scrollbar{width:0}
+.sb-head{padding:22px 18px 18px;border-bottom:1px solid var(--sb-b)}
+.sb-brand{display:flex;align-items:center;gap:11px;margin-bottom:20px}
+.sb-ico{width:36px;height:36px;border-radius:9px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:10px;color:#fff;flex-shrink:0;letter-spacing:-.2px}
+.sb-bn{font-family:'Syne',sans-serif;font-size:13.5px;font-weight:700;color:#fff;letter-spacing:-.2px}
+.sb-bs{font-size:10.5px;color:var(--sb-m);margin-top:1px}
+.sw-lbl{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--sb-m);margin-bottom:8px;font-weight:600}
+.sw{display:flex;flex-direction:column;gap:3px}
+.sw-b{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:9px;cursor:pointer;border:1px solid transparent;background:transparent;color:var(--sb-m);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:500;text-align:left;transition:all .16s;width:100%}
+.sw-b:hover{background:var(--sb-h);color:var(--sb-t)}
+.sw-b.a{background:var(--sb-a);border-color:rgba(255,255,255,.13);color:#fff}
+.sw-d{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sb-nav{padding:14px 10px;flex:1;display:flex;flex-direction:column;gap:1px}
+.nsec{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--sb-m);padding:14px 10px 6px;font-weight:600}
+.ni{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;cursor:pointer;color:var(--sb-m);font-size:13.5px;font-weight:500;transition:all .14s;user-select:none}
+.ni:hover{background:var(--sb-h);color:var(--sb-t)}
+.ni.a{background:var(--sb-a);color:#fff}
+.ni svg{width:17px;height:17px;flex-shrink:0;opacity:.75}
+.ni.a svg{opacity:1}
+.ni-badge{margin-left:auto;background:rgba(255,255,255,.15);color:rgba(255,255,255,.7);border-radius:20px;padding:2px 8px;font-size:10.5px;font-weight:600}
+.sb-foot{padding:16px 18px;border-top:1px solid var(--sb-b)}
+.urow{display:flex;align-items:center;gap:11px}
+.uav{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.uname{font-size:13.5px;font-weight:500;color:#fff}
+.urole{font-size:10.5px;color:var(--sb-m)}
+
+/* ===== MAIN ===== */
+.main{flex:1;overflow-y:auto;background:var(--bg)}
+.main::-webkit-scrollbar{width:6px}
+.main::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:3px}
+.topbar{display:flex;align-items:center;gap:16px;padding:15px 30px;border-bottom:1.5px solid var(--bdr);background:var(--top);position:sticky;top:0;z-index:10;box-shadow:0 2px 12px rgba(149,82,81,.06)}
+.tb-title{font-family:'Syne',sans-serif;font-size:19px;font-weight:700;letter-spacing:-.4px;color:var(--t1)}
+.tb-sub{font-size:12.5px;color:var(--t3);margin-top:2px}
+.tbr{margin-left:auto;display:flex;align-items:center;gap:10px}
+.tbbg{display:flex;align-items:center;gap:7px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:20px;padding:5px 13px;font-size:12.5px;color:var(--t2);font-weight:500}
+.ldot{width:7px;height:7px;border-radius:50%;background:var(--gr);animation:pulse 2.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.cobg{font-size:12.5px;color:var(--m);background:var(--mp);border:1.5px solid rgba(149,82,81,.2);border-radius:20px;padding:5px 13px;font-weight:600}
+.tbico{width:36px;height:36px;border-radius:9px;background:var(--bg);border:1.5px solid var(--bdr);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t2);transition:all .14s;position:relative}
+.tbico:hover{background:var(--bdr);color:var(--t1)}
+.ndot{position:absolute;top:7px;right:7px;width:6px;height:6px;border-radius:50%;background:var(--re);border:1.5px solid var(--card)}
+
+/* ===== PAGES ===== */
+.page{padding:24px 30px;display:none}
+.page.a{display:block}
+.pg-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:22px}
+.pg-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--t1)}
+.pg-sub{font-size:13px;color:var(--t3);margin-top:3px}
+.pg-actions{display:flex;align-items:center;gap:10px}
+
+/* ===== BUTTONS ===== */
+.bp{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;border:none;background:var(--m);color:#fff;transition:all .15s;letter-spacing:.01em}
+.bp:hover{background:var(--md);box-shadow:0 5px 16px rgba(149,82,81,.32);transform:translateY(-1px)}
+.bs{display:inline-flex;align-items:center;gap:7px;padding:10px 16px;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer;border:1.5px solid var(--bdr);background:var(--card);color:var(--t2);transition:all .14s}
+.bs:hover{background:var(--bg);border-color:var(--bdr2);color:var(--t1)}
+.fsel{background:var(--card);border:1.5px solid var(--bdr);border-radius:9px;padding:9px 13px;font-family:'DM Sans',sans-serif;font-size:13.5px;color:var(--t1);cursor:pointer;outline:none;font-weight:500}
+.fsel:focus{border-color:var(--m)}
+.srch{background:var(--card);border:1.5px solid var(--bdr);border-radius:9px;padding:10px 16px;font-family:'DM Sans',sans-serif;font-size:13.5px;color:var(--t1);outline:none;transition:border-color .2s;min-width:280px}
+.srch:focus{border-color:var(--m)} .srch::placeholder{color:var(--t4)}
+
+/* ===== KPI GRID ===== */
+.kg{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+.kg3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:22px}
+.kc{background:var(--card);border:1.5px solid var(--bdr);border-radius:var(--r);padding:22px;position:relative;overflow:hidden;transition:box-shadow .2s,transform .2s}
+.kc:hover{box-shadow:0 6px 20px rgba(149,82,81,.1);transform:translateY(-1px)}
+.kc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;opacity:0;transition:opacity .2s}
+.kc:hover::before{opacity:1}
+.kc.m::before{background:linear-gradient(90deg,var(--md),var(--ml))}
+.kc.g::before{background:linear-gradient(90deg,#1F6E45,#38A070)}
+.kc.o::before{background:linear-gradient(90deg,#905218,#C07830)}
+.kc.r::before{background:linear-gradient(90deg,#A02020,#D05050)}
+.kc.b::before{background:linear-gradient(90deg,#254A88,#3E70C0)}
+.klbl{font-size:12px;color:var(--t3);font-weight:600;margin-bottom:12px;letter-spacing:.02em;text-transform:uppercase}
+.kval{font-family:var(--num);font-size:26px;font-weight:800;letter-spacing:-.5px;color:var(--t1);margin-bottom:8px;transition:all .35s;line-height:1}
+.kft{display:flex;align-items:center;gap:7px;font-size:12.5px}
+.dt{padding:3px 7px;border-radius:5px;font-weight:700;font-size:12px}
+.dt.up{color:var(--gr);background:var(--grb)} .dt.dn{color:var(--re);background:var(--reb)}
+.kpr{color:var(--t3)}
+
+/* ===== CHARTS ===== */
+.cr{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:22px}
+.cc{background:var(--card);border:1.5px solid var(--bdr);border-radius:var(--r);padding:22px}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.ct{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--t1)}
+.cs{font-size:12px;color:var(--t3);margin-top:3px}
+.lg{display:flex;gap:14px}
+.li{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--t2)}
+.ld{width:9px;height:9px;border-radius:50%}
+
+/* ===== BOTTOM PANELS ===== */
+.br{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.sc{background:var(--card);border:1.5px solid var(--bdr);border-radius:var(--r);overflow:hidden}
+.sh{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1.5px solid var(--bdr)}
+.st{font-family:'Syne',sans-serif;font-size:14.5px;font-weight:700;color:var(--t1)}
+.lnk{font-size:13px;color:var(--m);background:transparent;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600}
+.lnk:hover{color:var(--md)}
+.tr{display:flex;align-items:center;gap:13px;padding:14px 22px;border-bottom:1.5px solid var(--bdr);transition:background .14s}
+.tr:last-child{border-bottom:none} .tr:hover{background:var(--bg)}
+.tic{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.tnm{font-size:13.5px;font-weight:600;color:var(--t1)}
+.tmt{font-size:12px;color:var(--t3);margin-top:2px}
+.tam{font-family:var(--num);font-size:14px;font-weight:700}
+.tam.cr{color:var(--gr)} .tam.db{color:var(--t1)}
+.nr{display:flex;align-items:flex-start;gap:12px;padding:14px 22px;border-bottom:1.5px solid var(--bdr)}
+.nr:last-child{border-bottom:none}
+.nic{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.ntt{font-size:13.5px;font-weight:600;color:var(--t1)}
+.nds{font-size:12px;color:var(--t3);margin-top:2px}
+.ntm{font-size:12px;color:var(--t3);margin-left:auto;flex-shrink:0;white-space:nowrap}
+
+/* ===== TABS ===== */
+.tabs{display:flex;gap:3px;background:var(--bdr);border-radius:11px;padding:4px;width:fit-content;margin-bottom:20px}
+.tab{padding:8px 18px;border-radius:8px;font-size:13.5px;font-weight:500;cursor:pointer;color:var(--t2);transition:all .14s;border:none;background:transparent;font-family:'DM Sans',sans-serif}
+.tab:hover{color:var(--t1)}
+.tab.a{background:var(--card);color:var(--t1);box-shadow:0 1px 4px rgba(0,0,0,.12);font-weight:600}
+
+/* ===== FINANCEIRO TABLE ===== */
+.dtbl{background:var(--card);border:1.5px solid var(--bdr);border-radius:var(--r);overflow:hidden;width:100%}
+.dtbl table{width:100%;border-collapse:collapse;table-layout:fixed}
+.dtbl th{font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;padding:11px 14px;text-align:left;background:var(--bg);border-bottom:1.5px solid var(--bdr);white-space:nowrap}
+.dtbl td{font-size:13px;color:var(--t2);padding:14px 14px;border-bottom:1.5px solid var(--bdr);vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dtbl tr:last-child td{border-bottom:none}
+.dtbl tbody tr:hover td{background:var(--bg)}
+.dtbl td.nm{color:var(--t1);font-weight:600}
+.dtbl td.mo{font-family:var(--num);font-weight:700;color:var(--t1);font-size:13.5px}
+.dtbl col.c-desc{width:auto}
+.dtbl col.c-cat{width:96px}
+.dtbl col.c-emp{width:130px}
+.dtbl col.c-dt{width:102px}
+.dtbl col.c-val{width:110px}
+.dtbl col.c-st{width:118px}
+.dtbl col.c-ac{width:76px}
+.bdg{display:inline-flex;align-items:center;padding:4px 9px;border-radius:6px;font-size:11.5px;font-weight:700;white-space:nowrap}
+.bdg.paid{background:var(--grb);color:var(--gr)} .bdg.pend{background:var(--orb);color:var(--or)}
+.bdg.due{background:var(--reb);color:var(--re)} .bdg.sched{background:var(--blb);color:var(--bl)}
+.bdg.ativo{background:var(--grb);color:var(--gr)} .bdg.encerrado{background:var(--orb);color:var(--or)}
+.bdg.inativo{background:var(--reb);color:var(--re)}
+.ract{display:flex;gap:5px}
+.rb{width:28px;height:28px;border-radius:7px;border:1.5px solid var(--bdr);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--t3);transition:all .14s;font-size:13px}
+.rb.e:hover{background:var(--blb);border-color:rgba(46,94,160,.3);color:var(--bl)}
+.rb.d:hover{background:var(--reb);border-color:rgba(184,48,48,.3);color:var(--re)}
+.rb.v:hover{background:var(--mp);border-color:rgba(149,82,81,.3);color:var(--m)}
+.empty{padding:32px;text-align:center;color:var(--t3);font-size:13.5px}
+
+/* ===== CURSO CARDS ===== */
+.cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.ccard{background:var(--card);border:1.5px solid var(--bdr);border-radius:var(--rl);padding:22px;position:relative;overflow:hidden;transition:all .18s;cursor:default}
+.ccard:hover{box-shadow:0 8px 28px rgba(149,82,81,.12);transform:translateY(-2px);border-color:rgba(149,82,81,.25)}
+.ccard-stripe{position:absolute;top:0;left:0;right:0;height:4px;border-radius:var(--rl) var(--rl) 0 0}
+.ccard-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+.ccard-code{font-family:var(--num);font-size:11.5px;font-weight:800;color:var(--m);background:var(--mp);border:1.5px solid rgba(149,82,81,.2);border-radius:7px;padding:3px 9px;letter-spacing:.04em}
+.ccard-name{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--t1);margin-bottom:5px;line-height:1.3}
+.ccard-cat{font-size:12.5px;color:var(--t3);margin-bottom:16px}
+.ccard-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.cstat{background:var(--bg);border-radius:9px;padding:12px 14px}
+.cstat-lbl{font-size:11px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.cstat-val{font-family:var(--num);font-size:17px;font-weight:700;color:var(--t1)}
+.cstat-val.gr{color:var(--gr)} .cstat-val.re{color:var(--re)} .cstat-val.or{color:var(--or)}
+.cbar-wrap{margin-bottom:16px}
+.cbar-lbl{display:flex;justify-content:space-between;font-size:12px;color:var(--t3);margin-bottom:5px;font-weight:500}
+.cbar-bg{background:var(--bdr);border-radius:10px;height:8px;overflow:hidden}
+.cbar-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--md),var(--ml));transition:width .4s ease}
+.ccard-dates{font-size:12px;color:var(--t3);margin-bottom:16px;display:flex;align-items:center;gap:5px}
+.ccard-foot{display:flex;gap:8px;padding-top:14px;border-top:1.5px solid var(--bdr)}
+
+/* ===== ALUNOS TABLE ===== */
+.atbl{background:var(--card);border:1.5px solid var(--bdr);border-radius:var(--r);overflow:hidden}
+.athdr,.atrow{display:grid;grid-template-columns:88px 1fr 160px 130px 105px 110px 76px;gap:0;padding:0 20px;align-items:stretch}
+.athdr{border-bottom:1.5px solid var(--bdr);background:var(--bg)}
+.athdr .th{padding:11px 12px 11px 0}
+.atrow{border-bottom:1.5px solid var(--bdr);transition:background .14s}
+.atrow:last-child{border-bottom:none} .atrow:hover{background:var(--bg)}
+.atrow .td{padding:14px 12px 14px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:transparent}
+.acode{font-family:var(--num);font-size:12px;font-weight:800;color:var(--m);background:var(--mp);border:1.5px solid rgba(149,82,81,.2);border-radius:7px;padding:3px 8px;display:inline-block}
+
+/* ===== CALENDAR ===== */
+.calnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.calmon{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--t1);letter-spacing:-.5px}
+.calarr{display:flex;gap:7px}
+.cala{width:36px;height:36px;border-radius:9px;background:var(--card);border:1.5px solid var(--bdr);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--t2);font-size:18px;transition:all .14s;font-family:'DM Sans',sans-serif;font-weight:700}
+.cala:hover{background:var(--bdr);color:var(--t1)}
+.caldhdr{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px}
+.caldn{text-align:center;font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;padding:5px 0}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.calcel{background:var(--card);border:1.5px solid var(--bdr);border-radius:9px;padding:9px;min-height:90px;cursor:pointer;transition:all .15s}
+.calcel:hover{border-color:rgba(149,82,81,.35);box-shadow:0 3px 10px rgba(149,82,81,.1)}
+.calcel.om{background:var(--bg);opacity:.5} .calcel.today{border-color:var(--m);border-width:2px}
+.calnum{font-size:13.5px;font-weight:700;color:var(--t1);width:24px;height:24px;display:flex;align-items:center;justify-content:center;margin-bottom:4px;border-radius:50%}
+.calcel.today .calnum{background:var(--m);color:#fff}
+.calcel.om .calnum{color:var(--t4)}
+.calevs{display:flex;flex-direction:column;gap:2px}
+.calev{font-size:10.5px;padding:2px 6px;border-radius:4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.calev.aula{background:var(--blb);color:var(--bl)} .calev.mentoria{background:var(--mp);color:var(--m)}
+.calev.reuniao{background:rgba(107,47,46,.12);color:var(--md)} .calev.pagamento{background:var(--orb);color:var(--or)}
+.calev.evento{background:var(--grb);color:var(--gr)} .calev.alerta{background:var(--reb);color:var(--re)}
+.calmore{font-size:10px;color:var(--t3);padding:2px 4px}
+.calev-wrap{position:relative;display:flex;align-items:center;gap:2px;margin-bottom:2px}
+.calev-wrap .calev{flex:1;margin-bottom:0;cursor:pointer;transition:opacity .14s}
+.calev-wrap .calev:hover{opacity:.8}
+.calev-del{width:14px;height:14px;border-radius:3px;border:none;background:rgba(184,48,48,.12);color:var(--re);cursor:pointer;font-size:11px;display:none;align-items:center;justify-content:center;flex-shrink:0;line-height:1;padding:0;font-weight:700;transition:background .14s}
+.calev-del:hover{background:rgba(184,48,48,.25)}
+.calcel:hover .calev-del{display:flex}
+
+/* ===== VAI ===== */
+.vw{display:grid;grid-template-columns:1fr 285px;gap:20px;height:calc(100vh - 138px)}
+.vchat{background:var(--card);border:1.5px solid var(--bdr);border-radius:var(--rl);display:flex;flex-direction:column;overflow:hidden}
+.vhdr{padding:18px 22px;border-bottom:1.5px solid var(--bdr);display:flex;align-items:center;gap:13px;background:linear-gradient(135deg,rgba(149,82,81,.05),rgba(107,47,46,.03))}
+.vav{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--md),var(--ml));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:#fff;position:relative;flex-shrink:0}
+.von{position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:var(--gr);border:2px solid var(--card);animation:pulse 2.5s infinite}
+.vnm{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--t1)}
+.vds{font-size:12px;color:var(--t3)}
+.vmsgs{flex:1;overflow-y:auto;padding:22px;display:flex;flex-direction:column;gap:15px}
+.vmsgs::-webkit-scrollbar{width:4px}
+.vmsgs::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px}
+.msg{display:flex;gap:10px;animation:mi .3s ease}
+@keyframes mi{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.msg.u{flex-direction:row-reverse}
+.mav{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.bbl{max-width:72%;padding:12px 16px;border-radius:13px;font-size:13.5px;line-height:1.65}
+.msg.ai .bbl{background:var(--bg);border:1.5px solid var(--bdr);color:var(--t1);border-radius:5px 13px 13px 13px}
+.msg.u .bbl{background:linear-gradient(135deg,var(--md),var(--m));color:#fff;border-radius:13px 5px 13px 13px}
+.vinp{padding:14px 18px;border-top:1.5px solid var(--bdr);display:flex;gap:9px;align-items:center}
+.vi{flex:1;background:var(--bg);border:1.5px solid var(--bdr);border-radius:9px;padding:11px 15px;font-family:'DM Sans',sans-serif;font-size:13.5px;color:var(--t1);outline:none;transition:border-color .2s}
+.vi::placeholder{color:var(--t4)} .vi:focus{border-color:var(--m)}
+.vs{width:38px;height:38px;border-radius:9px;background:var(--m);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;transition:all .14s;flex-shrink:0}
+.vs:hover{background:var(--md);box-shadow:0 4px 12px rgba(149,82,81,.4)}
+.tind{display:flex;gap:4px;align-items:center}
+.tind span{width:7px;height:7px;background:var(--t3);border-radius:50%;animation:ty 1.2s infinite}
+.tind span:nth-child(2){animation-delay:.2s}.tind span:nth-child(3){animation-delay:.4s}
+@keyframes ty{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-6px);opacity:1}}
+.icol{display:flex;flex-direction:column;gap:14px}
+.icard{background:var(--card);border:1.5px solid var(--bdr);border-radius:var(--r);padding:18px}
+.ilbl{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.09em;text-transform:uppercase;margin-bottom:13px}
+.iit{display:flex;align-items:flex-start;gap:9px;margin-bottom:11px;font-size:13px;line-height:1.6;color:var(--t2)}
+.iit:last-child{margin-bottom:0}
+.idot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.ql{display:flex;flex-direction:column;gap:6px}
+.qb{background:var(--bg);border:1.5px solid var(--bdr);border-radius:8px;padding:10px 13px;text-align:left;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--t2);cursor:pointer;transition:all .14s;font-weight:500}
+.qb:hover{background:var(--mp);border-color:rgba(149,82,81,.25);color:var(--m)}
+
+/* ===== MODAL ===== */
+.ov{position:fixed;inset:0;background:rgba(26,7,7,.45);z-index:100;display:none;align-items:center;justify-content:center;backdrop-filter:blur(5px)}
+.ov.o{display:flex}
+.mo{background:var(--card);border-radius:var(--rl);padding:28px;width:560px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.18);border:1.5px solid var(--bdr);position:relative}
+.mo.w{width:680px}
+.mo.xl{width:820px}
+.mttl{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--t1);margin-bottom:4px;letter-spacing:-.3px}
+.msub{font-size:13px;color:var(--t3);margin-bottom:22px}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fg.f3{grid-template-columns:1fr 1fr 1fr}
+.fgp{display:flex;flex-direction:column;gap:6px}
+.fl{font-size:11px;font-weight:700;color:var(--t2);letter-spacing:.07em;text-transform:uppercase}
+.fi,.fse,.fta{background:var(--bg);border:1.5px solid var(--bdr);border-radius:9px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--t1);outline:none;transition:border-color .2s;width:100%;font-weight:500}
+.fi:focus,.fse:focus,.fta:focus{border-color:var(--m);box-shadow:0 0 0 3px rgba(149,82,81,.09)}
+.fse option{background:var(--card)} .fta{resize:vertical;min-height:70px}
+.fc1{grid-column:1/-1}
+.mft{display:flex;gap:10px;justify-content:flex-end;margin-top:22px;padding-top:18px;border-top:1.5px solid var(--bdr)}
+.mcl{position:absolute;top:20px;right:20px;width:30px;height:30px;border-radius:7px;border:1.5px solid var(--bdr);background:var(--bg);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--t2);font-size:18px;transition:all .14s}
+.mcl:hover{background:var(--bdr);color:var(--t1)}
+.sec-div{grid-column:1/-1;border-top:1.5px solid var(--bdr);padding-top:16px;margin-top:4px;font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.09em;text-transform:uppercase}
+/* Student section in TX modal */
+.stusec{grid-column:1/-1;border-top:1.5px solid var(--bdr);padding-top:18px;margin-top:6px;display:none}
+.stusec.s{display:block}
+.stuttl{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--t1);margin-bottom:3px}
+.stusub{font-size:12.5px;color:var(--t3);margin-bottom:14px}
+.stabs{display:flex;gap:6px;margin-bottom:16px}
+.stab{padding:7px 15px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--bdr);background:transparent;color:var(--t2);font-family:'DM Sans',sans-serif;transition:all .14s}
+.stab.a{background:var(--mp);border-color:rgba(149,82,81,.28);color:var(--m)}
+/* Course detail modal */
+.cdet-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.cdet-box{background:var(--bg);border:1.5px solid var(--bdr);border-radius:var(--r);padding:16px}
+.cdet-box-ttl{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
+.cdet-tx{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--bdr)}
+.cdet-tx:last-child{border-bottom:none}
+.cdet-txn{font-size:13px;color:var(--t1);font-weight:500}
+.cdet-txm{font-size:11.5px;color:var(--t3)}
+.cdet-txv{font-family:var(--num);font-size:14px;font-weight:700}
+.cdet-txv.cr{color:var(--gr)} .cdet-txv.db{color:var(--re)}
+.profit-bar{background:var(--bg);border:1.5px solid var(--bdr);border-radius:var(--r);padding:16px;margin-bottom:20px}
+.profit-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.profit-lbl{font-size:13px;color:var(--t2);font-weight:500}
+.profit-val{font-family:var(--num);font-size:15px;font-weight:700}
+@keyframes nfShoot{
+  0%{left:-400px;top:50%;transform:translateY(-50%);width:500px;opacity:0}
+  10%{opacity:.18;left:5%;top:50%;transform:translateY(-50%);width:520px}
+  45%{opacity:.12;left:42%;top:50%;transform:translateY(-50%);width:500px}
+  70%{opacity:0;left:100%;top:50%;transform:translateY(-50%);width:480px}
+  100%{opacity:0;left:110%;top:50%;transform:translateY(-50%);width:480px}
+}
+@keyframes nfGlow{
+  0%,100%{filter:drop-shadow(0 0 40px rgba(196,154,108,.5)) drop-shadow(0 0 80px rgba(196,154,108,.2))}
+  50%{filter:drop-shadow(0 0 80px rgba(196,154,108,.8)) drop-shadow(0 0 140px rgba(196,154,108,.4))}
+}
+.nf-star{position:fixed;z-index:0;pointer-events:none;opacity:0;
+  animation:nfShoot 10s ease-in-out infinite,nfGlow 2s ease-in-out infinite}
+</style>
+</head>
+<body>
+<!-- ===== TELA DE LOGIN ===== -->
+<div id="auth-screen" style="display:none;position:fixed;inset:0;background:#12050505;z-index:500;align-items:center;justify-content:center;overflow:hidden">
+
+  <!-- Fundo escuro atrás de tudo -->
+  <div style="position:absolute;inset:0;background:#160608;z-index:1"></div>
+
+  <!-- NF passando por trás — z-index:2 -->
+  <img id="nfStar" class="nf-star" src="nf-logo.png" style="z-index:2">
+
+  <!-- Card de login sólido — z-index:3 -->
+  <div style="position:relative;z-index:3;width:100%;max-width:400px;padding:20px">
+
+    <div style="text-align:center;margin-bottom:28px">
+      <img src="nf-logo.png" style="width:80px;height:auto;margin:0 auto;display:block;filter:drop-shadow(0 4px 16px rgba(196,154,108,.5))">
+      <div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:10px;letter-spacing:.1em;text-transform:uppercase">Acesso somente para usuários autorizados</div>
+    </div>
+
+    <!-- Tabs — sólidas, sem transparência -->
+    <div style="display:flex;background:#2C0F10;border-radius:10px;padding:4px;margin-bottom:20px;border:1px solid rgba(255,255,255,.08)">
+      <button onclick="showAuthTab('login')" id="tabLogin" style="flex:1;padding:9px;border-radius:7px;border:none;background:#955251;color:#fff;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s">Entrar</button>
+      <button onclick="showAuthTab('signup')" id="tabSignup" style="flex:1;padding:9px;border-radius:7px;border:none;background:transparent;color:rgba(255,255,255,.45);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer;transition:all .15s">Criar conta</button>
+    </div>
+
+    <!-- Formulário Login -->
+    <div id="formLogin" style="background:#1E0809;border-radius:12px;padding:20px;border:1px solid rgba(255,255,255,.08)">
+      <div style="margin-bottom:14px">
+        <label style="font-size:10px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:6px">E-mail</label>
+        <input id="authEmail" type="email" placeholder="seu@email.com" style="width:100%;background:#2A0D0E;border:1.5px solid rgba(255,255,255,.1);border-radius:8px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:#FAF5F5;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='#955251'" onblur="this.style.borderColor='rgba(255,255,255,.1)'">
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:10px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:6px">Senha</label>
+        <input id="authPass" type="password" placeholder="••••••••" style="width:100%;background:#2A0D0E;border:1.5px solid rgba(255,255,255,.1);border-radius:8px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:#FAF5F5;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='#955251'" onblur="this.style.borderColor='rgba(255,255,255,.1)'" onkeydown="if(event.key==='Enter')doSignIn()">
+      </div>
+      <div id="authMsg" style="font-size:13px;color:#E07070;margin-bottom:12px;display:none;background:#2A0D0E;border:1px solid rgba(224,112,112,.25);border-radius:7px;padding:9px 13px"></div>
+      <button id="loginBtn" onclick="doSignIn()" style="width:100%;background:#955251;color:#fff;border:none;border-radius:9px;padding:13px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.02em;transition:background .15s" onmouseover="this.style.background='#6B2F2E'" onmouseout="this.style.background='#955251'">Entrar no Sistema</button>
+    </div>
+
+    <!-- Formulário Cadastro -->
+    <div id="formSignup" style="display:none;background:#1E0809;border-radius:12px;padding:20px;border:1px solid rgba(255,255,255,.08)">
+      <div style="margin-bottom:14px">
+        <label style="font-size:10px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:6px">Nome completo</label>
+        <input id="authName" type="text" placeholder="Seu nome" style="width:100%;background:#2A0D0E;border:1.5px solid rgba(255,255,255,.1);border-radius:8px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:#FAF5F5;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='#955251'" onblur="this.style.borderColor='rgba(255,255,255,.1)'">
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:10px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:6px">E-mail</label>
+        <input id="authEmail2" type="email" placeholder="seu@email.com" style="width:100%;background:#2A0D0E;border:1.5px solid rgba(255,255,255,.1);border-radius:8px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:#FAF5F5;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='#955251'" onblur="this.style.borderColor='rgba(255,255,255,.1)'">
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:10px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:6px">Senha (mín. 6 caracteres)</label>
+        <input id="authPass2" type="password" placeholder="••••••••" style="width:100%;background:#2A0D0E;border:1.5px solid rgba(255,255,255,.1);border-radius:8px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:#FAF5F5;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='#955251'" onblur="this.style.borderColor='rgba(255,255,255,.1)'">
+      </div>
+      <div id="authMsg2" style="font-size:13px;margin-bottom:12px;display:none;border-radius:7px;padding:9px 13px;background:#2A0D0E"></div>
+      <button onclick="doSignUp()" style="width:100%;background:#955251;color:#fff;border:none;border-radius:9px;padding:13px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:background .15s" onmouseover="this.style.background='#6B2F2E'" onmouseout="this.style.background='#955251'">Criar conta</button>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<div id="app">
+
+<!-- SIDEBAR -->
+<aside class="sb">
+  <div class="sb-head">
+    <div class="sw-lbl">Empresa ativa</div>
+    <div class="sw">
+      <button class="sw-b a" onclick="setCo('nf',this)"><span class="sw-d" style="background:#C4807F"></span>NatureFace</button>
+      <button class="sw-b" onclick="setCo('rv',this)"><span class="sw-d" style="background:#955251"></span>Rosana Academy</button>
+      <button class="sw-b" onclick="setCo('all',this)"><span class="sw-d" style="background:rgba(255,255,255,.5)"></span>Consolidado</button>
+    </div>
+  </div>
+  <nav class="sb-nav">
+    <div class="nsec">Principal</div>
+    <div class="ni a" onclick="sv('dashboard',this)">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg>Dashboard
+    </div>
+    <div class="nsec">Financeiro</div>
+    <div class="ni" onclick="sv('financeiro',this)">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 10h16M5 6h10M7 14h6"/><rect x="2" y="3" width="16" height="14" rx="2"/></svg>Gestão Financeira
+    </div>
+    <div class="nsec" id="navSecNF" style="display:none">NatureFace</div>
+    <div class="ni" id="navVendedoras" style="display:none" onclick="sv('vendedoras',this)">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="3"/><path d="M1 17c0-3.3 2.7-6 6-6"/><circle cx="14" cy="7" r="3"/><path d="M11 17c0-3.3 1.3-5.4 3-6"/></svg>Vendedoras
+      <span class="ni-badge" id="nbVend">3</span>
+    </div>
+    <div class="nsec" id="navSecAcademy">Rosana Academy</div>
+    <div class="ni" id="navCursos" onclick="sv('cursos',this)">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 5l8-3 8 3v6c0 4-8 7-8 7S2 15 2 11V5z"/></svg>Cursos
+      <span class="ni-badge" id="nbCursos">3</span>
+    </div>
+    <div class="ni" id="navAlunos" onclick="sv('alunos',this)">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="7" r="3"/><path d="M2 17c0-3.3 2.7-6 6-6"/><path d="M13 14h5m-2.5-2.5v5"/></svg>Base de Alunos
+      <span class="ni-badge" id="nbAlunos">4</span>
+    </div>
+    <div class="nsec">Agenda</div>
+    <div class="ni" onclick="sv('calendario',this)">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M14 2v4M6 2v4M3 9h14"/></svg>Calendário
+    </div>
+    <div class="nsec">Inteligência</div>
+    <div class="ni" onclick="sv('vai',this)">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="7"/><path d="M10 7v3l2 2"/></svg>V.A.I Assistente
+    </div>
+  </nav>
+  <div class="sb-foot">
+    <div class="urow">
+      <div class="uav" id="sbAvatar">RV</div>
+      <div style="flex:1;min-width:0"><div class="uname" id="sbName">Carregando...</div><div class="urole" id="sbEmail" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px"></div></div>
+      <button onclick="doSignOut()" title="Sair" style="background:rgba(255,255,255,.1);border:none;border-radius:7px;width:30px;height:30px;cursor:pointer;color:rgba(255,255,255,.6);font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .14s;flex-shrink:0" onmouseover="this.style.background='rgba(255,255,255,.2)'" onmouseout="this.style.background='rgba(255,255,255,.1)'">⏻</button>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div><div class="tb-title" id="tbT">Dashboard Executivo</div><div class="tb-sub" id="tbS">Visão geral estratégica · NatureFace</div></div>
+    <div class="tbr">
+      <div class="tbbg"><span class="ldot"></span>Online</div>
+      <div class="tbico"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 2a6 6 0 0 1 6 6v2l1.3 2.6A1 1 0 0 1 16.4 14H3.6a1 1 0 0 1-.9-1.4L4 10V8a6 6 0 0 1 6-6z"/><path d="M8 14a2 2 0 0 0 4 0"/></svg><span class="ndot"></span></div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="page a" id="page-dashboard">
+    <div class="kg">
+      <div class="kc m"><div class="klbl">Faturamento Mensal</div><div class="kval" id="kF">R$&nbsp;284.750</div><div class="kft"><span class="dt up">▲ 18,3%</span><span class="kpr">vs mês anterior</span></div></div>
+      <div class="kc g"><div class="klbl">Lucro Líquido</div><div class="kval" id="kL">R$&nbsp;112.340</div><div class="kft"><span class="dt up">▲ 22,1%</span><span class="kpr">margem 39,4%</span></div></div>
+      <div class="kc o"><div class="klbl">Contas a Receber</div><div class="kval" id="kR">R$&nbsp;67.200</div><div class="kft"><span class="dt dn">▼ 4,7%</span><span class="kpr">23 faturas</span></div></div>
+      <div class="kc g"><div class="klbl">Crescimento MoM</div><div class="kval" id="kG">+18%</div><div class="kft"><span class="dt up">▲ Meta atingida</span><span class="kpr">meta: 15%</span></div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:22px">
+      <div class="cc">
+        <div class="ch">
+          <div><div class="ct">Faturamento 2025</div><div class="cs">Receita mensal acumulada</div></div>
+          <div class="lg"><div class="li"><div class="ld" style="background:#C4807F"></div>NatureFace</div><div class="li"><div class="ld" style="background:#955251"></div>Rosana Academy</div></div>
+        </div>
+        <canvas id="revChart" height="120"></canvas>
+      </div>
+      <div class="sc" style="border-radius:var(--r)">
+        <div class="sh"><div class="st">V.A.I — Insights</div><button class="lnk" onclick="sv('vai',null)">Abrir →</button></div>
+        <div class="nr"><div class="nic" style="background:var(--grb)">🚀</div><div style="flex:1"><div class="ntt">Meta atingida</div><div class="nds">Academy superou a meta em 23%</div></div></div>
+        <div class="nr"><div class="nic" style="background:var(--orb)">⚠️</div><div style="flex:1"><div class="ntt">3 contas vencem hoje</div><div class="nds">R$ 8.640 a vencer</div></div></div>
+        <div class="nr"><div class="nic" style="background:var(--mp)">📈</div><div style="flex:1"><div class="ntt">Pico de matrículas</div><div class="nds">+40% nos últimos 3 dias</div></div></div>
+        <div class="nr"><div class="nic" style="background:var(--blb)">💡</div><div style="flex:1"><div class="ntt">Sugestão de economia</div><div class="nds">-12% em custos possível</div></div></div>
+      </div>
+    </div>
+    <div class="sc">
+      <div class="sh"><div class="st">Movimentações Recentes</div><button class="lnk" onclick="sv('financeiro',null)">Ver todas →</button></div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr)">
+        <div class="tr"><div class="tic" style="background:var(--grb)">💆</div><div style="flex:1"><div class="tnm">Protocolo Facial Premium</div><div class="tmt">NatureFace · Hoje 14:23</div></div><div class="tam cr">+R$&nbsp;850</div></div>
+        <div class="tr"><div class="tic" style="background:var(--mp)">🎓</div><div style="flex:1"><div class="tnm">Matrícula — Curso Avançado</div><div class="tmt">Rosana Academy · Hoje 11:05</div></div><div class="tam cr">+R$&nbsp;2.400</div></div>
+        <div class="tr" style="border-top:1.5px solid var(--bdr)"><div class="tic" style="background:var(--orb)">🏢</div><div style="flex:1"><div class="tnm">Aluguel Clínica — Julho</div><div class="tmt">NatureFace · Hoje 09:00</div></div><div class="tam db">-R$&nbsp;4.200</div></div>
+        <div class="tr" style="border-top:1.5px solid var(--bdr)"><div class="tic" style="background:var(--mp)">🎯</div><div style="flex:1"><div class="tnm">Mentoria Executiva</div><div class="tmt">Rosana Academy · Ontem</div></div><div class="tam cr">+R$&nbsp;7.500</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FINANCEIRO -->
+  <div class="page" id="page-financeiro">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+      <div class="tabs" style="margin-bottom:0">
+        <button class="tab a" onclick="swTab(this,'pagar')">Contas a Pagar</button>
+        <button class="tab" onclick="swTab(this,'receber')">Contas a Receber</button>
+        <button class="tab" onclick="swTab(this,'todos')">Todos</button>
+      </div>
+      <select class="fsel" id="fFiltMes" onchange="renderTx()">
+        <option value="">Todos os períodos</option>
+        <option>Janeiro 2025</option><option>Fevereiro 2025</option><option>Março 2025</option>
+        <option>Abril 2025</option><option>Maio 2025</option><option>Junho 2025</option>
+        <option selected>Julho 2025</option><option>Agosto 2025</option><option>Setembro 2025</option>
+        <option>Outubro 2025</option><option>Novembro 2025</option><option>Dezembro 2025</option>
+      </select>
+      <select class="fsel" id="fFiltCat" onchange="renderTx()">
+        <option value="">Todas categorias</option>
+        <option>Operacional</option><option>Insumos</option><option>Marketing</option>
+        <option>RH</option><option>Tecnologia</option><option>Cursos</option><option>Mentorias</option>
+        <option>Procedimentos</option><option>Seguros</option><option>Outros</option>
+      </select>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="bs">📥 Exportar</button>
+        <button class="bp" onclick="openAddTx()">+ Novo Lançamento</button>
+      </div>
+    </div>
+    <div class="kg3" style="margin-bottom:18px">
+      <div class="kc g"><div class="klbl">Receita do Período</div><div class="kval" id="sumRec">R$&nbsp;0</div><div class="kft"><span class="kpr" id="sumRecCt">lançamentos</span></div></div>
+      <div class="kc m"><div class="klbl">Despesas do Período</div><div class="kval" id="sumP">R$&nbsp;0</div><div class="kft"><span class="kpr" id="sumPct">lançamentos</span></div></div>
+      <div class="kc o"><div class="klbl">Resultado</div><div class="kval" id="sumRes" style="font-size:22px">R$&nbsp;0</div><div class="kft"><span id="sumResLabel" class="kpr">período</span></div></div>
+    </div>
+    <div class="dtbl">
+      <table>
+        <colgroup><col class="c-desc"><col class="c-cat"><col class="c-emp"><col class="c-dt"><col class="c-val"><col class="c-st"><col class="c-ac"></colgroup>
+        <thead><tr><th>Descrição</th><th>Cat.</th><th>Empresa / Curso</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
+        <tbody id="txBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CURSOS -->
+  <div class="page" id="page-cursos">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+      <select class="fsel" id="cfStat" onchange="renderCursos()"><option value="">Todos os status</option><option value="ativo">Ativos</option><option value="encerrado">Encerrados</option></select>
+      <button class="bp" style="margin-left:auto" onclick="openAddCurso()">+ Novo Curso</button>
+    </div>
+    <div class="kg3" id="cursoKpis">
+      <div class="kc m"><div class="klbl">Total de Cursos</div><div class="kval" id="ckTotal">3</div><div class="kft"><span class="kpr">cadastrados</span></div></div>
+      <div class="kc g"><div class="klbl">Cursos Ativos</div><div class="kval" id="ckAtivos">2</div><div class="kft"><span class="dt up">▲ Em andamento</span></div></div>
+      <div class="kc o"><div class="klbl">Faturamento Total</div><div class="kval" id="ckFat">—</div><div class="kft"><span class="kpr">todos os cursos</span></div></div>
+    </div>
+    <div class="cgrid" id="cursoGrid"></div>
+  </div>
+
+  <!-- ALUNOS -->
+  <div class="page" id="page-alunos">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+      <input class="srch" id="alunoSrch" placeholder="Buscar por nome, código ou curso..." oninput="renderAlunos()">
+      <select class="fsel" id="aFiltCurso" onchange="renderAlunos()"><option value="">Todos os cursos</option></select>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="bs">📥 Exportar</button>
+        <button class="bp" onclick="openAddAluno()">+ Nova Aluna</button>
+      </div>
+    </div>
+    <div class="atbl">
+      <div class="athdr"><div class="th">Código</div><div class="th">Nome</div><div class="th">Curso</div><div class="th">Cidade / UF</div><div class="th">Matrícula</div><div class="th">Status</div><div class="th">Ações</div></div>
+      <div id="alunoBody"></div>
+    </div>
+  </div>
+
+  <!-- CALENDARIO -->
+  <div class="page" id="page-calendario">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+      <div class="calnav" style="flex:1;margin-bottom:0">
+        <div class="calmon" id="calMon"></div>
+        <div class="calarr"><button class="cala" onclick="navCal(-1)">‹</button><button class="cala" onclick="navCal(1)">›</button></div>
+      </div>
+      <button class="bp" onclick="openAddEvent('')">+ Novo Evento</button>
+    </div>
+    <div class="caldhdr"><div class="caldn">Dom</div><div class="caldn">Seg</div><div class="caldn">Ter</div><div class="caldn">Qua</div><div class="caldn">Qui</div><div class="caldn">Sex</div><div class="caldn">Sáb</div></div>
+    <div class="calgrid" id="calGrid"></div>
+  </div>
+
+  <!-- VAI -->
+  <div class="page" id="page-vai">
+    <div class="vw">
+      <div class="vchat">
+        <div class="vhdr"><div class="vav">V<span class="von"></span></div><div><div class="vnm">V.A.I</div><div class="vds">Vecchi Artificial Intelligence · Análise em tempo real</div></div></div>
+        <div class="vmsgs" id="vaiMsgs">
+          <div class="msg ai"><div class="mav" style="background:linear-gradient(135deg,var(--md),var(--ml));color:#fff">V</div><div class="bbl">Olá, Rosana! 👋 Sou o V.A.I, seu assistente executivo.<br><br><strong>📊 Resumo de hoje:</strong><br>• Faturamento: <strong>R$ 284.750</strong> (+18,3%)<br>• Rosana Academy superou a meta em <strong>23%</strong><br>• 3 contas vencem hoje — <strong>R$ 8.640</strong><br><br>Como posso ajudar?</div></div>
+        </div>
+        <div class="vinp"><input class="vi" id="vaiI" placeholder="Pergunte sobre finanças, crescimento, previsões..." onkeydown="if(event.key==='Enter')sendVai()"><button class="vs" onclick="sendVai()"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 10L3 3l3 7-3 7 16-7z"/></svg></button></div>
+      </div>
+      <div class="icol">
+        <div class="icard">
+          <div class="ilbl">💡 Insights</div>
+          <div class="iit"><span class="idot" style="background:var(--gr)"></span><span>Academy cresceu 31% em matrículas — recorde do ano</span></div>
+          <div class="iit"><span class="idot" style="background:var(--or)"></span><span>CPL subiu 8% — revisar mix de anúncios</span></div>
+          <div class="iit"><span class="idot" style="background:var(--m)"></span><span>Previsão agosto: R$ 316.000 (+11%)</span></div>
+          <div class="iit"><span class="idot" style="background:var(--re)"></span><span>Operacional NF 12% acima do orçamento</span></div>
+          <div class="iit"><span class="idot" style="background:var(--bl)"></span><span>Mentorias têm margem de 71% — escalar</span></div>
+        </div>
+        <div class="icard">
+          <div class="ilbl">🎯 Perguntas rápidas</div>
+          <div class="ql">
+            <button class="qb" onclick="askVai('Quanto faturamos este mês?')">Quanto faturamos este mês?</button>
+            <button class="qb" onclick="askVai('Qual empresa cresceu mais?')">Qual empresa cresceu mais?</button>
+            <button class="qb" onclick="askVai('Preveja o faturamento do próximo mês')">Previsão do próximo mês</button>
+            <button class="qb" onclick="askVai('Onde posso reduzir custos?')">Onde reduzir custos?</button>
+            <button class="qb" onclick="askVai('Qual categoria mais lucrou?')">Categoria mais lucrativa</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- VENDEDORAS -->
+  <div class="page" id="page-vendedoras">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+      <input class="srch" id="vendSrch" placeholder="Buscar por nome, código ou e-mail..." oninput="renderVendedoras()">
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="bs">📥 Exportar</button>
+        <button class="bp" onclick="openAddVend()">+ Nova Vendedora</button>
+      </div>
+    </div>
+    <div class="atbl">
+      <div class="athdr"><div class="th">Código</div><div class="th">Nome</div><div class="th">E-mail</div><div class="th">Telefone</div><div class="th">Cidade / UF</div><div class="th">Status</div><div class="th">Ações</div></div>
+      <div id="vendBody"></div>
+    </div>
+  </div>
+</main>
+</div>
+
+<!-- MODAL VENDEDORA -->
+<div class="ov" id="vendModal">
+  <div class="mo w">
+    <button class="mcl" onclick="closeM('vendModal')">×</button>
+    <div class="mttl" id="vendMT">Nova Vendedora</div>
+    <div class="msub">NatureFace — cadastro de vendedora</div>
+    <div class="fg">
+      <div class="fgp"><label class="fl">Código</label><input class="fi" id="vCode" placeholder="Ex: NFV004"></div>
+      <div class="fgp"><label class="fl">Status</label><select class="fse" id="vSt"><option value="ativa">Ativa</option><option value="inativa">Inativa</option></select></div>
+      <div class="fgp fc1"><label class="fl">Nome completo</label><input class="fi" id="vNm" placeholder="Nome da vendedora"></div>
+      <div class="fgp"><label class="fl">CPF</label><input class="fi" id="vCpf" placeholder="000.000.000-00"></div>
+      <div class="fgp"><label class="fl">Data de Nascimento</label><input class="fi" id="vBirth" type="date"></div>
+      <div class="fgp"><label class="fl">E-mail</label><input class="fi" id="vEm" type="email" placeholder="email@natureface.com"></div>
+      <div class="fgp"><label class="fl">Telefone / WhatsApp</label><input class="fi" id="vPh" placeholder="(00) 00000-0000"></div>
+      <div class="sec-div" style="font-size:12px;color:var(--m)">📍 Endereço</div>
+      <div class="fgp"><label class="fl">CEP</label><input class="fi" id="vCep" placeholder="00000-000"></div>
+      <div class="fgp"><label class="fl">Estado</label><select class="fse" id="vState">
+        <option value="">— UF —</option><option>AC</option><option>AL</option><option>AM</option><option>AP</option><option>BA</option><option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option><option>MG</option><option>MS</option><option>MT</option><option>PA</option><option>PB</option><option>PE</option><option>PI</option><option>PR</option><option>RJ</option><option>RN</option><option>RO</option><option>RR</option><option>RS</option><option>SC</option><option selected>SP</option><option>SE</option><option>TO</option>
+      </select></div>
+      <div class="fgp"><label class="fl">Cidade</label><input class="fi" id="vCit" placeholder="São Paulo"></div>
+      <div class="fgp"><label class="fl">Bairro</label><input class="fi" id="vBa" placeholder="Jardim Paulista"></div>
+      <div class="fgp fc1"><label class="fl">Logradouro e Número</label><input class="fi" id="vStr" placeholder="Ex: Rua das Flores, 123 — Apto 4B"></div>
+      <div class="fgp fc1"><label class="fl">Observações</label><textarea class="fta" id="vNo" placeholder="Anotações sobre a vendedora..."></textarea></div>
+    </div>
+    <div class="mft"><button class="bs" onclick="closeM('vendModal')">Cancelar</button><button class="bp" onclick="saveVend()">Salvar Vendedora</button></div>
+  </div>
+</div>
+
+<!-- MODAL FINANCEIRO -->
+<div class="ov" id="txModal">
+  <div class="mo w">
+    <button class="mcl" onclick="closeM('txModal')">×</button>
+    <div class="mttl" id="txMT">Novo Lançamento</div>
+    <div class="msub">Preencha os dados do lançamento financeiro</div>
+    <div class="fg">
+      <div class="fgp fc1"><label class="fl">Descrição</label><input class="fi" id="fNm" placeholder="Ex: Aluguel — Clínica Faria Lima"></div>
+      <div class="fgp"><label class="fl">Tipo</label><select class="fse" id="fTy" onchange="checkStu()"><option value="pagar">A Pagar</option><option value="receber">A Receber</option></select></div>
+      <div class="fgp"><label class="fl">Categoria</label><select class="fse" id="fCa"><option>Operacional</option><option>Insumos</option><option>Marketing</option><option>RH</option><option>Tecnologia</option><option>Seguros</option><option>Procedimentos</option><option>Cursos</option><option>Mentorias</option><option>Outros</option></select></div>
+      <div class="fgp"><label class="fl">Empresa</label><select class="fse" id="fCo" onchange="checkStu();toggleCursoField()"><option value="nf">NatureFace</option><option value="rv">Rosana Academy</option></select></div>
+      <div class="fgp" id="cursoFieldWrap"><label class="fl">Curso (opcional)</label><select class="fse" id="fCrs"><option value="">— Nenhum —</option></select></div>
+      <div class="fgp"><label class="fl">Status</label><select class="fse" id="fSt"><option value="paid">Pago</option><option value="pend">Pendente</option><option value="due">Vence Hoje</option><option value="sched">Agendado</option></select></div>
+      <div class="fgp"><label class="fl">Vencimento</label><input class="fi" id="fDu" type="date"></div>
+      <div class="fgp"><label class="fl">Valor (R$)</label><input class="fi" id="fVl" type="number" placeholder="0,00" min="0" step="0.01"></div>
+      <div class="fgp fc1"><label class="fl">Observações</label><textarea class="fta" id="fNo" placeholder="Detalhes adicionais..."></textarea></div>
+      <!-- STUDENT SECTION -->
+      <div id="stuSec" class="stusec">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+          <div style="width:3px;height:28px;border-radius:2px;background:var(--m);flex-shrink:0"></div>
+          <div class="stuttl">👤 Dados do Aluno — Rosana Academy</div>
+        </div>
+        <div class="stusub">Preencha os dados do aluno vinculado a esta receita, ou selecione um já cadastrado.</div>
+        <div class="stabs">
+          <button class="stab a" id="btnNS" onclick="tgStu('new')">✦ Novo Aluno</button>
+          <button class="stab" id="btnES" onclick="tgStu('exist')">Selecionar Existente</button>
+        </div>
+        <div id="stuNew">
+          <div class="fg">
+            <div class="fgp"><label class="fl">Código do Aluno</label><input class="fi" id="sCode" placeholder="Ex: RVA005"></div>
+            <div class="fgp"><label class="fl">Nome completo</label><input class="fi" id="sNm" placeholder="Nome do aluno"></div>
+            <div class="fgp"><label class="fl">E-mail</label><input class="fi" id="sEm" type="email" placeholder="email@exemplo.com"></div>
+            <div class="fgp"><label class="fl">Telefone / WhatsApp</label><input class="fi" id="sPh" placeholder="(00) 00000-0000"></div>
+            <div class="fgp"><label class="fl">CPF</label><input class="fi" id="sCp" placeholder="000.000.000-00"></div>
+            <div class="fgp"><label class="fl">Curso Matriculado</label><select class="fse" id="sStuCrs" onchange="syncCourseFromStu()"><option value="">— Selecione o curso —</option></select></div>
+            <div class="sec-div">📍 Endereço</div>
+            <div class="fgp fc1"><label class="fl">Logradouro e Número</label><input class="fi" id="sSt" placeholder="Ex: Rua das Flores, 123 — Apto 4B"></div>
+            <div class="fgp"><label class="fl">Bairro</label><input class="fi" id="sBa" placeholder="Jardim Paulista"></div>
+            <div class="fgp"><label class="fl">CEP</label><input class="fi" id="sCe" placeholder="00000-000"></div>
+            <div class="fgp"><label class="fl">Cidade</label><input class="fi" id="sCi" placeholder="São Paulo"></div>
+            <div class="fgp"><label class="fl">Estado</label><select class="fse" id="sSe"><option>SP</option><option>RJ</option><option>MG</option><option>RS</option><option>PR</option><option>SC</option><option>BA</option><option>GO</option><option>DF</option><option>CE</option><option>PE</option><option>Outro</option></select></div>
+          </div>
+        </div>
+        <div id="stuExist" style="display:none">
+          <div class="fg">
+            <div class="fgp"><label class="fl">Selecionar Aluno Cadastrado</label><select class="fse" id="sExSel" style="width:100%" onchange="previewExistStu()"><option value="">— Escolha um aluno —</option></select></div>
+            <div class="fgp" id="existStuCrsWrap"><label class="fl">Curso Matriculado</label><select class="fse" id="sExCrs"><option value="">— Selecione o curso —</option></select></div>
+          </div>
+          <div id="existStuPreview" style="display:none;background:var(--bg);border:1.5px solid var(--bdr);border-radius:9px;padding:14px;margin-top:12px">
+            <div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px">Dados do aluno selecionado</div>
+            <div id="existStuData" style="font-size:13.5px;color:var(--t1);line-height:1.8"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mft"><button class="bs" onclick="closeM('txModal')">Cancelar</button><button class="bp" onclick="saveTx()">Salvar Lançamento</button></div>
+  </div>
+</div>
+
+<!-- MODAL CURSO -->
+<div class="ov" id="cursoModal">
+  <div class="mo w">
+    <button class="mcl" onclick="closeM('cursoModal')">×</button>
+    <div class="mttl" id="cursoMT">Novo Curso</div>
+    <div class="msub">Cadastrar curso da Rosana Vecchi Academy</div>
+    <div class="fg">
+      <div class="fgp"><label class="fl">Código do Curso</label><input class="fi" id="cCode" placeholder="Ex: RVC004"></div>
+      <div class="fgp"><label class="fl">Status</label><select class="fse" id="cStat"><option value="ativo">Ativo</option><option value="encerrado">Encerrado</option></select></div>
+      <div class="fgp fc1"><label class="fl">Nome do Curso</label><input class="fi" id="cNm" placeholder="Ex: Protocolos Faciais Avançados 2025"></div>
+      <div class="fgp"><label class="fl">Categoria</label><select class="fse" id="cCat"><option>Estética Clínica</option><option>Estética Básica</option><option>Gestão e Liderança</option><option>Protocolos Avançados</option><option>Certificação</option><option>Mentoria</option><option>Outro</option></select></div>
+      <div class="fgp"><label class="fl">Data de Início</label><input class="fi" id="cDtI" type="date"></div>
+      <div class="fgp"><label class="fl">Data de Término</label><input class="fi" id="cDtF" type="date"></div>
+      <div class="fgp"><label class="fl">Valor por Aluno (R$)</label><input class="fi" id="cVal" type="number" placeholder="0,00" min="0" step="0.01"></div>
+      <div class="fgp"><label class="fl">Máximo de Alunos</label><input class="fi" id="cMax" type="number" placeholder="Ex: 20" min="1"></div>
+      <div class="fgp fc1"><label class="fl">Descrição / Ementa</label><textarea class="fta" id="cDs" placeholder="Descreva o conteúdo e objetivos do curso..."></textarea></div>
+    </div>
+    <div class="mft"><button class="bs" onclick="closeM('cursoModal')">Cancelar</button><button class="bp" onclick="saveCurso()">Salvar Curso</button></div>
+  </div>
+</div>
+
+<!-- MODAL DETALHE CURSO -->
+<div class="ov" id="cursoDetModal">
+  <div class="mo xl">
+    <button class="mcl" onclick="closeM('cursoDetModal')">×</button>
+    <div id="cursoDetContent"></div>
+    <div class="mft"><button class="bp" onclick="closeM('cursoDetModal')">Fechar</button></div>
+  </div>
+</div>
+
+<!-- MODAL ALUNO -->
+<div class="ov" id="alunoModal">
+  <div class="mo w">
+    <button class="mcl" onclick="closeM('alunoModal')">×</button>
+    <div class="mttl" id="aMT">Nova Aluna</div>
+    <div class="msub">Cadastro completo — Rosana Vecchi Academy</div>
+    <div class="fg">
+      <div class="fgp"><label class="fl">Código da Aluna</label><input class="fi" id="aMCode" placeholder="Ex: RVA005"></div>
+      <div class="fgp"><label class="fl">Status</label><select class="fse" id="aMSt"><option value="ativo">Ativa</option><option value="inativo">Inativa</option></select></div>
+
+      <div class="sec-div" style="font-size:12px;color:var(--m)">👤 Dados Pessoais</div>
+      <div class="fgp fc1"><label class="fl">Nome completo</label><input class="fi" id="aMNm" placeholder="Nome completo da aluna"></div>
+      <div class="fgp"><label class="fl">CPF</label><input class="fi" id="aMCpf" placeholder="000.000.000-00"></div>
+      <div class="fgp"><label class="fl">Data de Nascimento</label><input class="fi" id="aMBirth" type="date"></div>
+      <div class="fgp"><label class="fl">E-mail</label><input class="fi" id="aMEm" type="email" placeholder="email@exemplo.com"></div>
+      <div class="fgp"><label class="fl">Telefone / WhatsApp</label><input class="fi" id="aMPh" placeholder="(00) 00000-0000"></div>
+
+      <div class="sec-div" style="font-size:12px;color:var(--m)">🎓 Curso</div>
+      <div class="fgp"><label class="fl">Curso / Turma</label><input class="fi" id="aMMCr" placeholder="Ex: Protocolos Avançados 2025"></div>
+      <div class="fgp"><label class="fl">Vincular Curso</label><select class="fse" id="aMCrs"><option value="">— Nenhum —</option></select></div>
+
+      <div class="sec-div" style="font-size:12px;color:var(--m)">📍 Endereço</div>
+      <div class="fgp"><label class="fl">CEP</label><input class="fi" id="aMCep" placeholder="00000-000"></div>
+      <div class="fgp"><label class="fl">Estado</label><select class="fse" id="aMSta">
+        <option value="">— UF —</option>
+        <option>AC</option><option>AL</option><option>AM</option><option>AP</option><option>BA</option>
+        <option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option>
+        <option>MG</option><option>MS</option><option>MT</option><option>PA</option><option>PB</option>
+        <option>PE</option><option>PI</option><option>PR</option><option>RJ</option><option>RN</option>
+        <option>RO</option><option>RR</option><option>RS</option><option>SC</option><option selected>SP</option>
+        <option>SE</option><option>TO</option>
+      </select></div>
+      <div class="fgp"><label class="fl">Cidade</label><input class="fi" id="aMCit" placeholder="São Paulo"></div>
+      <div class="fgp"><label class="fl">Bairro</label><input class="fi" id="aMBa" placeholder="Jardim Paulista"></div>
+      <div class="fgp fc1"><label class="fl">Logradouro e Número</label><input class="fi" id="aMStr" placeholder="Ex: Rua das Flores, 123 — Apto 4B"></div>
+
+      <div class="sec-div" style="font-size:12px;color:var(--m)">📝 Observações</div>
+      <div class="fgp fc1"><textarea class="fta" id="aMNo" placeholder="Anotações sobre a aluna..."></textarea></div>
+    </div>
+    <div class="mft"><button class="bs" onclick="closeM('alunoModal')">Cancelar</button><button class="bp" onclick="saveAluno()">Salvar Aluna</button></div>
+  </div>
+</div>
+
+<!-- MODAL EVENTO -->
+<div class="ov" id="evModal">
+  <div class="mo">
+    <button class="mcl" onclick="closeM('evModal')">×</button>
+    <div class="mttl" id="evMT">Novo Evento</div>
+    <div class="msub">Adicionar ao calendário</div>
+    <div class="fg">
+      <div class="fgp fc1"><label class="fl">Título</label><input class="fi" id="evTi" placeholder="Ex: Mentoria Premium, Reunião equipe..."></div>
+      <div class="fgp"><label class="fl">Data</label><input class="fi" id="evDt" type="date"></div>
+      <div class="fgp"><label class="fl">Horário</label><input class="fi" id="evHr" type="time" value="09:00"></div>
+      <div class="fgp"><label class="fl">Tipo</label><select class="fse" id="evTy"><option value="aula">Aula</option><option value="mentoria">Mentoria</option><option value="reuniao">Reunião</option><option value="pagamento">Pagamento</option><option value="evento">Evento</option><option value="alerta">Alerta</option></select></div>
+      <div class="fgp"><label class="fl">Empresa</label><select class="fse" id="evCo"><option value="nf">NatureFace</option><option value="rv">Rosana Academy</option></select></div>
+      <div class="fgp fc1"><label class="fl">Descrição</label><textarea class="fta" id="evDs" placeholder="Detalhes do evento..."></textarea></div>
+    </div>
+    <div class="mft"><button class="bs" onclick="closeM('evModal')">Cancelar</button><button class="bs" id="evDelBtn" style="display:none;color:var(--re);border-color:rgba(184,48,48,.3)" onclick="deleteEditingEvent()">🗑 Excluir Evento</button><button class="bp" onclick="saveEvent()">Salvar Evento</button></div>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+let co='nf', ftab='pagar', editTxId=null, txNid=11;
+let editStuId=null, stuMode='new', stuNid=5, stuNcode=5;
+let editCursoId=null, cursoNid=4, cursoNcode=4;
+let viewingCursoId=null;
+let calDate=new Date(2025,6,1);
+
+// ===== DATA =====
+let courses=[
+  {id:1,code:'RVC001',name:'Protocolos Faciais Avançados',cat:'Estética Clínica',color:'#955251',startDate:'2025-07-01',endDate:'2025-09-30',val:2400,maxStu:20,status:'ativo',desc:'Curso completo de protocolos faciais premium'},
+  {id:2,code:'RVC002',name:'Mentoria Executiva Premium',cat:'Gestão e Liderança',color:'#C4807F',startDate:'2025-07-15',endDate:'2025-12-15',val:7500,maxStu:10,status:'ativo',desc:''},
+  {id:3,code:'RVC003',name:'Curso Básico de Estética',cat:'Estética Básica',color:'#6B2F2E',startDate:'2025-05-01',endDate:'2025-07-31',val:1200,maxStu:30,status:'encerrado',desc:'Turma encerrada'},
+];
+let students=[
+  {id:1,code:'RVA001',name:'Dra. Beatriz Lemos',email:'beatriz@clinica.com',phone:'(11) 99820-0011',cpf:'345.678.901-23',course:'Curso Avançado + Certificação',courseId:1,status:'ativo',enrolledAt:'2025-07-12',street:'Rua Oscar Freire, 900',bairro:'Jardins',city:'São Paulo',state:'SP',cep:'01426-000',notes:'Especialista em dermatologia',txId:8},
+  {id:2,code:'RVA002',name:'Renata Campos Oliveira',email:'renata@gmail.com',phone:'(21) 97654-3210',cpf:'456.789.012-34',course:'Mentoria Executiva Premium',courseId:2,status:'ativo',enrolledAt:'2025-07-22',street:'Av. Atlântica, 2002 Apto 701',bairro:'Copacabana',city:'Rio de Janeiro',state:'RJ',cep:'22021-001',notes:'',txId:10},
+  {id:3,code:'RVA003',name:'Marina Souza Ferreira',email:'marina@med.com',phone:'(31) 98765-4321',cpf:'567.890.123-45',course:'Protocolos Faciais 2025',courseId:1,status:'ativo',enrolledAt:'2025-06-18',street:'Rua da Bahia, 500',bairro:'Lourdes',city:'Belo Horizonte',state:'MG',cep:'30160-010',notes:'',txId:null},
+  {id:4,code:'RVA004',name:'Ana Paula Mota',email:'anapaula@outlook.com',phone:'(41) 99234-5678',cpf:'678.901.234-56',course:'Curso Básico de Estética',courseId:3,status:'inativo',enrolledAt:'2025-05-10',street:'Rua XV de Novembro, 1200',bairro:'Centro',city:'Curitiba',state:'PR',cep:'80020-310',notes:'Trancou em junho',txId:null},
+];
+let txs=[
+  {id:1,name:'Aluguel — Clínica Faria Lima',cat:'Operacional',co:'nf',courseId:null,due:'2025-07-05',val:4200,status:'paid',type:'pagar',notes:''},
+  {id:2,name:'Fornecedora Derma+ Insumos',cat:'Insumos',co:'nf',courseId:null,due:'2025-07-10',val:3840,status:'paid',type:'pagar',notes:''},
+  {id:3,name:'Plataforma de Cursos Online',cat:'Tecnologia',co:'rv',courseId:1,due:'2025-07-15',val:1890,status:'pend',type:'pagar',notes:''},
+  {id:4,name:'Marketing Digital — Agência Nova',cat:'Marketing',co:'all',courseId:null,due:'2025-07-18',val:5200,status:'due',type:'pagar',notes:'Contrato mensal'},
+  {id:5,name:'Folha de Pagamento — Julho',cat:'RH',co:'nf',courseId:null,due:'2025-07-25',val:18400,status:'sched',type:'pagar',notes:''},
+  {id:6,name:'Material Didático RVC001',cat:'Insumos',co:'rv',courseId:1,due:'2025-07-08',val:1200,status:'paid',type:'pagar',notes:''},
+  {id:7,name:'Seguro Empresarial Anual',cat:'Seguros',co:'all',courseId:null,due:'2025-07-31',val:4000,status:'sched',type:'pagar',notes:''},
+  {id:8,name:'Matrícula — Dra. Beatriz Lemos',cat:'Cursos',co:'rv',courseId:1,due:'2025-07-12',val:2400,status:'paid',type:'receber',notes:''},
+  {id:9,name:'Matrícula — Marina Souza',cat:'Cursos',co:'rv',courseId:1,due:'2025-07-18',val:2400,status:'paid',type:'receber',notes:''},
+  {id:10,name:'Mentoria Premium — Renata Campos',cat:'Mentorias',co:'rv',courseId:2,due:'2025-07-22',val:7500,status:'sched',type:'receber',notes:''},
+  {id:11,name:'Protocolo Facial Premium x3',cat:'Procedimentos',co:'nf',courseId:null,due:'2025-07-20',val:2550,status:'pend',type:'receber',notes:''},
+];
+txNid=12;
+let editingEv=null, evNextId=20;
+let evs={
+  '2025-7-5':[{id:1,title:'Pagamento Aluguel',type:'pagamento',co:'nf',time:'09:00',desc:''}],
+  '2025-7-10':[{id:2,title:'Derma+ vencimento',type:'pagamento',co:'nf',time:'10:00',desc:''}],
+  '2025-7-14':[{id:3,title:'Aula Protocolos Avançados',type:'aula',co:'rv',time:'14:00',desc:''},{id:4,title:'Reunião de equipe',type:'reuniao',co:'all',time:'17:00',desc:''}],
+  '2025-7-18':[{id:5,title:'Marketing vence hoje',type:'alerta',co:'all',time:'',desc:''}],
+  '2025-7-21':[{id:6,title:'Mentoria Premium Grupo',type:'mentoria',co:'rv',time:'10:00',desc:''}],
+  '2025-7-25':[{id:7,title:'Folha de pagamento',type:'pagamento',co:'nf',time:'09:00',desc:''}],
+  '2025-7-28':[{id:8,title:'Lançamento novo curso',type:'evento',co:'rv',time:'19:00',desc:''}],
+};
+
+// ===== COMPANY =====
+const cod={nf:{fat:'R$ 148.200',luc:'R$ 58.100',rec:'R$ 32.400',inad:'1,8%',tick:'R$ 960',cli:'24',roi:'280%',grow:'+16%',name:'NatureFace'},rv:{fat:'R$ 136.550',luc:'R$ 54.240',rec:'R$ 34.800',inad:'3,1%',tick:'R$ 2.840',cli:'23',roi:'410%',grow:'+22%',name:'Rosana Academy'},all:{fat:'R$ 284.750',luc:'R$ 112.340',rec:'R$ 67.200',inad:'2,4%',tick:'R$ 1.840',cli:'47',roi:'340%',grow:'+18%',name:'Consolidado'}};
+function setCo(c,btn){
+  co=c;
+  document.querySelectorAll('.sw-b').forEach(b=>b.classList.remove('a'));
+  if(btn)btn.classList.add('a');
+  const d=cod[c];
+  const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  s('kF',d.fat);s('kL',d.luc);s('kR',d.rec);s('kI',d.inad);s('kT',d.tick);s('kC',d.cli);s('kRo',d.roi);s('kG',d.grow);
+  document.getElementById('tbS').textContent=document.getElementById('tbS').textContent.replace(/·.*$/,'· '+d.name);
+  if(charts.rev){charts.rev.data.datasets[0].hidden=c==='rv';charts.rev.data.datasets[1].hidden=c==='nf';charts.rev.update();}
+  // Show Academy-specific nav only when rv is selected
+  const isRV=c==='rv';
+  const disp=isRV?'':'none';
+  ['navSecAcademy','navCursos','navAlunos'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.style.display=isRV?'':'none';
+  });
+  const isNF=c==='nf';
+  ['navSecNF','navVendedoras'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=isNF?'':'none';});
+  const curPage=document.querySelector('.page.a');
+  if(!isRV&&curPage&&(curPage.id==='page-cursos'||curPage.id==='page-alunos'))sv('dashboard',document.querySelector('.ni'));
+  if(!isNF&&curPage&&curPage.id==='page-vendedoras')sv('dashboard',document.querySelector('.ni'));
+  renderTx();
+}
+
+// ===== NAV =====
+const pgMap={dashboard:['Dashboard Executivo','Visão geral estratégica'],financeiro:['Gestão Financeira','Lançamentos · Contas · Fluxo de Caixa'],cursos:['Cursos — Rosana Academy','Controle financeiro por curso'],alunos:['Base de Alunos','Rosana Vecchi Academy'],vendedoras:['Vendedoras — NatureFace','Equipe comercial'],calendario:['Calendário','Agenda e eventos'],vai:['V.A.I — Assistente','Inteligência artificial executiva']};
+function sv(v,el){
+  if(el){document.querySelectorAll('.ni').forEach(n=>n.classList.remove('a'));el.classList.add('a');}
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('a'));
+  const pg=document.getElementById('page-'+v);if(pg)pg.classList.add('a');
+  if(pgMap[v]){document.getElementById('tbT').textContent=pgMap[v][0];document.getElementById('tbS').textContent=pgMap[v][1]+' · '+cod[co].name;}
+  if(v==='financeiro')renderTx();
+  if(v==='cursos')renderCursos();
+  if(v==='alunos')renderAlunos();
+  if(v==='calendario')renderCal();
+  if(v==='vendedoras')renderVendedoras();
+}
+
+// ===== CHARTS =====
+let charts={};
+function initCharts(){
+  Chart.defaults.color='#A07070';Chart.defaults.font.family="'DM Sans',sans-serif";Chart.defaults.font.size=12.5;
+  const months=['Jan','Fev','Mar','Abr','Mai','Jun','Jul'];
+  charts.rev=new Chart(document.getElementById('revChart').getContext('2d'),{type:'line',data:{labels:months,datasets:[{label:'NatureFace',data:[82000,91000,105000,118000,126000,138000,148200],borderColor:'#C4807F',backgroundColor:'rgba(196,128,127,.09)',borderWidth:2.5,tension:.42,pointRadius:4,pointBackgroundColor:'#C4807F',fill:true},{label:'Rosana Academy',data:[55000,68000,82000,96000,110000,124000,136550],borderColor:'#955251',backgroundColor:'rgba(149,82,81,.09)',borderWidth:2.5,tension:.42,pointRadius:4,pointBackgroundColor:'#955251',fill:true}]},options:{responsive:true,plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',borderColor:'#E0D2D2',borderWidth:1.5,titleColor:'#1A0707',bodyColor:'#5C3535',padding:10,callbacks:{label:c=>' R$ '+c.raw.toLocaleString('pt-BR')}}},scales:{x:{grid:{color:'rgba(0,0,0,.05)'},border:{color:'transparent'}},y:{grid:{color:'rgba(0,0,0,.05)'},border:{color:'transparent'},ticks:{callback:v=>'R$'+(v/1000).toFixed(0)+'k'}}}}});
+  charts.donut=new Chart(document.getElementById('donutChart').getContext('2d'),{type:'doughnut',data:{labels:['Procedimentos','Cursos','Mentorias','Produtos','Eventos'],datasets:[{data:[38,29,18,10,5],backgroundColor:['#955251','#C4807F','#6B2F2E','#C49A6C','#7AAF8A'],borderWidth:0,hoverOffset:6}]},options:{responsive:true,cutout:'68%',plugins:{legend:{position:'bottom',labels:{padding:11,usePointStyle:true,pointStyle:'circle',font:{size:12}}},tooltip:{backgroundColor:'#fff',borderColor:'#E0D2D2',borderWidth:1.5,titleColor:'#1A0707',bodyColor:'#5C3535',callbacks:{label:c=>` ${c.label}: ${c.raw}%`}}}}});
+}
+
+// ===== COURSES =====
+function genCursoCode(){return 'RVC'+String(cursoNcode).padStart(3,'0');}
+function getCourseLabel(id){if(!id)return'—';const c=courses.find(x=>x.id===id);return c?`${c.code} · ${c.name}`:'—';}
+function getCourseRevenue(id){return txs.filter(t=>t.courseId===id&&t.type==='receber').reduce((a,t)=>a+t.val,0);}
+function getCourseExpenses(id){return txs.filter(t=>t.courseId===id&&t.type==='pagar').reduce((a,t)=>a+t.val,0);}
+function getCourseStudents(id){return students.filter(s=>s.courseId===id).length;}
+function fmt(v){return'R$ '+v.toLocaleString('pt-BR');}
+function fmtDate(d){if(!d)return'—';const p=d.split('-');return`${p[2]}/${p[1]}/${p[0]}`;}
+function fmtDateShort(d){if(!d)return'—';const[y,m,dd]=d.split('-');const ms=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];return`${parseInt(dd)} ${ms[parseInt(m)-1]} ${y}`;}
+
+function renderCursos(){
+  const filt=document.getElementById('cfStat')?.value||'';
+  const list=courses.filter(c=>!filt||c.status===filt);
+  const activeCount=courses.filter(c=>c.status==='ativo').length;
+  const totalRev=courses.reduce((a,c)=>a+getCourseRevenue(c.id),0);
+  const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  s('ckTotal',courses.length);s('ckAtivos',activeCount);s('ckFat',fmt(totalRev));
+  document.getElementById('nbCursos').textContent=activeCount;
+  let html='';
+  if(!list.length){html='<div class="empty" style="grid-column:1/-1">Nenhum curso encontrado.</div>';}
+  list.forEach(c=>{
+    const rev=getCourseRevenue(c.id),exp=getCourseExpenses(c.id),profit=rev-exp;
+    const stuCount=getCourseStudents(c.id),pct=c.maxStu?Math.round(stuCount/c.maxStu*100):0;
+    const statusBdg=c.status==='ativo'?'<span class="bdg ativo">✓ Ativo</span>':'<span class="bdg encerrado">⏸ Encerrado</span>';
+    html+=`<div class="ccard">
+      <div class="ccard-stripe" style="background:${c.color}"></div>
+      <div class="ccard-head">
+        <span class="ccard-code">${c.code}</span>${statusBdg}
+      </div>
+      <div class="ccard-name">${c.name}</div>
+      <div class="ccard-cat">${c.cat}</div>
+      <div class="ccard-stats">
+        <div class="cstat"><div class="cstat-lbl">Receita</div><div class="cstat-val gr">${fmt(rev)}</div></div>
+        <div class="cstat"><div class="cstat-lbl">Despesas</div><div class="cstat-val re">${fmt(exp)}</div></div>
+        <div class="cstat"><div class="cstat-lbl">Resultado</div><div class="cstat-val ${profit>=0?'gr':'re'}">${fmt(profit)}</div></div>
+        <div class="cstat"><div class="cstat-lbl">Alunos</div><div class="cstat-val">${stuCount}/${c.maxStu}</div></div>
+      </div>
+      <div class="cbar-wrap">
+        <div class="cbar-lbl"><span>Ocupação</span><span>${pct}%</span></div>
+        <div class="cbar-bg"><div class="cbar-fill" style="width:${pct}%;background:${c.color}"></div></div>
+      </div>
+      <div class="ccard-dates">📅 ${fmtDateShort(c.startDate)} → ${fmtDateShort(c.endDate)}</div>
+      <div class="ccard-foot">
+        <button class="bs" style="flex:1;justify-content:center;font-size:13px" onclick="viewCurso(${c.id})">Ver Detalhes</button>
+        <button class="bs" style="font-size:13px;padding:8px 12px" onclick="editCurso(${c.id})" title="Editar">✏️</button>
+        <button class="bs" style="font-size:13px;padding:8px 12px" onclick="delCurso(${c.id})" title="Excluir">🗑</button>
+      </div>
+    </div>`;
+  });
+  document.getElementById('cursoGrid').innerHTML=html;
+}
+
+function openAddCurso(){
+  editCursoId=null;
+  document.getElementById('cursoMT').textContent='Novo Curso';
+  document.getElementById('cCode').value=genCursoCode();
+  ['cNm','cDs'].forEach(id=>{document.getElementById(id).value='';});
+  document.getElementById('cCat').value='Estética Clínica';document.getElementById('cStat').value='ativo';
+  document.getElementById('cDtI').value='';
+  document.getElementById('cDtF').value='';document.getElementById('cVal').value='';document.getElementById('cMax').value='';
+  document.getElementById('cursoModal').classList.add('o');
+  setTimeout(()=>document.getElementById('cCode').select(),80);
+}
+function editCurso(id){
+  const c=courses.find(x=>x.id===id);if(!c)return;
+  editCursoId=id;
+  document.getElementById('cursoMT').textContent='Editar Curso';
+  document.getElementById('cCode').value=c.code;document.getElementById('cNm').value=c.name;
+  document.getElementById('cCat').value=c.cat;document.getElementById('cStat').value=c.status;
+  document.getElementById('cDtI').value=c.startDate;
+  document.getElementById('cDtF').value=c.endDate;document.getElementById('cVal').value=c.val;
+  document.getElementById('cMax').value=c.maxStu;document.getElementById('cDs').value=c.desc||'';
+  document.getElementById('cursoModal').classList.add('o');
+}
+function saveCurso(){
+  const nm=document.getElementById('cNm').value.trim();if(!nm){document.getElementById('cNm').focus();return;}
+  const code=document.getElementById('cCode').value.trim().toUpperCase()||genCursoCode();
+  if(!editCursoId)cursoNcode++;
+  const c={id:editCursoId||cursoNid++,code,name:nm,cat:document.getElementById('cCat').value,
+    status:document.getElementById('cStat').value,color:'#955251',
+    startDate:document.getElementById('cDtI').value,endDate:document.getElementById('cDtF').value,
+    val:parseFloat(document.getElementById('cVal').value)||0,maxStu:parseInt(document.getElementById('cMax').value)||20,
+    desc:document.getElementById('cDs').value};
+  if(editCursoId){const i=courses.findIndex(x=>x.id===editCursoId);if(i>=0)courses[i]=c;}else courses.push(c);
+  closeM('cursoModal');renderCursos();populateCursoSelects();saveData();
+}
+function delCurso(id){if(!confirm('Excluir este curso? Os lançamentos vinculados não serão removidos.'))return;courses=courses.filter(c=>c.id!==id);renderCursos();saveData();}
+
+function viewCurso(id){
+  viewingCursoId=id;
+  const c=courses.find(x=>x.id===id);if(!c)return;
+  const rev=txs.filter(t=>t.courseId===id&&t.type==='receber');
+  const exp=txs.filter(t=>t.courseId===id&&t.type==='pagar');
+  const totalRev=rev.reduce((a,t)=>a+t.val,0);
+  const totalExp=exp.reduce((a,t)=>a+t.val,0);
+  const profit=totalRev-totalExp;
+  const stus=students.filter(s=>s.courseId===id);
+  const pct=c.maxStu?Math.round(stus.length/c.maxStu*100):0;
+  const stuHtml=stus.length
+    ?`<div style="display:flex;flex-direction:column;gap:0">`+stus.map(s=>`<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--bdr)"><span class="acode">${s.code}</span><span style="font-size:14px;font-weight:600;color:var(--t1);flex:1">${s.name}</span><span style="font-size:12.5px;color:var(--t3)">${s.city||''}${s.state?' / '+s.state:''}</span><span class="bdg ${s.status}">${s.status==='ativo'?'✓ Ativa':'✕ Inativa'}</span></div>`).join('')+'</div>'
+    :`<div style="padding:14px 0;font-size:13.5px;color:var(--t3)">Nenhuma aluna vinculada a este curso.</div>`;
+  document.getElementById('cursoDetContent').innerHTML=`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+      <div style="width:5px;height:48px;border-radius:3px;background:${c.color};flex-shrink:0"></div>
+      <div>
+        <div class="mttl">${c.name}</div>
+        <div style="font-size:13px;color:var(--t3);margin-top:3px">${c.code} · ${c.cat} · ${fmtDateShort(c.startDate)} → ${fmtDateShort(c.endDate)}</div>
+      </div>
+      <span class="bdg ${c.status}" style="margin-left:auto">${c.status==='ativo'?'✓ Ativo':'⏸ Encerrado'}</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px">
+      <div class="cstat"><div class="cstat-lbl">Receita Total</div><div class="cstat-val gr">${fmt(totalRev)}</div></div>
+      <div class="cstat"><div class="cstat-lbl">Despesas Totais</div><div class="cstat-val re">${fmt(totalExp)}</div></div>
+      <div class="cstat"><div class="cstat-lbl">Resultado</div><div class="cstat-val ${profit>=0?'gr':'re'}">${fmt(profit)}</div></div>
+      <div class="cstat"><div class="cstat-lbl">Ocupação</div><div class="cstat-val">${stus.length}/${c.maxStu} <span style="font-size:13px;color:var(--t3)">(${pct}%)</span></div></div>
+    </div>
+
+    <div style="background:var(--bg);border:1.5px solid var(--bdr);border-radius:var(--r);padding:14px 16px;margin-bottom:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:12px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.07em">Ocupação do Curso</span>
+        <span style="font-size:13px;color:var(--t2);font-weight:600">${pct}%</span>
+      </div>
+      <div class="cbar-bg"><div class="cbar-fill" style="width:${pct}%;background:${c.color}"></div></div>
+      <div style="font-size:11.5px;color:var(--t3);margin-top:6px">Para visualizar lançamentos detalhados, acesse <strong>Gestão Financeira</strong> e filtre pelo curso ${c.code}.</div>
+    </div>
+
+    <div style="background:var(--card);border:1.5px solid var(--bdr);border-radius:var(--r);overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1.5px solid var(--bdr);background:var(--bg)">
+        <span style="font-family:'Syne',sans-serif;font-size:14.5px;font-weight:700;color:var(--t1)">👩 Alunas matriculadas (${stus.length})</span>
+      </div>
+      <div style="padding:0 18px">${stuHtml}</div>
+    </div>`;
+  document.getElementById('cursoDetModal').classList.add('o');
+}
+// ===== FINANCIAL =====
+function populateCursoSelects(){
+  ['fCrs','aMCrs'].forEach(id=>{
+    const sel=document.getElementById(id);if(!sel)return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">— Nenhum —</option>';
+    courses.forEach(c=>{sel.innerHTML+=`<option value="${c.id}">${c.code} — ${c.name}</option>`;});
+    if(cur)sel.value=cur;
+  });
+  ['sStuCrs','sExCrs'].forEach(id=>{
+    const sel=document.getElementById(id);if(!sel)return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">— Selecione o curso —</option>';
+    courses.forEach(c=>{sel.innerHTML+=`<option value="${c.id}">${c.code} — ${c.name}</option>`;});
+    if(cur)sel.value=cur;
+  });
+}
+function renderTx(){
+  const body=document.getElementById('txBody');if(!body)return;
+  const mesSel=(document.getElementById('fFiltMes')?.value||'').trim();
+  const catSel=(document.getElementById('fFiltCat')?.value||'').trim();
+  const mesMap={Janeiro:1,Fevereiro:2,'Março':3,Abril:4,Maio:5,Junho:6,Julho:7,Agosto:8,Setembro:9,Outubro:10,Novembro:11,Dezembro:12};
+  let filterMes=0,filterAno=0;
+  if(mesSel){const parts=mesSel.split(' ');if(parts.length===2){filterMes=mesMap[parts[0]]||0;filterAno=parseInt(parts[1])||0;}}
+  const inPeriod=t=>{if(!filterMes||!filterAno)return true;const[ty,tm]=t.due.split('-');return parseInt(tm)===filterMes&&parseInt(ty)===filterAno;};
+  let list=txs.filter(t=>{
+    if(ftab!=='todos'&&t.type!==ftab)return false;
+    if(catSel&&t.cat!==catSel)return false;
+    return inPeriod(t);
+  });
+  const bmap={paid:'<span class="bdg paid">✓ Pago</span>',pend:'<span class="bdg pend">⏳ Pendente</span>',due:'<span class="bdg due">🔴 Hoje</span>',sched:'<span class="bdg sched">📅 Agendado</span>'};
+  const cnm={nf:'NatureFace',rv:'Academy',all:'Consolidado'};
+  const cc={nf:'#C4807F',rv:'#955251',all:'#5C3535'};
+  let html='';
+  if(!list.length)html=`<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--t3);font-size:13.5px">Nenhum lançamento encontrado${mesSel?' para '+mesSel:''}.</td></tr>`;
+  list.forEach(t=>{
+    const crs=t.courseId?courses.find(x=>x.id===t.courseId):null;
+    const empCell=`<span style="color:${cc[t.co]};font-weight:600">${cnm[t.co]}</span>${crs?`<br><span style="font-size:11px;color:var(--m);font-weight:500">${crs.code}</span>`:''}`;
+    const typeIco=t.type==='receber'?'<span style="color:var(--gr);font-size:11px;font-weight:700;margin-right:4px">↓</span>':'<span style="color:var(--re);font-size:11px;font-weight:700;margin-right:4px">↑</span>';
+    html+=`<tr>
+      <td class="nm" title="${t.name}">${t.name}</td>
+      <td>${t.cat}</td>
+      <td>${empCell}</td>
+      <td>${fmtDate(t.due)}</td>
+      <td class="mo">${typeIco}${fmt(t.val)}</td>
+      <td>${bmap[t.status]||''}</td>
+      <td><div class="ract"><button class="rb e" onclick="editTx(${t.id})" title="Editar">✏️</button><button class="rb d" onclick="delTx(${t.id})" title="Excluir">🗑</button></div></td>
+    </tr>`;
+  });
+  body.innerHTML=html;
+  // Summary cards — full period, all types
+  const allP=txs.filter(inPeriod);
+  const receber=allP.filter(t=>t.type==='receber');
+  const pagar=allP.filter(t=>t.type==='pagar');
+  const totalRec=receber.reduce((a,t)=>a+t.val,0);
+  const totalPag=pagar.reduce((a,t)=>a+t.val,0);
+  const resultado=totalRec-totalPag;
+  const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  s('sumRec',fmt(totalRec));
+  s('sumRecCt',`${receber.length} lançamento${receber.length!==1?'s':''}`);
+  s('sumP',fmt(totalPag));
+  s('sumPct',`${pagar.length} lançamento${pagar.length!==1?'s':''}`);
+  const resEl=document.getElementById('sumRes');
+  const resLbl=document.getElementById('sumResLabel');
+  if(resEl){resEl.textContent=fmt(Math.abs(resultado));resEl.style.color=resultado>=0?'var(--gr)':'var(--re)';}
+  if(resLbl){resLbl.textContent=resultado>=0?'▲ Superávit':'▼ Déficit';resLbl.className=resultado>=0?'dt up':'dt dn';resLbl.style.display='';}
+}
+function swTab(el,t){document.querySelectorAll('.tab').forEach(x=>x.classList.remove('a'));el.classList.add('a');ftab=t;renderTx();}
+
+// Student section toggle
+function toggleCursoField(){
+  const isRV=document.getElementById('fCo')?.value==='rv';
+  const wrap=document.getElementById('cursoFieldWrap');
+  if(wrap){wrap.style.display=isRV?'':'none';if(!isRV){const s=document.getElementById('fCrs');if(s)s.value='';}}
+}
+function checkStu(){
+  const isRV=document.getElementById('fCo')?.value==='rv';
+  const isRec=document.getElementById('fTy')?.value==='receber';
+  const sec=document.getElementById('stuSec');
+  if(sec)sec.classList.toggle('s',isRV&&isRec);
+  if(isRV&&isRec){ populateExistSel(); populateStuCrsSelect(); }
+}
+function populateStuCrsSelect(){
+  // populate the course dropdown inside the student section
+  ['sStuCrs','sExCrs'].forEach(id=>{
+    const sel=document.getElementById(id);if(!sel)return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">— Selecione o curso —</option>';
+    courses.forEach(c=>{sel.innerHTML+=`<option value="${c.id}">${c.code} — ${c.name}</option>`;});
+    // pre-fill from the main form course selector
+    const mainCrs=document.getElementById('fCrs')?.value;
+    if(mainCrs)sel.value=mainCrs;else if(cur)sel.value=cur;
+  });
+}
+function syncCourseFromStu(){
+  // when student picks a course, sync it to the main form
+  const v=document.getElementById('sStuCrs')?.value;
+  const mainSel=document.getElementById('fCrs');
+  if(mainSel&&v)mainSel.value=v;
+}
+function populateExistSel(){
+  const sel=document.getElementById('sExSel');if(!sel)return;
+  sel.innerHTML='<option value="">— Escolha um aluno —</option>';
+  students.forEach(s=>{sel.innerHTML+=`<option value="${s.id}">${s.code} — ${s.name}</option>`;});
+}
+function previewExistStu(){
+  const sid=parseInt(document.getElementById('sExSel')?.value);
+  const preview=document.getElementById('existStuPreview');
+  const data=document.getElementById('existStuData');
+  const exCrs=document.getElementById('sExCrs');
+  if(!sid){if(preview)preview.style.display='none';return;}
+  const s=students.find(x=>x.id===sid);if(!s){if(preview)preview.style.display='none';return;}
+  if(preview)preview.style.display='block';
+  if(data)data.innerHTML=`<strong>${s.name}</strong> · <span style="color:var(--t3)">${s.code}</span><br>${s.email||''}${s.phone?' · '+s.phone:''}<br>${s.street?s.street+', ':''}<span style="color:var(--t3)">${s.city||''}${s.state?' / '+s.state:''} ${s.cep||''}</span>`;
+  // pre-select the student's existing course
+  if(exCrs&&s.courseId)exCrs.value=s.courseId;
+  // also sync to main form
+  const mainCrs=document.getElementById('fCrs');
+  if(mainCrs&&s.courseId)mainCrs.value=s.courseId;
+}
+function tgStu(mode){stuMode=mode;document.getElementById('stuNew').style.display=mode==='new'?'block':'none';document.getElementById('stuExist').style.display=mode==='exist'?'block':'none';document.getElementById('btnNS').classList.toggle('a',mode==='new');document.getElementById('btnES').classList.toggle('a',mode==='exist');}
+
+function openAddTx(){
+  editTxId=null;document.getElementById('txMT').textContent='Novo Lançamento';
+  ['fNm','fNo'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fTy').value='pagar';document.getElementById('fCa').value='Operacional';
+  document.getElementById('fCo').value=(co==='all'||co==='nf')?'nf':'rv';document.getElementById('fSt').value='sched';
+  document.getElementById('fDu').value='';document.getElementById('fVl').value='';
+  populateCursoSelects();toggleCursoField();checkStu();tgStu('new');
+  ['sNm','sEm','sPh','sCp','sSt','sBa','sCe','sCi'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const sc=document.getElementById('sCode');if(sc)sc.value=genStuCode();
+  const ss=document.getElementById('sSe');if(ss)ss.value='SP';
+  const ep=document.getElementById('existStuPreview');if(ep)ep.style.display='none';
+  document.getElementById('txModal').classList.add('o');
+}
+function editTx(id){
+  const t=txs.find(x=>x.id===id);if(!t)return;
+  editTxId=id;document.getElementById('txMT').textContent='Editar Lançamento';
+  document.getElementById('fNm').value=t.name;document.getElementById('fTy').value=t.type;
+  document.getElementById('fCa').value=t.cat;document.getElementById('fCo').value=t.co;
+  document.getElementById('fSt').value=t.status;document.getElementById('fDu').value=t.due;
+  document.getElementById('fVl').value=t.val;document.getElementById('fNo').value=t.notes||'';
+  populateCursoSelects();toggleCursoField();document.getElementById('fCrs').value=t.courseId||'';
+  checkStu();const linked=students.find(s=>s.txId===id);
+  if(linked){tgStu('exist');setTimeout(()=>{const sel=document.getElementById('sExSel');if(sel){sel.value=linked.id;previewExistStu();}},60);}else tgStu('new');
+  document.getElementById('txModal').classList.add('o');
+}
+function saveTx(){
+  const name=document.getElementById('fNm').value.trim();if(!name){document.getElementById('fNm').focus();return;}
+  const tx={id:editTxId||txNid++,name,type:document.getElementById('fTy').value,cat:document.getElementById('fCa').value,co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,status:document.getElementById('fSt').value,due:document.getElementById('fDu').value||new Date().toISOString().slice(0,10),val:parseFloat(document.getElementById('fVl').value)||0,notes:document.getElementById('fNo').value};
+  if(editTxId){const i=txs.findIndex(x=>x.id===editTxId);if(i>=0)txs[i]=tx;}else txs.push(tx);
+  const sec=document.getElementById('stuSec');
+  if(sec&&sec.classList.contains('s')){
+    if(stuMode==='new'){
+      const sname=document.getElementById('sNm')?.value?.trim();
+      if(sname){
+        const typedCode=document.getElementById('sCode')?.value?.trim().toUpperCase();
+        const code=typedCode||genStuCode();if(!typedCode)stuNcode++;
+        const stuCrsId=parseInt(document.getElementById('sStuCrs')?.value)||tx.courseId||null;
+        const stuCrs=stuCrsId?courses.find(x=>x.id===stuCrsId):null;
+        students.push({id:stuNid++,code,name:sname,email:document.getElementById('sEm')?.value||'',phone:document.getElementById('sPh')?.value||'',cpf:document.getElementById('sCp')?.value||'',course:stuCrs?stuCrs.name:'',courseId:stuCrsId,status:'ativo',enrolledAt:new Date().toISOString().slice(0,10),street:document.getElementById('sSt')?.value||'',bairro:document.getElementById('sBa')?.value||'',city:document.getElementById('sCi')?.value||'',state:document.getElementById('sSe')?.value||'SP',cep:document.getElementById('sCe')?.value||'',notes:'',txId:tx.id});}
+    }else{
+      const sid=parseInt(document.getElementById('sExSel')?.value);
+      if(sid){
+        const s=students.find(x=>x.id===sid);
+        if(s){
+          s.txId=tx.id;
+          const newCrs=parseInt(document.getElementById('sExCrs')?.value);
+          if(newCrs){s.courseId=newCrs;const c=courses.find(x=>x.id===newCrs);if(c)s.course=c.name;}
+        }
+      }
+    }
+  }
+  closeM('txModal');renderTx();saveData();if(document.getElementById('page-cursos').classList.contains('a'))renderCursos();
+}
+function delTx(id){if(!confirm('Excluir este lançamento?'))return;txs=txs.filter(t=>t.id!==id);renderTx();saveData();}
+
+// ===== STUDENTS =====
+function genStuCode(){return 'RVA'+String(stuNcode).padStart(3,'0');}
+function renderAlunos(){
+  const body=document.getElementById('alunoBody');if(!body)return;
+  const q=(document.getElementById('alunoSrch')?.value||'').toLowerCase();
+  const cf=document.getElementById('aFiltCurso')?.value||'';
+  const list=students.filter(s=>(!q||s.name.toLowerCase().includes(q)||s.code.toLowerCase().includes(q)||s.course.toLowerCase().includes(q))&&(!cf||String(s.courseId)===cf));
+  let html='';
+  if(!list.length)html='<div class="empty">Nenhum aluno encontrado.</div>';
+  list.forEach(s=>{html+=`<div class="atrow"><div class="td"><span class="acode">${s.code}</span></div><div class="td p">${s.name}</div><div class="td">${s.course||'—'}</div><div class="td">${s.city||'—'} / ${s.state||'—'}</div><div class="td">${fmtDate(s.enrolledAt)}</div><div class="td"><span class="bdg ${s.status}">${s.status==='ativo'?'✓ Ativo':'✕ Inativo'}</span></div><div class="td"><div class="ract"><button class="rb e" onclick="editAluno(${s.id})" title="Editar">✏️</button><button class="rb d" onclick="delAluno(${s.id})" title="Excluir">🗑</button></div></div></div>`;});
+  body.innerHTML=html;
+  const s1=document.getElementById('aT'),s2=document.getElementById('aA'),s3=document.getElementById('aN');
+  if(s1)s1.textContent=students.length;if(s2)s2.textContent=students.filter(s=>s.status==='ativo').length;
+  const tm=new Date().getMonth();if(s3)s3.textContent=students.filter(s=>s.enrolledAt&&new Date(s.enrolledAt).getMonth()===tm).length||3;
+  document.getElementById('nbAlunos').textContent=students.length;
+  // populate curso filter
+  const cf2=document.getElementById('aFiltCurso');if(cf2){const cur=cf2.value;cf2.innerHTML='<option value="">Todos os cursos</option>';courses.forEach(c=>{cf2.innerHTML+=`<option value="${c.id}">${c.name}</option>`;});cf2.value=cur;}
+}
+function openAddAluno(){
+  editStuId=null;document.getElementById('aMT').textContent='Nova Aluna';
+  ['aMNm','aMEm','aMPh','aMCpf','aMMCr','aMStr','aMBa','aMCep','aMCit','aMNo','aMBirth'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('aMCode').value=genStuCode();document.getElementById('aMSt').value='ativo';document.getElementById('aMSta').value='SP';
+  populateCursoSelects();document.getElementById('alunoModal').classList.add('o');
+  setTimeout(()=>document.getElementById('aMCode').select(),80);
+}
+function editAluno(id){
+  const s=students.find(x=>x.id===id);if(!s)return;
+  editStuId=id;document.getElementById('aMT').textContent='Editar Aluna';
+  document.getElementById('aMCode').value=s.code;document.getElementById('aMNm').value=s.name;
+  document.getElementById('aMEm').value=s.email;document.getElementById('aMPh').value=s.phone;
+  document.getElementById('aMCpf').value=s.cpf;document.getElementById('aMMCr').value=s.course||'';
+  document.getElementById('aMSt').value=s.status;document.getElementById('aMStr').value=s.street||'';
+  document.getElementById('aMBa').value=s.bairro||'';document.getElementById('aMCep').value=s.cep||'';
+  document.getElementById('aMCit').value=s.city||'';document.getElementById('aMSta').value=s.state||'SP';
+  document.getElementById('aMNo').value=s.notes||'';
+  const birth=document.getElementById('aMBirth');if(birth)birth.value=s.birth||'';
+  populateCursoSelects();document.getElementById('aMCrs').value=s.courseId||'';
+  document.getElementById('alunoModal').classList.add('o');
+}
+function saveAluno(){
+  const name=document.getElementById('aMNm').value.trim();if(!name){document.getElementById('aMNm').focus();return;}
+  const code=document.getElementById('aMCode').value.trim().toUpperCase()||genStuCode();
+  if(!editStuId)stuNcode++;
+  const s={id:editStuId||stuNid++,code,name,email:document.getElementById('aMEm').value,phone:document.getElementById('aMPh').value,cpf:document.getElementById('aMCpf').value,course:document.getElementById('aMMCr').value,courseId:parseInt(document.getElementById('aMCrs').value)||null,status:document.getElementById('aMSt').value,birth:document.getElementById('aMBirth')?.value||'',enrolledAt:editStuId?students.find(x=>x.id===editStuId)?.enrolledAt:new Date().toISOString().slice(0,10),street:document.getElementById('aMStr').value,bairro:document.getElementById('aMBa').value,cep:document.getElementById('aMCep').value,city:document.getElementById('aMCit').value,state:document.getElementById('aMSta').value,notes:document.getElementById('aMNo').value,txId:editStuId?students.find(x=>x.id===editStuId)?.txId:null};
+  if(editStuId){const i=students.findIndex(x=>x.id===editStuId);if(i>=0)students[i]=s;}else students.push(s);
+  closeM('alunoModal');renderAlunos();saveData();
+}
+function delAluno(id){if(!confirm('Excluir esta aluna?'))return;students=students.filter(s=>s.id!==id);renderAlunos();saveData();}
+
+// ===== CALENDAR =====
+const mns=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+function renderCal(){
+  const y=calDate.getFullYear(),m=calDate.getMonth();
+  document.getElementById('calMon').textContent=mns[m]+' '+y;
+  const fd=new Date(y,m,1).getDay(),dim=new Date(y,m+1,0).getDate(),dp=new Date(y,m,0).getDate();
+  const today=new Date();let cells=[];
+  for(let i=fd-1;i>=0;i--)cells.push({d:dp-i,om:true,realM:m===0?11:m-1,realY:m===0?y-1:y});
+  for(let d=1;d<=dim;d++)cells.push({d,om:false,realM:m,realY:y});
+  const rem=42-cells.length;for(let d=1;d<=rem;d++)cells.push({d,om:true,realM:m===11?0:m+1,realY:m===11?y+1:y});
+  let html='';
+  cells.forEach(c=>{
+    const key=`${c.realY}-${c.realM+1}-${c.d}`;const isToday=!c.om&&c.d===today.getDate()&&c.realM===today.getMonth()&&c.realY===today.getFullYear();
+    const es=evs[key]||[];const ds=`${c.realY}-${String(c.realM+1).padStart(2,'0')}-${String(c.d).padStart(2,'0')}`;
+    const eh=es.slice(0,3).map(e=>`<div class="calev-wrap" onclick="event.stopPropagation()"><div class="calev ${e.type}" onclick="openEditEvent('${key}',${e.id},event)" title="Clique para editar: ${e.title}${e.time?' · '+e.time:''}">${e.title}</div><button class="calev-del" onclick="deleteEvent('${key}',${e.id},event)" title="Excluir">x</button></div>`).join('');
+    const more=es.length>3?`<div class="calmore" onclick="event.stopPropagation()">+${es.length-3} mais</div>`:'';
+    html+=`<div class="calcel${c.om?' om':''}${isToday?' today':''}" onclick="openAddEvent('${ds}')"><div class="calnum">${c.d}</div><div class="calevs">${eh}${more}</div></div>`;
+  });
+  document.getElementById('calGrid').innerHTML=html;
+}
+function navCal(d){calDate.setMonth(calDate.getMonth()+d);renderCal();}
+
+function openAddEvent(ds){
+  editingEv=null;
+  document.getElementById('evMT').textContent='Novo Evento';
+  document.getElementById('evDelBtn').style.display='none';
+  document.getElementById('evTi').value='';document.getElementById('evDs').value='';
+  document.getElementById('evDt').value=ds||new Date().toISOString().slice(0,10);
+  document.getElementById('evHr').value='09:00';document.getElementById('evTy').value='evento';
+  document.getElementById('evCo').value=co==='all'?'nf':co;
+  document.getElementById('evModal').classList.add('o');
+  setTimeout(()=>document.getElementById('evTi').focus(),80);
+}
+
+function openEditEvent(key,id,e){
+  if(e)e.stopPropagation();
+  const evArr=evs[key];if(!evArr)return;
+  const ev=evArr.find(x=>x.id===id);if(!ev)return;
+  editingEv={key,id};
+  document.getElementById('evMT').textContent='Editar Evento';
+  document.getElementById('evDelBtn').style.display='';
+  document.getElementById('evTi').value=ev.title;
+  document.getElementById('evDs').value=ev.desc||'';
+  document.getElementById('evHr').value=ev.time||'09:00';
+  document.getElementById('evTy').value=ev.type;
+  document.getElementById('evCo').value=ev.co||'nf';
+  // convert key 'YYYY-M-D' to 'YYYY-MM-DD'
+  const[y,m,d2]=key.split('-');
+  document.getElementById('evDt').value=`${y}-${m.padStart(2,'0')}-${d2.padStart(2,'0')}`;
+  document.getElementById('evModal').classList.add('o');
+  setTimeout(()=>document.getElementById('evTi').focus(),80);
+}
+
+function deleteEvent(key,id,e){
+  if(e)e.stopPropagation();
+  if(!confirm('Excluir este evento?'))return;
+  if(evs[key]){evs[key]=evs[key].filter(x=>x.id!==id);if(!evs[key].length)delete evs[key];}
+  renderCal();saveData();
+}
+
+function deleteEditingEvent(){
+  if(!editingEv)return;
+  if(!confirm('Excluir este evento?'))return;
+  const{key,id}=editingEv;
+  if(evs[key]){evs[key]=evs[key].filter(x=>x.id!==id);if(!evs[key].length)delete evs[key];}
+  editingEv=null;closeM('evModal');renderCal();saveData();
+}
+
+function saveEvent(){
+  const title=document.getElementById('evTi').value.trim();if(!title){document.getElementById('evTi').focus();return;}
+  const ds=document.getElementById('evDt').value;if(!ds){document.getElementById('evDt').focus();return;}
+  const[y,mo,d]=ds.split('-').map(Number);const newKey=`${y}-${mo}-${d}`;
+  const ev={
+    id:editingEv?editingEv.id:evNextId++,
+    title,type:document.getElementById('evTy').value,
+    co:document.getElementById('evCo').value,
+    time:document.getElementById('evHr').value,
+    desc:document.getElementById('evDs').value
+  };
+  if(editingEv){
+    const{key:oldKey,id:oldId}=editingEv;
+    if(evs[oldKey]){evs[oldKey]=evs[oldKey].filter(x=>x.id!==oldId);if(!evs[oldKey].length)delete evs[oldKey];}
+  }
+  if(!evs[newKey])evs[newKey]=[];
+  evs[newKey].push(ev);
+  editingEv=null;closeM('evModal');renderCal();saveData();
+}
+
+// ===== MODALS =====
+function closeM(id){document.getElementById(id).classList.remove('o');}
+document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('o');}));
+
+// ===== VAI =====
+const vm={'Quanto faturamos este mês?':'Com base nos dados de julho/2025, o faturamento total atingiu <strong>R$ 284.750</strong>:<br><br>• NatureFace: <strong>R$ 148.200</strong> (52%)<br>• Rosana Academy: <strong>R$ 136.550</strong> (48%)<br><br>Crescimento de <strong>+18,3%</strong> vs junho. 🚀','Qual empresa cresceu mais?':'A <strong>Rosana Academy lidera</strong> com <strong>+22%</strong> em julho, impulsionada por +31% em novas matrículas.<br><br>NatureFace cresceu +16%, com destaque para protocolos premium. 🎯','Preveja o faturamento do próximo mês':'Previsão para <strong>agosto/2025</strong>:<br><br>📊 <strong>R$ 316.000</strong> (±8%)<br>• NatureFace: ~R$ 164.000<br>• Rosana Academy: ~R$ 152.000<br><br>Alta demanda inverno + novo curso. Confiança: 78%','Onde posso reduzir custos?':'<strong>3 oportunidades identificadas:</strong><br><br>1️⃣ <strong>Marketing Digital</strong> — 12% acima do budget<br>2️⃣ <strong>Derma+</strong> — Negociar desconto por volume (-8%)<br>3️⃣ <strong>Licenças</strong> — Consolidar ferramentas (R$ 890/mês)','Qual categoria mais lucrou?':'🏆 <strong>Top 3 por margem em julho:</strong><br><br>1. <strong>Mentorias Premium</strong> — 71% → R$ 38.400<br>2. <strong>Protocolos Avançados</strong> — 58% → R$ 24.100<br>3. <strong>Cursos Certificadores</strong> — 52% → R$ 29.300'};
+function sendVai(){const inp=document.getElementById('vaiI');const txt=inp.value.trim();if(!txt)return;inp.value='';askVai(txt);}
+function askVai(txt){
+  const msgs=document.getElementById('vaiMsgs');
+  const ud=document.createElement('div');ud.className='msg u';ud.innerHTML=`<div class="mav" style="background:linear-gradient(135deg,var(--md),var(--m));color:#fff">RV</div><div class="bbl">${txt}</div>`;msgs.appendChild(ud);
+  const td=document.createElement('div');td.className='msg ai';td.innerHTML=`<div class="mav" style="background:linear-gradient(135deg,var(--m),var(--ml));color:#fff">V</div><div class="bbl"><div class="tind"><span></span><span></span><span></span></div></div>`;msgs.appendChild(td);msgs.scrollTop=msgs.scrollHeight;
+  const resp=vm[txt]||`Analisando <strong>"${txt}"</strong>...<br><br>Com base nos dados de julho/2025, posso ajudar com faturamento, custos, previsões e cursos. 💡`;
+  setTimeout(()=>{msgs.removeChild(td);const ad=document.createElement('div');ad.className='msg ai';ad.innerHTML=`<div class="mav" style="background:linear-gradient(135deg,var(--m),var(--ml));color:#fff">V</div><div class="bbl">${resp}</div>`;msgs.appendChild(ad);msgs.scrollTop=msgs.scrollHeight;},1500);
+}
+
+// VENDEDORAS
+let vendedoras=[
+  {id:1,code:'NFV001',name:'Ana Lima Santos',cpf:'234.567.890-12',email:'ana@natureface.com',phone:'(11) 98765-4321',status:'ativa',birth:'1990-04-12',since:'2024-03-15',street:'Rua Pamplona, 500',bairro:'Jardins',city:'São Paulo',state:'SP',cep:'01405-001',notes:'Top vendedora do mês'},
+  {id:2,code:'NFV002',name:'Carla Mendes Rocha',cpf:'345.678.901-23',email:'carla@natureface.com',phone:'(11) 97654-3210',status:'ativa',birth:'1993-08-25',since:'2024-06-01',street:'Av. Paulista, 2000',bairro:'Bela Vista',city:'São Paulo',state:'SP',cep:'01310-100',notes:''},
+  {id:3,code:'NFV003',name:'Fernanda Costa',cpf:'456.789.012-34',email:'fernanda@natureface.com',phone:'(21) 99876-5432',status:'inativa',birth:'1988-11-03',since:'2023-11-20',street:'Rua das Laranjeiras, 300',bairro:'Laranjeiras',city:'Rio de Janeiro',state:'RJ',cep:'22240-003',notes:'Em licença'},
+];
+let vendNid=4,vendNcode=4,editVendId=null;
+
+function genVendCode(){return'NFV'+String(vendNcode).padStart(3,'0');}
+
+function renderVendedoras(){
+  const body=document.getElementById('vendBody');if(!body)return;
+  const q=(document.getElementById('vendSrch')?.value||'').toLowerCase();
+  const list=vendedoras.filter(v=>!q||v.name.toLowerCase().includes(q)||v.code.toLowerCase().includes(q)||v.email.toLowerCase().includes(q));
+  let html='';
+  if(!list.length)html='<div class="atrow" style="grid-template-columns:1fr"><div class="td" style="padding:28px;text-align:center;color:var(--t3)">Nenhuma vendedora encontrada.</div></div>';
+  list.forEach(v=>{html+=`<div class="atrow">
+    <div class="td"><span class="acode">${v.code}</span></div>
+    <div class="td p">${v.name}</div>
+    <div class="td">${v.email}</div>
+    <div class="td">${v.phone}</div>
+    <div class="td">${v.city||'—'} / ${v.state||'—'}</div>
+    <div class="td"><span class="bdg ${v.status}">${v.status==='ativa'?'✓ Ativa':'✕ Inativa'}</span></div>
+    <div class="td"><div class="ract"><button class="rb e" onclick="editVend(${v.id})" title="Editar">✏️</button><button class="rb d" onclick="delVend(${v.id})" title="Excluir">🗑</button></div></div>
+  </div>`;});
+  body.innerHTML=html;
+  const nb=document.getElementById('nbVend');if(nb)nb.textContent=vendedoras.length;
+}
+
+function openAddVend(){
+  editVendId=null;document.getElementById('vendMT').textContent='Nova Vendedora';
+  ['vNm','vCpf','vEm','vPh','vCep','vCit','vBa','vStr','vNo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('vCode').value=genVendCode();
+  document.getElementById('vSt').value='ativa';document.getElementById('vState').value='SP';
+  const vb=document.getElementById('vBirth');if(vb)vb.value='';
+  document.getElementById('vendModal').classList.add('o');
+  setTimeout(()=>document.getElementById('vCode').select(),80);
+}
+
+function editVend(id){
+  const v=vendedoras.find(x=>x.id===id);if(!v)return;
+  editVendId=id;document.getElementById('vendMT').textContent='Editar Vendedora';
+  document.getElementById('vCode').value=v.code;document.getElementById('vNm').value=v.name;
+  document.getElementById('vCpf').value=v.cpf;document.getElementById('vEm').value=v.email;
+  document.getElementById('vPh').value=v.phone;document.getElementById('vSt').value=v.status;
+  document.getElementById('vStr').value=v.street||'';document.getElementById('vBa').value=v.bairro||'';
+  document.getElementById('vCep').value=v.cep||'';document.getElementById('vCit').value=v.city||'';
+  document.getElementById('vState').value=v.state||'SP';document.getElementById('vNo').value=v.notes||'';
+  const vb=document.getElementById('vBirth');if(vb)vb.value=v.birth||'';
+  document.getElementById('vendModal').classList.add('o');
+}
+
+function saveVend(){
+  const name=document.getElementById('vNm').value.trim();if(!name){document.getElementById('vNm').focus();return;}
+  const code=document.getElementById('vCode').value.trim().toUpperCase()||genVendCode();
+  if(!editVendId)vendNcode++;
+  const v={id:editVendId||vendNid++,code,name,cpf:document.getElementById('vCpf').value,email:document.getElementById('vEm').value,phone:document.getElementById('vPh').value,status:document.getElementById('vSt').value,birth:document.getElementById('vBirth')?.value||'',since:editVendId?vendedoras.find(x=>x.id===editVendId)?.since:new Date().toISOString().slice(0,10),street:document.getElementById('vStr').value,bairro:document.getElementById('vBa').value,cep:document.getElementById('vCep').value,city:document.getElementById('vCit').value,state:document.getElementById('vState').value,notes:document.getElementById('vNo').value};
+  if(editVendId){const i=vendedoras.findIndex(x=>x.id===editVendId);if(i>=0)vendedoras[i]=v;}else vendedoras.push(v);
+  closeM('vendModal');renderVendedoras();saveData();
+}
+
+function delVend(id){if(!confirm('Excluir esta vendedora?'))return;vendedoras=vendedoras.filter(v=>v.id!==id);renderVendedoras();saveData();}
+
+// ================================================================
+// SUPABASE — Configure suas credenciais abaixo
+// Acesse: supabase.com > seu projeto > Settings > API
+// ================================================================
+const SUPABASE_URL = 'https://cfbnqvznkmpihojwkgek.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNmYm5xdnpua21waWhvandrZ2VrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNjgwNzUsImV4cCI6MjA5NDk0NDA3NX0.73T9XrUe508SbH-quOmsUDeebPjrcQK98WmO9XJibMc';
+
+let sbClient = null;
+let supabaseReady = false;
+let authHandled = false; // evita duplo disparo do onAuthStateChange
+
+function initSupabase(){
+  if(!SUPABASE_URL.includes('COLE')&&!SUPABASE_KEY.includes('COLE')){
+    try{
+      const {createClient}=supabase;
+      sbClient=createClient(SUPABASE_URL,SUPABASE_KEY);
+      supabaseReady=true;
+      // Escutar mudanças de sessão
+      sbClient.auth.onAuthStateChange(async(event,session)=>{
+        if(event==='SIGNED_IN'&&session?.user){
+          if(authHandled)return; authHandled=true;
+          if(!session.user.email_confirmed_at){
+            authHandled=false;
+            await sbClient.auth.signOut();
+            showAuthMsg('⚠️ Confirme seu e-mail antes de entrar. Verifique sua caixa de entrada.');
+            return;
+          }
+          const autorizado=await checkAuthorized(session.user);
+          if(!autorizado){authHandled=false;return;}
+          updateUserUI(session.user);
+          document.getElementById('auth-screen').style.display='none';
+          document.getElementById('app').style.display='flex';
+          await loadData();
+          subscribeRealtime();
+        } else if(event==='SIGNED_OUT'){
+          authHandled=false;
+          // Limpar mensagem de "Entrando..." se ainda estiver visível
+          const msg=document.getElementById('authMsg');
+          if(msg&&msg.textContent==='Entrando...')msg.style.display='none';
+          document.getElementById('auth-screen').style.display='flex';
+          document.getElementById('app').style.display='none';
+        }
+      });
+    }catch(e){console.warn('Erro ao conectar Supabase:',e);}
+  }
+}
+
+function updateUserUI(user){
+  const name=user.user_metadata?.full_name||user.email?.split('@')[0]||'Usuário';
+  const initials=name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+  const sbAv=document.getElementById('sbAvatar');const sbNm=document.getElementById('sbName');const sbEm=document.getElementById('sbEmail');
+  if(sbAv)sbAv.textContent=initials;if(sbNm)sbNm.textContent=name;if(sbEm)sbEm.textContent=user.email;
+}
+
+function showAuthTab(tab){
+  const isLogin=tab==='login';
+  document.getElementById('formLogin').style.display=isLogin?'block':'none';
+  document.getElementById('formSignup').style.display=isLogin?'none':'block';
+  document.getElementById('tabLogin').style.background=isLogin?'rgba(149,82,81,.8)':'transparent';
+  document.getElementById('tabLogin').style.color=isLogin?'#fff':'rgba(255,255,255,.5)';
+  document.getElementById('tabSignup').style.background=isLogin?'transparent':'rgba(149,82,81,.8)';
+  document.getElementById('tabSignup').style.color=isLogin?'rgba(255,255,255,.5)':'#fff';
+  hideAuthMsg();
+}
+
+function showAuthMsg(msg,isError=true,formId='authMsg'){
+  const el=document.getElementById(formId);if(!el)return;
+  el.style.display='block';el.textContent=msg;
+  el.style.color=isError?'#E07070':'#7AAF8A';
+  el.style.background=isError?'rgba(224,112,112,.1)':'rgba(122,175,138,.1)';
+}
+function hideAuthMsg(){
+  ['authMsg','authMsg2'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+}
+
+async function checkAuthorized(user){
+  try{
+    const{data,error}=await sbClient.from('usuarios_autorizados').select('nome,cargo').eq('email',user.email).eq('ativo',true).single();
+    if(error||!data){
+      await sbClient.auth.signOut();
+      showAuthMsg('⛔ Acesso não autorizado. Entre em contato com o administrador do sistema.');
+      return false;
+    }
+    return true;
+  }catch(e){
+    await sbClient.auth.signOut();
+    showAuthMsg('Erro ao verificar autorização. Tente novamente.');
+    return false;
+  }
+}
+
+async function doSignIn(){
+  if(!supabaseReady){showAuthMsg('Supabase não configurado.');return;}
+  const email=document.getElementById('authEmail').value.trim();
+  const pass=document.getElementById('authPass').value;
+  if(!email||!pass){showAuthMsg('Preencha e-mail e senha.');return;}
+  const btn=document.querySelector('#formLogin button');
+  if(btn){btn.disabled=true;btn.textContent='Entrando...';}
+  // Timeout de segurança — nunca fica preso
+  const timeout=setTimeout(()=>{
+    if(btn){btn.disabled=false;btn.textContent='Entrar no Sistema';}
+    showAuthMsg('Tempo esgotado. Tente novamente.');
+  },10000);
+  const{error}=await sbClient.auth.signInWithPassword({email,password:pass});
+  clearTimeout(timeout);
+  if(btn){btn.disabled=false;btn.textContent='Entrar no Sistema';}
+  if(error){
+    const msgs={'Invalid login credentials':'E-mail ou senha incorretos.','Email not confirmed':'Confirme seu e-mail. Verifique sua caixa de entrada.'};
+    showAuthMsg(msgs[error.message]||error.message);
+  }
+}
+
+async function doSignUp(){
+  if(!supabaseReady){showAuthMsg('Supabase não configurado.','true','authMsg2');return;}
+  const name=document.getElementById('authName').value.trim();
+  const email=document.getElementById('authEmail2').value.trim();
+  const pass=document.getElementById('authPass2').value;
+  if(!name||!email||!pass){showAuthMsg('Preencha todos os campos.',true,'authMsg2');return;}
+  if(pass.length<6){showAuthMsg('A senha deve ter pelo menos 6 caracteres.',true,'authMsg2');return;}
+  showAuthMsg('Criando conta...','info','authMsg2');
+  const{error}=await sbClient.auth.signUp({email,password:pass,options:{data:{full_name:name}}});
+  if(error){showAuthMsg(error.message,true,'authMsg2');}
+  else{showAuthMsg('✅ Conta criada! Verifique seu e-mail para confirmar o acesso.',false,'authMsg2');}
+}
+
+async function doSignOut(){
+  if(sbClient)await sbClient.auth.signOut();
+}
+
+// ===== SALVAR =====
+async function saveData(){
+  const payload={
+    txs,courses,students,vendedoras,evs,
+    ids:{txNid,cursoNid,cursoNcode,stuNid,stuNcode,vendNid,vendNcode,evNextId}
+  };
+  // Sempre salva no localStorage como backup
+  try{localStorage.setItem('vai_backup',JSON.stringify(payload));}catch(e){}
+  // Salva no Supabase se configurado
+  if(!supabaseReady)return;
+  try{
+    const{error}=await sbClient.from('vai_data').upsert({key:'all_data',value:payload,updated_at:new Date().toISOString()});
+    if(error)console.warn('Erro ao salvar no Supabase:',error);
+  }catch(e){console.warn('Supabase saveData error:',e);}
+}
+
+// ===== CARREGAR =====
+async function loadData(){
+  // Tenta carregar do Supabase primeiro
+  if(supabaseReady){
+    try{
+      const{data,error}=await sbClient.from('vai_data').select('value').eq('key','all_data').maybeSingle();
+      if(!error&&data?.value&&Object.keys(data.value).length>0){
+        applyData(data.value);
+        console.log('✅ Dados carregados do Supabase');
+        return;
+      }
+    }catch(e){console.warn('Supabase loadData error:',e);}
+  }
+  // Fallback: localStorage
+  try{
+    const backup=localStorage.getItem('vai_backup');
+    if(backup){applyData(JSON.parse(backup));console.log('📦 Dados carregados do backup local');}
+  }catch(e){console.warn('Erro ao carregar backup local:',e);}
+}
+
+function applyData(d){
+  if(d.txs&&d.txs.length)txs=d.txs;
+  if(d.courses&&d.courses.length)courses=d.courses;
+  if(d.students&&d.students.length)students=d.students;
+  if(d.vendedoras&&d.vendedoras.length)vendedoras=d.vendedoras;
+  if(d.evs&&Object.keys(d.evs).length)evs=d.evs;
+  if(d.ids){
+    const ids=d.ids;
+    if(ids.txNid)txNid=ids.txNid;if(ids.cursoNid)cursoNid=ids.cursoNid;
+    if(ids.cursoNcode)cursoNcode=ids.cursoNcode;if(ids.stuNid)stuNid=ids.stuNid;
+    if(ids.stuNcode)stuNcode=ids.stuNcode;if(ids.vendNid)vendNid=ids.vendNid;
+    if(ids.vendNcode)vendNcode=ids.vendNcode;if(ids.evNextId)evNextId=ids.evNextId;
+  }
+  // Re-renderizar a página atual após carregar dados
+  refreshCurrentPage();
+}
+
+function refreshCurrentPage(){
+  const cur=document.querySelector('.page.a');
+  if(!cur)return;
+  const id=cur.id;
+  if(id==='page-financeiro')renderTx();
+  else if(id==='page-cursos')renderCursos();
+  else if(id==='page-alunos')renderAlunos();
+  else if(id==='page-vendedoras')renderVendedoras();
+  else if(id==='page-calendario')renderCal();
+}
+
+// Realtime — sincroniza entre todos os usuários da empresa
+function subscribeRealtime(){
+  if(!supabaseReady)return;
+  sbClient.channel('empresa-sync')
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'vai_data',filter:'key=eq.all_data'},payload=>{
+      if(payload.new?.value){
+        applyData(payload.new.value);
+        showSyncToast();
+      }
+    })
+    .subscribe();
+}
+
+function showSyncToast(){
+  let toast=document.getElementById('syncToast');
+  if(!toast){
+    toast=document.createElement('div');
+    toast.id='syncToast';
+    toast.style.cssText='position:fixed;bottom:20px;right:20px;background:#2A7A52;color:#fff;padding:10px 16px;border-radius:9px;font-size:13px;font-family:DM Sans,sans-serif;font-weight:500;z-index:500;animation:fadeIn .3s ease;box-shadow:0 4px 14px rgba(0,0,0,.2)';
+    document.body.appendChild(toast);
+  }
+  toast.textContent='🔄 Dados atualizados por outro usuário';
+  toast.style.display='block';
+  setTimeout(()=>{if(toast)toast.style.display='none';},3000);
+}
+
+window.addEventListener('load',async()=>{
+  initSupabase();
+  // Mostrar tela de login por padrão, app oculto
+  document.getElementById('auth-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
+  // Verificar se já tem sessão ativa
+  if(supabaseReady){
+    const{data:{session}}=await sbClient.auth.getSession();
+    if(session?.user?.email_confirmed_at){
+      const autorizado=await checkAuthorized(session.user);
+      if(!autorizado)return;
+      updateUserUI(session.user);
+      document.getElementById('auth-screen').style.display='none';
+      document.getElementById('app').style.display='flex';
+      await loadData();
+      subscribeRealtime();
+    }
+  }
+  ['navSecAcademy','navCursos','navAlunos'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  ['navSecNF','navVendedoras'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='';});
+  setTimeout(initCharts,80);
+});
+</script>
+</body>
+</html>
