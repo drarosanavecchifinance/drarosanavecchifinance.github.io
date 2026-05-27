@@ -491,10 +491,17 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
   <!-- FINANCEIRO -->
   <div class="page" id="page-financeiro">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">
-      <div class="tabs" style="margin-bottom:0">
-        <button class="tab a" onclick="swTab(this,'pagar')">Contas a Pagar</button>
-        <button class="tab" onclick="swTab(this,'receber')">Contas a Receber</button>
-        <button class="tab" onclick="swTab(this,'todos')">Todos</button>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div id="mainTabsFin" class="tabs" style="margin-bottom:0">
+          <button class="tab a" onclick="swTab(this,'pagar')">Contas a Pagar</button>
+          <button class="tab" onclick="swTab(this,'receber')">Contas a Receber</button>
+          <button class="tab" onclick="swTab(this,'todos')">Todos</button>
+        </div>
+        <div id="subTabsPagar" class="tabs" style="margin-bottom:0">
+          <button class="tab a" onclick="swSubTab(this,'pagas')">✓ Pagas</button>
+          <button class="tab" onclick="swSubTab(this,'apagar')">⏳ A Pagar</button>
+          <button class="tab" onclick="swSubTab(this,'avencer')">🔔 A Vencer</button>
+        </div>
       </div>
       <select class="fsel" id="fFiltMes" onchange="renderTx()">
         <option value="">Todos os períodos</option>
@@ -800,7 +807,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
 
 <script>
 // ===== STATE =====
-let co='nf', ftab='pagar', editTxId=null, txNid=11;
+let co='nf', ftab='pagar', subftab='pagas', editTxId=null, txNid=11;
 let editStuId=null, stuMode='new', stuNid=5, stuNcode=5;
 let editCursoId=null, cursoNid=4, cursoNcode=4;
 let viewingCursoId=null;
@@ -1051,11 +1058,20 @@ function renderTx(){
   let filterMes=0,filterAno=0;
   if(mesSel){const parts=mesSel.split(' ');if(parts.length===2){filterMes=mesMap[parts[0]]||0;filterAno=parseInt(parts[1])||0;}}
   const inPeriod=t=>{if(!filterMes||!filterAno)return true;const[ty,tm]=t.due.split('-');return parseInt(tm)===filterMes&&parseInt(ty)===filterAno;};
+  const today=new Date();today.setHours(0,0,0,0);
+  const in30=new Date(today);in30.setDate(in30.getDate()+30);
   let list=txs.filter(t=>{
     if(ftab!=='todos'&&t.type!==ftab)return false;
     if(catSel&&t.cat!==catSel)return false;
-    return inPeriod(t);
+    if(ftab==='pagar'){
+      const due=new Date(t.due+'T00:00:00');
+      if(subftab==='pagas'&&t.status!=='paid')return false;
+      if(subftab==='apagar'&&t.status==='paid')return false;
+      if(subftab==='avencer'){if(t.status==='paid')return false;if(due<today||due>in30)return false;}
+    }
+    return ftab==='pagar'&&subftab==='avencer'?true:inPeriod(t);
   });
+  list=ftab==='pagar'&&subftab==='avencer'?list.sort((a,b)=>new Date(a.due)-new Date(b.due)):list;
   const bmap={paid:'<span class="bdg paid">✓ Pago</span>',pend:'<span class="bdg pend">⏳ Pendente</span>',due:'<span class="bdg due">🔴 Hoje</span>',sched:'<span class="bdg sched">📅 Agendado</span>'};
   const cnm={nf:'NatureFace',rv:'Academy',all:'Consolidado'};
   const cc={nf:'#C4807F',rv:'#955251',all:'#5C3535'};
@@ -1065,11 +1081,18 @@ function renderTx(){
     const crs=t.courseId?courses.find(x=>x.id===t.courseId):null;
     const empCell=`<span style="color:${cc[t.co]};font-weight:600">${cnm[t.co]}</span>${crs?`<br><span style="font-size:11px;color:var(--m);font-weight:500">${crs.code}</span>`:''}`;
     const typeIco=t.type==='receber'?'<span style="color:var(--gr);font-size:11px;font-weight:700;margin-right:4px">↓</span>':'<span style="color:var(--re);font-size:11px;font-weight:700;margin-right:4px">↑</span>';
+    let dueCell=fmtDate(t.due);
+    if(ftab==='pagar'&&subftab==='avencer'){
+      const dueD=new Date(t.due+'T00:00:00');
+      const diff=Math.round((dueD-today)/(1000*60*60*24));
+      const badge=diff===0?'<span style="background:#E07070;color:#fff;font-size:10px;padding:2px 6px;border-radius:10px;margin-left:5px">Hoje</span>':diff===1?'<span style="background:#E09070;color:#fff;font-size:10px;padding:2px 6px;border-radius:10px;margin-left:5px">Amanhã</span>':`<span style="background:#955251;color:#fff;font-size:10px;padding:2px 6px;border-radius:10px;margin-left:5px">em ${diff}d</span>`;
+      dueCell=fmtDate(t.due)+badge;
+    }
     html+=`<tr>
       <td class="nm" title="${t.name}">${t.name}</td>
       <td>${t.cat}</td>
       <td>${empCell}</td>
-      <td>${fmtDate(t.due)}</td>
+      <td>${dueCell}</td>
       <td class="mo">${typeIco}${fmt(t.val)}</td>
       <td>${bmap[t.status]||''}</td>
       <td><div class="ract"><button class="rb e" onclick="editTx(${t.id})" title="Editar">✏️</button><button class="rb d" onclick="delTx(${t.id})" title="Excluir">🗑</button></div></td>
@@ -1093,7 +1116,22 @@ function renderTx(){
   if(resEl){resEl.textContent=fmt(Math.abs(resultado));resEl.style.color=resultado>=0?'var(--gr)':'var(--re)';}
   if(resLbl){resLbl.textContent=resultado>=0?'▲ Superávit':'▼ Déficit';resLbl.className=resultado>=0?'dt up':'dt dn';resLbl.style.display='';}
 }
-function swTab(el,t){document.querySelectorAll('.tab').forEach(x=>x.classList.remove('a'));el.classList.add('a');ftab=t;renderTx();}
+function swTab(el,t){
+  document.querySelectorAll('#mainTabsFin .tab').forEach(x=>x.classList.remove('a'));
+  el.classList.add('a');
+  ftab=t;
+  const sub=document.getElementById('subTabsPagar');
+  if(sub){sub.style.display=t==='pagar'?'flex':'none';}
+  if(t==='pagar'){subftab='pagas';const first=sub?.querySelector('.tab');if(first){sub.querySelectorAll('.tab').forEach(x=>x.classList.remove('a'));first.classList.add('a');}}
+  renderTx();
+}
+function swSubTab(el,t){
+  const sub=document.getElementById('subTabsPagar');
+  sub.querySelectorAll('.tab').forEach(x=>x.classList.remove('a'));
+  el.classList.add('a');
+  subftab=t;
+  renderTx();
+}
 
 // Student section toggle
 function toggleCursoField(){
