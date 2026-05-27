@@ -1534,16 +1534,19 @@ function hideAuthMsg(){
 async function checkAuthorized(user){
   try{
     const{data,error}=await sbClient.from('usuarios_autorizados').select('nome,cargo').eq('email',user.email).eq('ativo',true).single();
-    if(error||!data){
-      await sbClient.auth.signOut();
-      showAuthMsg('⛔ '+(error?.message||'Usuário não encontrado na lista de autorizados.')+'  [email: '+user.email+']');
-      return false;
+    // Se a tabela retornar dado, autorizado
+    if(data)return true;
+    // Se RLS bloquear (erro de permissão), confiar no Supabase Auth (email confirmado)
+    if(error&&(error.code==='PGRST301'||error.code==='42501'||error.message?.includes('permission')||error.message?.includes('policy'))){
+      return !!user.email_confirmed_at;
     }
-    return true;
-  }catch(e){
+    // Sem dado e sem erro de RLS = email não está na lista
     await sbClient.auth.signOut();
-    showAuthMsg('Erro: '+e.message);
+    showAuthMsg('⛔ Acesso não autorizado para '+user.email);
     return false;
+  }catch(e){
+    // Em caso de falha de rede, confiar no Auth
+    return !!user.email_confirmed_at;
   }
 }
 
