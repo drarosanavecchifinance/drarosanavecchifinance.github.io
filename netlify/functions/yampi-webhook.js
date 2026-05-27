@@ -60,11 +60,19 @@ exports.handler = async (event) => {
   const order = payload.data || payload;
   const orderId = order.id || order.number || Date.now();
   const orderNumber = order.number || order.id || '?';
-  const customerName = order.customer?.name || order.buyer?.name || 'Cliente';
+
+  const rawName = order.customer?.name || order.buyer?.name || 'Cliente';
+  const customerName = rawName
+    .toLowerCase()
+    .split(' ')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+
   const totalRaw = order.total || order.value || order.amount || 0;
-  const total = parseFloat(String(totalRaw).replace(',', '.')) || 0;
-  const paidAt = order.paid_at || order.approved_at || order.created_at || new Date().toISOString();
-  const dueDate = paidAt.slice(0, 10);
+  const total = Math.round(parseFloat(String(totalRaw).replace(',', '.')) * 100) / 100 || 0;
+
+  const paidAtRaw = order.paid_at || order.approved_at || order.created_at || new Date().toISOString();
+  const dueDate = paidAtRaw.slice(0, 10);
 
   // Ler all_data atual do Supabase
   const read = await supabaseRequest('GET', '/rest/v1/vai_data?select=value&key=eq.all_data');
