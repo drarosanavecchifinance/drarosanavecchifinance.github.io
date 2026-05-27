@@ -490,18 +490,11 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
 
   <!-- FINANCEIRO -->
   <div class="page" id="page-financeiro">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div id="mainTabsFin" class="tabs" style="margin-bottom:0">
-          <button class="tab a" onclick="swTab(this,'pagar')">Contas a Pagar</button>
-          <button class="tab" onclick="swTab(this,'receber')">Contas a Receber</button>
-          <button class="tab" onclick="swTab(this,'todos')">Todos</button>
-        </div>
-        <div id="subTabsPagar" class="tabs" style="margin-bottom:0">
-          <button class="tab a" onclick="swSubTab(this,'pagas')">✓ Pagas</button>
-          <button class="tab" onclick="swSubTab(this,'apagar')">⏳ A Pagar</button>
-          <button class="tab" onclick="swSubTab(this,'avencer')">🔔 A Vencer</button>
-        </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+      <div id="mainTabsFin" class="tabs" style="margin-bottom:0">
+        <button class="tab a" onclick="swTab(this,'pagar')">Contas a Pagar</button>
+        <button class="tab" onclick="swTab(this,'receber')">Contas a Receber</button>
+        <button class="tab" onclick="swTab(this,'todos')">Todos</button>
       </div>
       <select class="fsel" id="fFiltMes" onchange="renderTx()">
         <option value="">Todos os períodos</option>
@@ -520,6 +513,11 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
         <button class="bs">📥 Exportar</button>
         <button class="bp" onclick="openAddTx()">+ Novo Lançamento</button>
       </div>
+    </div>
+    <div id="subTabsPagar" class="tabs" style="margin-bottom:14px">
+      <button class="tab a" onclick="swSubTab(this,'pagas')">✓ Pagas</button>
+      <button class="tab" onclick="swSubTab(this,'apagar')">⏳ A Pagar</button>
+      <button class="tab" onclick="swSubTab(this,'avencer')">🔔 A Vencer</button>
     </div>
     <div class="kg3" style="margin-bottom:18px">
       <div class="kc g"><div class="klbl">Receita do Período</div><div class="kval" id="sumRec">R$&nbsp;0</div><div class="kft"><span class="kpr" id="sumRecCt">lançamentos</span></div></div>
