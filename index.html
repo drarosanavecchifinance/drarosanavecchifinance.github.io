@@ -1865,12 +1865,12 @@ function renderCarteira(){
   var fmt=function(v){return'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});};
   var fpgLabel={pix:'PIX',debito:'Débito',credito:'Crédito',boleto:'Boleto',transferencia:'Transf.',dinheiro:'Dinheiro','':''};
   var coBadge=function(c){return c==='nf'?'<span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(196,128,127,.15);color:#955251">NF</span>':c==='ct'?'<span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(123,158,135,.15);color:#4A7A5A">Consul.</span>':'<span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(149,82,81,.12);color:#6B2F2E">Academy</span>';};
+  var allRec=txs.filter(function(t){return t.type==='receber'&&(!selCo||t.co===selCo);});
+  var fatTxs=allRec.filter(function(t){return!selMes||(t.due&&t.due.startsWith(selMes));});
   var isImediato=function(t){return['pix','debito','dinheiro','transferencia','boleto'].includes(t.fpg)||(!t.fpg&&t.status==='paid');};
   var paidTxs=fatTxs.filter(function(t){return t.status==='paid';});
   var carteiraTotal=paidTxs.filter(isImediato).reduce(function(s,t){return s+t.val;},0);
   var creditoCompTotal=paidTxs.filter(function(t){return t.fpg==='credito';}).reduce(function(s,t){return s+t.val;},0);
-  var allRec=txs.filter(function(t){return t.type==='receber'&&(!selCo||t.co===selCo);});
-  var fatTxs=allRec.filter(function(t){return!selMes||(t.due&&t.due.startsWith(selMes));});
   var fatTotal=fatTxs.reduce(function(s,t){return s+t.val;},0);
   var recTotal=fatTxs.filter(function(t){return t.status==='paid';}).reduce(function(s,t){return s+t.val;},0);
   var pendTotal=fatTxs.filter(function(t){return t.status!=='paid';}).reduce(function(s,t){return s+t.val;},0);
