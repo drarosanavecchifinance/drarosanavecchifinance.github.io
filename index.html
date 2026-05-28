@@ -531,6 +531,20 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
         <div class="nr"><div class="nic" style="background:var(--blb)">💡</div><div style="flex:1"><div class="ntt">Sugestão de economia</div><div class="nds">-12% em custos possível</div></div></div>
       </div>
     </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:22px">
+      <div class="cc">
+        <div class="ch"><div><div class="ct">Vendas por Vendedora</div><div class="cs">NatureFace — receitas acumuladas</div></div></div>
+        <canvas id="vendChart" height="190"></canvas>
+      </div>
+      <div class="cc">
+        <div class="ch"><div><div class="ct">Receita vs Despesa</div><div class="cs">Mensal — últimos 6 meses</div></div></div>
+        <canvas id="rdChart" height="190"></canvas>
+      </div>
+      <div class="cc">
+        <div class="ch"><div><div class="ct">Distribuição por Empresa</div><div class="cs">% da receita total</div></div></div>
+        <canvas id="empresaChart" height="190"></canvas>
+      </div>
+    </div>
     <div class="sc">
       <div class="sh"><div class="st">Movimentações Recentes</div><button class="lnk" onclick="sv('financeiro',null)">Ver todas →</button></div>
       <div style="display:grid;grid-template-columns:repeat(2,1fr)">
@@ -661,16 +675,26 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
   </div>
   <!-- VENDEDORAS -->
   <div class="page" id="page-vendedoras">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">
-      <input class="srch" id="vendSrch" placeholder="Buscar por nome, código ou e-mail..." oninput="renderVendedoras()">
-      <div style="margin-left:auto;display:flex;gap:8px">
-        <button class="bs">📥 Exportar</button>
-        <button class="bp" onclick="openAddVend()">+ Nova Vendedora</button>
+    <div class="tabs" style="margin-bottom:18px">
+      <button class="tab a" id="vtabCad" onclick="swVendTab(this,'cad')">👥 Cadastro</button>
+      <button class="tab" id="vtabDesemp" onclick="swVendTab(this,'desemp')">📊 Desempenho do Mês</button>
+    </div>
+    <!-- Cadastro -->
+    <div id="vendSecCad">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+        <input class="srch" id="vendSrch" placeholder="Buscar por nome, código ou e-mail..." oninput="renderVendedoras()">
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <button class="bp" onclick="openAddVend()">+ Nova Vendedora</button>
+        </div>
+      </div>
+      <div class="atbl">
+        <div class="athdr"><div class="th">Código</div><div class="th">Nome</div><div class="th">E-mail</div><div class="th">Telefone</div><div class="th">Cidade / UF</div><div class="th">Status</div><div class="th">Ações</div></div>
+        <div id="vendBody"></div>
       </div>
     </div>
-    <div class="atbl">
-      <div class="athdr"><div class="th">Código</div><div class="th">Nome</div><div class="th">E-mail</div><div class="th">Telefone</div><div class="th">Cidade / UF</div><div class="th">Status</div><div class="th">Ações</div></div>
-      <div id="vendBody"></div>
+    <!-- Desempenho -->
+    <div id="vendSecDesemp" style="display:none">
+      <div id="vendPerfWrap"></div>
     </div>
   </div>
 </main>
@@ -712,8 +736,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
     <div class="msub">Preencha os dados do lançamento financeiro</div>
     <div class="fg">
       <div class="fgp fc1"><label class="fl">Descrição</label><input class="fi" id="fNm" placeholder="Ex: Aluguel — Clínica Faria Lima"></div>
-      <div class="fgp"><label class="fl">Tipo</label><select class="fse" id="fTy" onchange="checkStu();toggleRec()"><option value="pagar">A Pagar</option><option value="receber">A Receber</option></select></div>
-      <div class="fgp"><label class="fl">Empresa</label><select class="fse" id="fCo" onchange="checkStu();toggleCursoField()"><option value="nf">NatureFace</option><option value="rv">Rosana Academy</option></select></div>
+      <div class="fgp"><label class="fl">Tipo</label><select class="fse" id="fTy" onchange="checkStu();toggleRec();toggleVendField()"><option value="pagar">A Pagar</option><option value="receber">A Receber</option></select></div>
+      <div class="fgp"><label class="fl">Empresa</label><select class="fse" id="fCo" onchange="checkStu();toggleCursoField();toggleVendField()"><option value="nf">NatureFace</option><option value="rv">Rosana Academy</option></select></div>
+      <div class="fgp" id="fVendWrap" style="display:none"><label class="fl">Vendedora</label><select class="fse" id="fVend"><option value="">— Nenhuma —</option></select></div>
       <div class="fgp" id="cursoFieldWrap"><label class="fl">Curso (opcional)</label><select class="fse" id="fCrs"><option value="">— Nenhum —</option></select></div>
       <div class="fgp"><label class="fl">Status</label><select class="fse" id="fSt"><option value="paid">Pago</option><option value="pend">Pendente</option><option value="due">Vence Hoje</option><option value="sched">Agendado</option></select></div>
       <div class="fgp"><label class="fl">Vencimento</label><input class="fi" id="fDu" type="date"></div>
@@ -923,15 +948,15 @@ function setCo(c,btn){
     const el=document.getElementById(id);if(el)el.style.display=isRV?'':'none';
   });
   const isNF=c==='nf';
-  ['navSecNF','navVendedoras'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=isNF?'':'none';});
+  const nfSecEl=document.getElementById('navSecNF');if(nfSecEl)nfSecEl.style.display=isNF?'':'none';
+  const nvEl=document.getElementById('navVendedoras');if(nvEl)nvEl.style.display='';
   const curPage=document.querySelector('.page.a');
   if(!isRV&&curPage&&(curPage.id==='page-cursos'||curPage.id==='page-alunos'))sv('dashboard',document.querySelector('.ni'));
-  if(!isNF&&curPage&&curPage.id==='page-vendedoras')sv('dashboard',document.querySelector('.ni'));
   renderTx();
 }
 
 // ===== NAV =====
-const pgMap={dashboard:['Dashboard Executivo','Visão geral estratégica'],financeiro:['Gestão Financeira','Lançamentos · Contas · Fluxo de Caixa'],cursos:['Cursos — Rosana Academy','Controle financeiro por curso'],alunos:['Base de Alunos','Rosana Vecchi Academy'],vendedoras:['Vendedoras — NatureFace','Equipe comercial'],calendario:['Calendário','Agenda e eventos'],vai:['V.A.I — Assistente','Inteligência artificial executiva']};
+const pgMap={dashboard:['Dashboard Executivo','Visão geral estratégica'],financeiro:['Gestão Financeira','Lançamentos · Contas · Fluxo de Caixa'],cursos:['Cursos — Rosana Academy','Controle financeiro por curso'],alunos:['Base de Alunos','Rosana Vecchi Academy'],vendedoras:['Vendedoras','Equipe de vendas — NatureFace & Academy'],calendario:['Calendário','Agenda e eventos'],vai:['V.A.I — Assistente','Inteligência artificial executiva']};
 function sv(v,el){
   if(el){document.querySelectorAll('.ni').forEach(n=>n.classList.remove('a'));el.classList.add('a');}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('a'));
@@ -946,11 +971,55 @@ function sv(v,el){
 
 // ===== CHARTS =====
 let charts={};
+function _tip(cb){return{backgroundColor:'#fff',borderColor:'#E0D2D2',borderWidth:1.5,titleColor:'#1A0707',bodyColor:'#5C3535',padding:10,callbacks:cb};}
 function initCharts(){
   Chart.defaults.color='#A07070';Chart.defaults.font.family="'DM Sans',sans-serif";Chart.defaults.font.size=12.5;
-  const months=['Jan','Fev','Mar','Abr','Mai','Jun','Jul'];
-  charts.rev=new Chart(document.getElementById('revChart').getContext('2d'),{type:'line',data:{labels:months,datasets:[{label:'NatureFace',data:[82000,91000,105000,118000,126000,138000,148200],borderColor:'#C4807F',backgroundColor:'rgba(196,128,127,.09)',borderWidth:2.5,tension:.42,pointRadius:4,pointBackgroundColor:'#C4807F',fill:true},{label:'Rosana Academy',data:[55000,68000,82000,96000,110000,124000,136550],borderColor:'#955251',backgroundColor:'rgba(149,82,81,.09)',borderWidth:2.5,tension:.42,pointRadius:4,pointBackgroundColor:'#955251',fill:true}]},options:{responsive:true,plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',borderColor:'#E0D2D2',borderWidth:1.5,titleColor:'#1A0707',bodyColor:'#5C3535',padding:10,callbacks:{label:c=>' R$ '+c.raw.toLocaleString('pt-BR')}}},scales:{x:{grid:{color:'rgba(0,0,0,.05)'},border:{color:'transparent'}},y:{grid:{color:'rgba(0,0,0,.05)'},border:{color:'transparent'},ticks:{callback:v=>'R$'+(v/1000).toFixed(0)+'k'}}}}});
-  charts.donut=new Chart(document.getElementById('donutChart').getContext('2d'),{type:'doughnut',data:{labels:['Procedimentos','Cursos','Mentorias','Produtos','Eventos'],datasets:[{data:[38,29,18,10,5],backgroundColor:['#955251','#C4807F','#6B2F2E','#C49A6C','#7AAF8A'],borderWidth:0,hoverOffset:6}]},options:{responsive:true,cutout:'68%',plugins:{legend:{position:'bottom',labels:{padding:11,usePointStyle:true,pointStyle:'circle',font:{size:12}}},tooltip:{backgroundColor:'#fff',borderColor:'#E0D2D2',borderWidth:1.5,titleColor:'#1A0707',bodyColor:'#5C3535',callbacks:{label:c=>` ${c.label}: ${c.raw}%`}}}}});
+  var months=['Jan','Fev','Mar','Abr','Mai','Jun','Jul'];
+  var rc=document.getElementById('revChart');
+  if(rc)charts.rev=new Chart(rc.getContext('2d'),{type:'line',data:{labels:months,datasets:[{label:'NatureFace',data:[82000,91000,105000,118000,126000,138000,148200],borderColor:'#C4807F',backgroundColor:'rgba(196,128,127,.09)',borderWidth:2.5,tension:.42,pointRadius:4,pointBackgroundColor:'#C4807F',fill:true},{label:'Rosana Academy',data:[55000,68000,82000,96000,110000,124000,136550],borderColor:'#955251',backgroundColor:'rgba(149,82,81,.09)',borderWidth:2.5,tension:.42,pointRadius:4,pointBackgroundColor:'#955251',fill:true}]},options:{responsive:true,plugins:{legend:{display:false},tooltip:_tip({label:function(c){return' R$ '+c.raw.toLocaleString('pt-BR');}})},scales:{x:{grid:{color:'rgba(0,0,0,.05)'},border:{color:'transparent'}},y:{grid:{color:'rgba(0,0,0,.05)'},border:{color:'transparent'},ticks:{callback:function(v){return'R$'+(v/1000).toFixed(0)+'k';}}}}}});
+  // Vendas por Vendedora
+  var vc=document.getElementById('vendChart');
+  if(vc)charts.vend=new Chart(vc.getContext('2d'),{type:'bar',data:{labels:[],datasets:[{label:'Receita (R$)',data:[],backgroundColor:['#C4A55A','#955251','#C4807F','#9A7D3A'],borderRadius:6,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false},tooltip:_tip({label:function(c){return' R$ '+c.raw.toLocaleString('pt-BR');}})},scales:{x:{grid:{color:'rgba(0,0,0,.05)'},border:{color:'transparent'},ticks:{callback:function(v){return'R$'+(v/1000).toFixed(0)+'k';}}},y:{grid:{display:false},border:{color:'transparent'}}}}});
+  // Receita vs Despesa Mensal
+  var rdc=document.getElementById('rdChart');
+  if(rdc)charts.rd=new Chart(rdc.getContext('2d'),{type:'bar',data:{labels:[],datasets:[{label:'Receita',data:[],backgroundColor:'rgba(196,165,90,.75)',borderRadius:5,borderSkipped:false},{label:'Despesa',data:[],backgroundColor:'rgba(149,82,81,.6)',borderRadius:5,borderSkipped:false}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{padding:10,usePointStyle:true,pointStyle:'circle',font:{size:11}}},tooltip:_tip({label:function(c){return' R$ '+c.raw.toLocaleString('pt-BR');}})},scales:{x:{grid:{display:false},border:{color:'transparent'}},y:{grid:{color:'rgba(0,0,0,.05)'},border:{color:'transparent'},ticks:{callback:function(v){return'R$'+(v/1000).toFixed(0)+'k';}}}}}});
+  // Distribuição por Empresa
+  var ec=document.getElementById('empresaChart');
+  if(ec)charts.empresa=new Chart(ec.getContext('2d'),{type:'doughnut',data:{labels:['NatureFace','Rosana Academy'],datasets:[{data:[50,50],backgroundColor:['#C4807F','#955251'],borderWidth:0,hoverOffset:6}]},options:{responsive:true,cutout:'65%',plugins:{legend:{position:'bottom',labels:{padding:11,usePointStyle:true,pointStyle:'circle',font:{size:12}}},tooltip:_tip({label:function(c){return' '+c.label+': '+c.raw+'%';}})}}});
+  updateDashCharts();
+}
+function updateDashCharts(){
+  if(!charts.vend&&!charts.rd&&!charts.empresa)return;
+  // --- Vendas por Vendedora (NF receitas) ---
+  if(charts.vend){
+    const totals={};
+    vendedoras.forEach(v=>{totals[v.id]=0;});
+    txs.filter(t=>t.co==='nf'&&t.type==='receber'&&t.vendId).forEach(t=>{if(totals[t.vendId]!==undefined)totals[t.vendId]+=t.val;else totals[t.vendId]=t.val;});
+    const vLabels=vendedoras.map(v=>v.name.split(' ')[0]+' '+v.name.split(' ')[1]);
+    const vData=vendedoras.map(v=>totals[v.id]||0);
+    charts.vend.data.labels=vLabels;
+    charts.vend.data.datasets[0].data=vData;
+    charts.vend.update();
+  }
+  // --- Receita vs Despesa últimos 6 meses ---
+  if(charts.rd){
+    const now=new Date();const rdRec={};const rdDes={};const rdLabels=[];
+    for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;const lbl=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][d.getMonth()]+'/'+String(d.getFullYear()).slice(2);rdLabels.push(lbl);rdRec[k]=0;rdDes[k]=0;}
+    txs.forEach(t=>{const k=t.due?t.due.slice(0,7):'';if(rdRec[k]!==undefined){if(t.type==='receber')rdRec[k]+=t.val;else rdDes[k]+=t.val;}});
+    const keys=Object.keys(rdRec);
+    charts.rd.data.labels=rdLabels;
+    charts.rd.data.datasets[0].data=keys.map(k=>rdRec[k]);
+    charts.rd.data.datasets[1].data=keys.map(k=>rdDes[k]);
+    charts.rd.update();
+  }
+  // --- Distribuição por Empresa ---
+  if(charts.empresa){
+    const nfTot=txs.filter(t=>t.co==='nf'&&t.type==='receber').reduce((s,t)=>s+t.val,0);
+    const rvTot=txs.filter(t=>t.co==='rv'&&t.type==='receber').reduce((s,t)=>s+t.val,0);
+    const total=nfTot+rvTot||1;
+    charts.empresa.data.datasets[0].data=[Math.round(nfTot/total*100),Math.round(rvTot/total*100)];
+    charts.empresa.update();
+  }
 }
 
 // ===== COURSES =====
@@ -1209,13 +1278,29 @@ function toggleCursoField(){
   const vr=document.getElementById('fVlRestWrap');
   if(vr)vr.style.display=isRV?'':'none';
 }
+function toggleVendField(){
+  const isRec=document.getElementById('fTy')?.value==='receber';
+  const vw=document.getElementById('fVendWrap');
+  if(!vw)return;
+  vw.style.display=isRec?'':'none';
+  if(isRec){
+    const sel=document.getElementById('fVend');
+    if(sel){sel.innerHTML='<option value="">— Nenhuma —</option>'+vendedoras.filter(v=>v.status==='ativa').map(v=>`<option value="${v.id}">${v.name}</option>`).join('');}
+  }
+}
 function toggleRec(){
   const isEdit=!!editTxId;
+  const isPagar=document.getElementById('fTy')?.value==='pagar';
   const rec=document.getElementById('fRec')?.value;
+  const rw=document.getElementById('fRecWrap');
+  if(rw)rw.style.display=(isPagar&&!isEdit)?'':'none';
   const qw=document.getElementById('fRecQtdWrap');
-  if(qw)qw.style.display=(rec&&!isEdit)?'':'none';
+  if(qw)qw.style.display=(rec&&isPagar&&!isEdit)?'':'none';
+  const pw=document.getElementById('fParcWrap');
+  if(pw)pw.style.display=(isPagar&&!isEdit)?'':'none';
+  if(!isPagar||isEdit){const pn=document.getElementById('fParcN');if(pn)pn.value='';const pp=document.getElementById('fParcPreview');if(pp){pp.style.display='none';pp.innerHTML='';}const pcw=document.getElementById('fParcCustomWrap');if(pcw)pcw.style.display='none';const frec=document.getElementById('fRec');if(frec)frec.value='';}
   // Recorrência e parcelamento são mutuamente exclusivos
-  if(rec){const pn=document.getElementById('fParcN');if(pn)pn.value='';const pp=document.getElementById('fParcPreview');if(pp){pp.style.display='none';pp.innerHTML='';}const pcw=document.getElementById('fParcCustomWrap');if(pcw)pcw.style.display='none';}
+  if(rec&&isPagar){const pn=document.getElementById('fParcN');if(pn)pn.value='';const pp=document.getElementById('fParcPreview');if(pp){pp.style.display='none';pp.innerHTML='';}const pcw=document.getElementById('fParcCustomWrap');if(pcw)pcw.style.display='none';}
 }
 function toggleParc(){
   const v=document.getElementById('fParcN')?.value;
@@ -1302,12 +1387,10 @@ function openAddTx(){
   document.getElementById('fDu').value='';document.getElementById('fVl').value='';const fr=document.getElementById('fVlRest');if(fr)fr.value='';
   const rec=document.getElementById('fRec');if(rec)rec.value='';
   const rqw=document.getElementById('fRecQtdWrap');if(rqw)rqw.style.display='none';
-  const frw=document.getElementById('fRecWrap');if(frw)frw.style.display='';
   const pn=document.getElementById('fParcN');if(pn)pn.value='';
-  const pw=document.getElementById('fParcWrap');if(pw)pw.style.display='';
   const pcw=document.getElementById('fParcCustomWrap');if(pcw)pcw.style.display='none';
   const pp=document.getElementById('fParcPreview');if(pp){pp.style.display='none';pp.innerHTML='';}
-  populateCursoSelects();toggleCursoField();checkStu();tgStu('new');
+  populateCursoSelects();toggleCursoField();toggleRec();toggleVendField();checkStu();tgStu('new');
   ['sNm','sEm','sPh','sCp','sSt','sBa','sCe','sCi'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const sc=document.getElementById('sCode');if(sc)sc.value=genStuCode();
   const ss=document.getElementById('sSe');if(ss)ss.value='SP';
@@ -1326,6 +1409,7 @@ function editTx(id){
   const pwE=document.getElementById('fParcWrap');if(pwE)pwE.style.display='none';
   const ppE=document.getElementById('fParcPreview');if(ppE){ppE.style.display='none';ppE.innerHTML='';}
   populateCursoSelects();toggleCursoField();document.getElementById('fCrs').value=t.courseId||'';
+  toggleVendField();setTimeout(()=>{const sv=document.getElementById('fVend');if(sv&&t.vendId)sv.value=t.vendId;},30);
   checkStu();const linked=students.find(s=>s.txId===id);
   if(linked){tgStu('exist');setTimeout(()=>{const sel=document.getElementById('sExSel');if(sel){sel.value=linked.id;previewExistStu();}},60);}else tgStu('new');
   document.getElementById('txModal').classList.add('o');
@@ -1333,7 +1417,8 @@ function editTx(id){
 function saveTx(){
   const name=document.getElementById('fNm').value.trim();if(!name){document.getElementById('fNm').focus();return;}
   const existCat=editTxId?(txs.find(x=>x.id===editTxId)?.cat||''):'';
-  const tx={id:editTxId||txNid++,name,type:document.getElementById('fTy').value,cat:existCat,co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,status:document.getElementById('fSt').value,due:document.getElementById('fDu').value||new Date().toISOString().slice(0,10),val:parseFloat(document.getElementById('fVl').value)||0,notes:document.getElementById('fNo').value};
+  const vendIdRaw=document.getElementById('fVend')?.value;
+  const tx={id:editTxId||txNid++,name,type:document.getElementById('fTy').value,cat:existCat,co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,vendId:vendIdRaw?parseInt(vendIdRaw):null,status:document.getElementById('fSt').value,due:document.getElementById('fDu').value||new Date().toISOString().slice(0,10),val:parseFloat(document.getElementById('fVl').value)||0,notes:document.getElementById('fNo').value};
   // Parcelamento (só para novos lançamentos)
   if(!editTxId){
     const rawPN=document.getElementById('fParcN')?.value;
@@ -1561,6 +1646,50 @@ let vendNid=4,vendNcode=4,editVendId=null;
 
 function genVendCode(){return'NFV'+String(vendNcode).padStart(3,'0');}
 
+function swVendTab(el,tab){
+  document.querySelectorAll('#page-vendedoras .tab').forEach(t=>t.classList.remove('a'));
+  el.classList.add('a');
+  document.getElementById('vendSecCad').style.display=tab==='cad'?'':'none';
+  document.getElementById('vendSecDesemp').style.display=tab==='desemp'?'':'none';
+  if(tab==='desemp')renderVendDesemp();
+}
+
+function renderVendDesemp(){
+  const wrap=document.getElementById('vendPerfWrap');if(!wrap)return;
+  const now=new Date();
+  const curY=now.getFullYear();const curM=now.getMonth()+1;
+  const mStr=String(curM).padStart(2,'0');
+  const prefix=curY+'-'+mStr;
+  const mNames=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const mLabel=mNames[curM-1]+' '+curY;
+  const fmt=v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  let html='<div style="font-size:13px;color:var(--t3);margin-bottom:16px;font-weight:600">📅 '+mLabel+' — vendas por vendedora</div>';
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px">';
+  vendedoras.forEach(function(v){
+    var nfTxs=txs.filter(function(t){return t.co==='nf'&&t.type==='receber'&&t.vendId===v.id&&t.due&&t.due.startsWith(prefix);});
+    var rvTxs=txs.filter(function(t){return t.co==='rv'&&t.type==='receber'&&t.vendId===v.id&&t.due&&t.due.startsWith(prefix);});
+    var nfTotal=nfTxs.reduce(function(s,t){return s+t.val;},0);
+    var rvTotal=rvTxs.reduce(function(s,t){return s+t.val;},0);
+    var total=nfTotal+rvTotal;
+    var statusCls=v.status==='ativa'?'gr':'re';
+    var nfRows=nfTxs.length?nfTxs.map(function(t){return'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bdr);font-size:12.5px"><span style="color:var(--t2)">'+t.name+'</span><span style="font-weight:600;color:var(--gr)">'+fmt(t.val)+'</span></div>';}).join(''):'<div style="font-size:12px;color:var(--t3);padding:6px 0">Nenhuma venda NatureFace</div>';
+    var rvRows=rvTxs.length?rvTxs.map(function(t){var crs=courses.find(function(c){return c.id===t.courseId;});var crsName=crs?' · '+crs.name:'';return'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bdr);font-size:12.5px"><span style="color:var(--t2)">'+t.name+crsName+'</span><span style="font-weight:600;color:var(--gr)">'+fmt(t.val)+'</span></div>';}).join(''):'<div style="font-size:12px;color:var(--t3);padding:6px 0">Nenhuma venda de curso</div>';
+    html+='<div class="sc" style="padding:18px">';
+    html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">';
+    html+='<div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--m),var(--ml));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;flex-shrink:0">'+v.name.charAt(0)+'</div>';
+    html+='<div style="flex:1"><div style="font-weight:700;font-size:14px;color:var(--t1)">'+v.name+'</div><div style="font-size:11px;color:var(--t3)">'+v.code+'</div></div>';
+    html+='<span class="bdg '+statusCls+'" style="font-size:10px">'+fmt(total)+'</span>';
+    html+='</div>';
+    // NatureFace
+    html+='<div style="margin-bottom:12px"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><div style="width:8px;height:8px;border-radius:50%;background:#C4807F"></div><span style="font-size:12px;font-weight:700;color:var(--t2)">NatureFace</span><span style="margin-left:auto;font-size:12px;font-weight:700;color:var(--gr)">'+fmt(nfTotal)+'</span></div>'+nfRows+'</div>';
+    // Academy
+    html+='<div><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><div style="width:8px;height:8px;border-radius:50%;background:#955251"></div><span style="font-size:12px;font-weight:700;color:var(--t2)">Rosana Academy</span><span style="margin-left:auto;font-size:12px;font-weight:700;color:var(--gr)">'+fmt(rvTotal)+'</span></div>'+rvRows+'</div>';
+    html+='</div>';
+  });
+  html+='</div>';
+  wrap.innerHTML=html;
+}
+
 function renderVendedoras(){
   const body=document.getElementById('vendBody');if(!body)return;
   const q=(document.getElementById('vendSrch')?.value||'').toLowerCase();
@@ -1620,8 +1749,10 @@ function delVend(id){if(!confirm('Excluir esta vendedora?'))return;vendedoras=ve
 // ================================================================
 const SUPABASE_URL = 'https://cfbnqvznkmpihojwkgek.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNmYm5xdnpua21waWhvandrZ2VrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNjgwNzUsImV4cCI6MjA5NDk0NDA3NX0.73T9XrUe508SbH-quOmsUDeebPjrcQK98WmO9XJibMc';
+const SUPABASE_SVC = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNmYm5xdnpua21waWhvandrZ2VrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTM2ODA3NSwiZXhwIjoyMDk0OTQ0MDc1fQ.U6eD2Az3ltWBgD4pRbDY5ZWBg749dbvU8drC6TTVFak';
 
 let sbClient = null;
+let sbAdmin = null;
 let supabaseReady = false;
 let authHandled = false; // evita duplo disparo do onAuthStateChange
 
@@ -1644,6 +1775,7 @@ function initSupabase(){
     try{
       const {createClient}=supabase;
       sbClient=createClient(SUPABASE_URL,SUPABASE_KEY);
+      sbAdmin=createClient(SUPABASE_URL,SUPABASE_SVC,{auth:{autoRefreshToken:false,persistSession:false}});
       supabaseReady=true;
       // Escutar mudanças de sessão
       sbClient.auth.onAuthStateChange(async(event,session)=>{
@@ -1662,6 +1794,7 @@ function initSupabase(){
           document.getElementById('app').style.display='flex';
           await loadData();
           subscribeRealtime();
+          setTimeout(initCharts,120);
         } else if(event==='SIGNED_OUT'){
           authHandled=false;
           // Limpar mensagem de "Entrando..." se ainda estiver visível
@@ -1760,7 +1893,8 @@ async function saveData(){
   // Salva no Supabase se configurado
   if(!supabaseReady)return;
   try{
-    const{error}=await sbClient.from('vai_data').upsert({key:'all_data',value:payload,updated_at:new Date().toISOString()});
+    const db=sbAdmin||sbClient;
+    const{error}=await db.from('vai_data').upsert({key:'all_data',value:payload,updated_at:new Date().toISOString()});
     if(error)console.warn('Erro ao salvar no Supabase:',error);
   }catch(e){console.warn('Supabase saveData error:',e);}
 }
@@ -1770,7 +1904,8 @@ async function loadData(){
   // Tenta carregar do Supabase primeiro
   if(supabaseReady){
     try{
-      const{data,error}=await sbClient.from('vai_data').select('value').eq('key','all_data').maybeSingle();
+      const db=sbAdmin||sbClient;
+      const{data,error}=await db.from('vai_data').select('value').eq('key','all_data').maybeSingle();
       if(!error&&data?.value&&Object.keys(data.value).length>0){
         applyData(data.value);
         console.log('✅ Dados carregados do Supabase');
@@ -1807,10 +1942,11 @@ function refreshCurrentPage(){
   const cur=document.querySelector('.page.a');
   if(!cur)return;
   const id=cur.id;
-  if(id==='page-financeiro')renderTx();
+  if(id==='page-dashboard')updateDashCharts();
+  else if(id==='page-financeiro')renderTx();
   else if(id==='page-cursos')renderCursos();
   else if(id==='page-alunos')renderAlunos();
-  else if(id==='page-vendedoras')renderVendedoras();
+  else if(id==='page-vendedoras'){renderVendedoras();if(document.getElementById('vendSecDesemp')?.style.display!=='none')renderVendDesemp();}
   else if(id==='page-calendario')renderCal();
 }
 
@@ -1857,11 +1993,12 @@ window.addEventListener('load',async()=>{
       document.getElementById('app').style.display='flex';
       await loadData();
       subscribeRealtime();
+      setTimeout(initCharts,120);
     }
   }
   ['navSecAcademy','navCursos','navAlunos'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
-  ['navSecNF','navVendedoras'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='';});
-  setTimeout(initCharts,80);
+  ['navSecNF'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='';});
+  const nvInit=document.getElementById('navVendedoras');if(nvInit)nvInit.style.display='';
 });
 </script>
 </body>
