@@ -1336,6 +1336,7 @@ function renderTx(){
   if(bannerEl){if(filterGrupo){const cnt=txs.filter(t=>t.grupoId===filterGrupo).length;bannerEl.style.display='';bannerEl.innerHTML=`🔗 Exibindo grupo <strong>${filterGrupo}</strong> — ${cnt} parcelas <button onclick="clearGrupoFilter()">✕ Limpar</button>`;}else{bannerEl.style.display='none';}}
   let list=txs.filter(t=>{
     if(filterGrupo){return t.grupoId===filterGrupo;}
+    if(co!=='all'&&t.co!==co)return false;
     if(ftab!=='todos'&&t.type!==ftab)return false;
     if(catSel&&t.cat!==catSel)return false;
     if(ftab==='pagar'){
@@ -1348,8 +1349,8 @@ function renderTx(){
   });
   list=ftab==='pagar'&&subftab==='avencer'?list.sort((a,b)=>new Date(a.due)-new Date(b.due)):list;
   const bmap={paid:'<span class="bdg paid">✓ Pago</span>',pend:'<span class="bdg pend">⏳ Pendente</span>',due:'<span class="bdg due">🔴 Hoje</span>',sched:'<span class="bdg sched">📅 Agendado</span>'};
-  const cnm={nf:'NatureFace',rv:'Academy',all:'Consolidado'};
-  const cc={nf:'#C4807F',rv:'#955251',all:'#5C3535'};
+  const cnm={nf:'NatureFace',rv:'Academy',ct:'Consultório',all:'Consolidado'};
+  const cc={nf:'#C4807F',rv:'#955251',ct:'#7B9E87',all:'#5C3535'};
   let html='';
   if(!list.length)html=`<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--t3);font-size:13.5px">Nenhum lançamento encontrado${mesSel?' para '+mesSel:''}.</td></tr>`;
   list.forEach(t=>{
