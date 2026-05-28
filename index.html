@@ -2352,22 +2352,41 @@ async function loadCEEvents(){
     renderCEImport(data);
   }catch(e){if(el)el.innerHTML='<div style="color:var(--m);padding:20px">Erro: '+e.message+'</div>';}
 }
+function parseCEPayload(p){
+  const r=p.resource||{};
+  // nome do paciente
+  const nome=r.buyer?.name||r.patient?.name||p.patient_name||p.paciente||p.nome||'—';
+  // valor em reais (CE envia em centavos quando >1000)
+  const rawVal=r.final_amount||r.amount||p.amount||p.valor||0;
+  const val=rawVal>1000?rawVal/100:rawVal;
+  // procedimentos
+  const procs=(r.procedures||[]).map(function(pr){return pr.name;}).join(', ')||'—';
+  // forma de pagamento
+  const fpg=(r.payment_methods||[]).map(function(m){return m.name;}).join(', ')||(r.payment_method?.name||'');
+  // data do atendimento
+  const dtAt=r.sale_date||r.starts_at||r.due_date||'';
+  const dtFmt=dtAt?new Date(dtAt).toLocaleDateString('pt-BR'):'—';
+  return{nome,val,procs,fpg,dtAt:dtFmt};
+}
 function renderCEImport(events){
   const el=document.getElementById('ceEventsList');if(!el)return;
   const fmt=function(v){return'R$ '+parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});};
   el.innerHTML=events.map(function(ev){
     const p=ev.payload||{};
     const dt=new Date(ev.received_at).toLocaleDateString('pt-BR')+' '+new Date(ev.received_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    const nome=p.patient_name||p.paciente||p.nome||p.name||'—';
-    const val=p.amount||p.valor||p.value||p.total||0;
+    const{nome,val,procs,fpg,dtAt}=parseCEPayload(p);
     const tipo=p.type||p.tipo||ev.event_type||'evento';
     const raw=JSON.stringify(p,null,2);
-    return '<div class="cc" style="margin-bottom:12px"><div style="padding:16px 18px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><div style="font-weight:600;color:var(--t1)">'+tipo+'</div><div style="font-size:11px;color:var(--t3)">'+dt+'</div><div style="margin-left:auto;display:flex;gap:8px"><button class="bp" onclick="importCEEvent(\''+ev.id+'\','+JSON.stringify({nome,val,tipo}).replace(/'/g,"\\'")+')">⬇ Importar</button><button class="ba" onclick="discardCEEvent(\''+ev.id+'\')" style="color:var(--m)">✕ Descartar</button></div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:12px;color:var(--t2)"><div><span style="color:var(--t3)">Paciente: </span>'+nome+'</div><div><span style="color:var(--t3)">Valor: </span>'+fmt(val)+'</div><div><span style="color:var(--t3)">ID: </span>'+ev.id.slice(0,8)+'...</div></div><details style="margin-top:10px"><summary style="font-size:11px;color:var(--t3);cursor:pointer">Ver payload completo</summary><pre style="font-size:10px;color:var(--t3);margin-top:6px;overflow:auto;max-height:120px">'+raw+'</pre></details></div></div>';
+    const importData=JSON.stringify({nome,val,tipo,procs,fpg}).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return '<div class="cc" style="margin-bottom:12px"><div style="padding:16px 18px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><div style="font-weight:700;color:var(--t1)">'+tipo+'</div><div style="font-size:11px;color:var(--t3)">'+dt+'</div><div style="margin-left:auto;display:flex;gap:8px">'+(val>0?'<button class="bp" onclick="importCEEvent(\''+ev.id+'\',\''+importData+'\')">⬇ Importar</button>':'')+'<button class="ba" onclick="discardCEEvent(\''+ev.id+'\')" style="color:var(--m)">✕ Descartar</button></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:var(--t2);margin-bottom:8px"><div><span style="color:var(--t3)">Paciente: </span><strong>'+nome+'</strong></div><div><span style="color:var(--t3)">Valor: </span><strong style="color:var(--gr)">'+fmt(val)+'</strong></div><div><span style="color:var(--t3)">Procedimento: </span>'+procs+'</div><div><span style="color:var(--t3)">Pagamento: </span>'+(fpg||'—')+'</div></div><details style="margin-top:4px"><summary style="font-size:11px;color:var(--t3);cursor:pointer">Ver payload completo</summary><pre style="font-size:10px;color:var(--t3);margin-top:6px;overflow:auto;max-height:120px">'+raw+'</pre></details></div></div>';
   }).join('');
 }
-async function importCEEvent(eventId,meta){
+async function importCEEvent(eventId,metaStr){
+  const meta=typeof metaStr==='string'?JSON.parse(metaStr):metaStr;
   const now=new Date().toISOString().slice(0,10);
-  const tx={id:txNid++,name:meta.tipo+' — '+(meta.nome||'Paciente'),type:'receber',cat:'Procedimentos',co:'ct',courseId:null,procedureId:null,vendId:null,fpg:'',status:'paid',due:now,val:parseFloat(meta.val)||0,notes:'Importado do Clínica Experts'};
+  const fpgMap={'CARTÃO DE CRÉDITO':'credito','CARTÃO DE DÉBITO':'debito','PIX':'pix','DINHEIRO':'dinheiro','TRANSFERÊNCIA':'transferencia','BOLETO':'boleto'};
+  const fpg=fpgMap[(meta.fpg||'').toUpperCase()]||'';
+  const tx={id:txNid++,name:(meta.procs&&meta.procs!=='—'?meta.procs:meta.tipo)+' — '+(meta.nome||'Paciente'),type:'receber',cat:'Procedimentos',co:'ct',courseId:null,procedureId:null,vendId:null,fpg,status:'paid',due:now,val:parseFloat(meta.val)||0,notes:'Importado do Clínica Experts'};
   txs.push(tx);
   try{
     const db=sbAdmin||sbClient;
