@@ -1074,7 +1074,8 @@ function setCo(c,btn){
   if(btn)btn.classList.add('a');
   const d=cod[c];
   const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-  s('kF',d.fat);s('kL',d.luc);s('kR',d.rec);s('kI',d.inad);s('kT',d.tick);s('kC',d.cli);s('kRo',d.roi);s('kG',d.grow);
+  s('kI',d.inad);s('kT',d.tick);s('kC',d.cli);s('kRo',d.roi);
+  updateDashCharts();
   document.getElementById('tbS').textContent=document.getElementById('tbS').textContent.replace(/·.*$/,'· '+d.name);
   if(charts.rev){charts.rev.data.datasets[0].hidden=c==='rv';charts.rev.data.datasets[1].hidden=c==='nf';charts.rev.update();}
   // Nav visibility per empresa
@@ -1130,6 +1131,39 @@ function initCharts(){
 }
 function updateDashCharts(){
   if(!charts.vend&&!charts.rd&&!charts.empresa)return;
+  // ===== KPIs dinâmicos =====
+  (function(){
+    const now2=new Date();
+    const curM=now2.getFullYear()+'-'+String(now2.getMonth()+1).padStart(2,'0');
+    const prev=new Date(now2.getFullYear(),now2.getMonth()-1,1);
+    const prevM=prev.getFullYear()+'-'+String(prev.getMonth()+1).padStart(2,'0');
+    const coFilt=function(t){return co==='all'||t.co===co;};
+    const curRec=txs.filter(function(t){return coFilt(t)&&t.type==='receber'&&t.due&&t.due.startsWith(curM);});
+    const curPag=txs.filter(function(t){return coFilt(t)&&t.type==='pagar'&&t.due&&t.due.startsWith(curM);});
+    const prevRec=txs.filter(function(t){return coFilt(t)&&t.type==='receber'&&t.due&&t.due.startsWith(prevM);});
+    const fatAtual=curRec.reduce(function(s,t){return s+t.val;},0);
+    const fatPrev=prevRec.reduce(function(s,t){return s+t.val;},0);
+    const despAtual=curPag.reduce(function(s,t){return s+t.val;},0);
+    const lucro=fatAtual-despAtual;
+    const contasRec=txs.filter(function(t){return coFilt(t)&&t.type==='receber'&&t.status!=='paid';}).reduce(function(s,t){return s+t.val;},0);
+    const pendCt=txs.filter(function(t){return coFilt(t)&&t.type==='receber'&&t.status!=='paid';}).length;
+    const growPct=fatPrev>0?Math.round((fatAtual-fatPrev)/fatPrev*100):0;
+    const s2=function(id,v){const el=document.getElementById(id);if(el)el.textContent=v;};
+    s2('kF',fmt(fatAtual));
+    s2('kL',fmt(lucro));
+    s2('kR',fmt(contasRec));
+    s2('kG',(growPct>=0?'+':'')+growPct+'%');
+    // sub-textos
+    const kfEl=document.querySelector('#kF~.kft');
+    const klEl=document.querySelector('#kL~.kft');
+    const krEl=document.querySelector('#kR~.kft');
+    const kgEl=document.querySelector('#kG~.kft');
+    const margem=fatAtual>0?Math.round(lucro/fatAtual*100):0;
+    if(kfEl)kfEl.innerHTML='<span class="dt '+(growPct>=0?'up':'dn')+'">'+(growPct>=0?'▲':'▼')+' '+Math.abs(growPct)+'%</span><span class="kpr">vs mês anterior</span>';
+    if(klEl)klEl.innerHTML='<span class="dt '+(lucro>=0?'up':'dn')+'">'+(lucro>=0?'▲':'▼')+' '+(fatAtual>0?Math.abs(margem):0)+'%</span><span class="kpr">margem '+(fatAtual>0?Math.abs(margem):0)+'%</span>';
+    if(krEl)krEl.innerHTML='<span class="kpr">'+pendCt+' fatura'+(pendCt!==1?'s':'')+' pendente'+(pendCt!==1?'s':'')+'</span>';
+    if(kgEl)kgEl.innerHTML='<span class="dt '+(growPct>=0?'up':'dn')+'">'+(growPct>=0?'▲ Meta':'▼')+' '+(growPct>=0?'atingida':'abaixo')+'</span><span class="kpr">vs mês anterior</span>';
+  })();
   // --- Vendas por Vendedora (NF receitas) ---
   if(charts.vend){
     const totals={};
