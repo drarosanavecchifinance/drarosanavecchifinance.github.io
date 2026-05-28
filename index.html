@@ -465,7 +465,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
     </div>
     <div class="nsec">Financeiro</div>
     <div class="ni" onclick="sv('financeiro',this)">
-      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 10h16M5 6h10M7 14h6"/><rect x="2" y="3" width="16" height="14" rx="2"/></svg>Gestão Financeira
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 10h16M5 6h10M7 14h6"/><rect x="2" y="3" width="16" height="14" rx="2"/></svg>Fluxo de Caixa
     </div>
     <div class="ni" onclick="sv('carteira',this)">
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="5" width="16" height="12" rx="2"/><path d="M2 8h16"/><circle cx="14.5" cy="13" r="1.5"/></svg>Carteira
@@ -1092,7 +1092,7 @@ function setCo(c,btn){
 }
 
 // ===== NAV =====
-const pgMap={dashboard:['Dashboard Executivo','Visão geral estratégica'],financeiro:['Gestão Financeira','Lançamentos · Contas · Fluxo de Caixa'],carteira:['Carteira','Faturamento · Recebimentos · Agenda de entradas'],cursos:['Cursos — Rosana Academy','Controle financeiro por curso'],alunos:['Base de Alunos','Rosana Vecchi Academy'],vendedoras:['Vendedoras','Equipe de vendas — NatureFace & Academy'],pacientes:['Pacientes — Consultório','Base de pacientes'],procedimentos:['Procedimentos — Consultório','Serviços e tratamentos'],ceimport:['Clínica Experts','Integração e importação automática'],calendario:['Calendário','Agenda e eventos'],vai:['V.A.I — Assistente','Inteligência artificial executiva']};
+const pgMap={dashboard:['Dashboard Executivo','Visão geral estratégica'],financeiro:['Fluxo de Caixa','Lançamentos · Contas · Fluxo de Caixa'],carteira:['Carteira','Faturamento · Recebimentos · Agenda de entradas'],cursos:['Cursos — Rosana Academy','Controle financeiro por curso'],alunos:['Base de Alunos','Rosana Vecchi Academy'],vendedoras:['Vendedoras','Equipe de vendas — NatureFace & Academy'],pacientes:['Pacientes — Consultório','Base de pacientes'],procedimentos:['Procedimentos — Consultório','Serviços e tratamentos'],ceimport:['Clínica Experts','Integração e importação automática'],calendario:['Calendário','Agenda e eventos'],vai:['V.A.I — Assistente','Inteligência artificial executiva']};
 function sv(v,el){
   if(el){document.querySelectorAll('.ni').forEach(n=>n.classList.remove('a'));el.classList.add('a');}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('a'));
@@ -1293,7 +1293,7 @@ function viewCurso(id){
         <span style="font-size:13px;color:var(--t2);font-weight:600">${pct}%</span>
       </div>
       <div class="cbar-bg"><div class="cbar-fill" style="width:${pct}%;background:${c.color}"></div></div>
-      <div style="font-size:11.5px;color:var(--t3);margin-top:6px">Para visualizar lançamentos detalhados, acesse <strong>Gestão Financeira</strong> e filtre pelo curso ${c.code}.</div>
+      <div style="font-size:11.5px;color:var(--t3);margin-top:6px">Para visualizar lançamentos detalhados, acesse <strong>Fluxo de Caixa</strong> e filtre pelo curso ${c.code}.</div>
     </div>
 
     <div style="background:var(--card);border:1.5px solid var(--bdr);border-radius:var(--r);overflow:hidden">
