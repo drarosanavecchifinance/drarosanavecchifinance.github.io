@@ -699,14 +699,15 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
     <div class="msub">Preencha os dados do lançamento financeiro</div>
     <div class="fg">
       <div class="fgp fc1"><label class="fl">Descrição</label><input class="fi" id="fNm" placeholder="Ex: Aluguel — Clínica Faria Lima"></div>
-      <div class="fgp"><label class="fl">Tipo</label><select class="fse" id="fTy" onchange="checkStu()"><option value="pagar">A Pagar</option><option value="receber">A Receber</option></select></div>
-      <div class="fgp"><label class="fl">Categoria</label><select class="fse" id="fCa"><option>Operacional</option><option>Insumos</option><option>Marketing</option><option>RH</option><option>Tecnologia</option><option>Seguros</option><option>Procedimentos</option><option>Cursos</option><option>Mentorias</option><option>Outros</option></select></div>
+      <div class="fgp"><label class="fl">Tipo</label><select class="fse" id="fTy" onchange="checkStu();toggleRec()"><option value="pagar">A Pagar</option><option value="receber">A Receber</option></select></div>
       <div class="fgp"><label class="fl">Empresa</label><select class="fse" id="fCo" onchange="checkStu();toggleCursoField()"><option value="nf">NatureFace</option><option value="rv">Rosana Academy</option></select></div>
       <div class="fgp" id="cursoFieldWrap"><label class="fl">Curso (opcional)</label><select class="fse" id="fCrs"><option value="">— Nenhum —</option></select></div>
       <div class="fgp"><label class="fl">Status</label><select class="fse" id="fSt"><option value="paid">Pago</option><option value="pend">Pendente</option><option value="due">Vence Hoje</option><option value="sched">Agendado</option></select></div>
       <div class="fgp"><label class="fl">Vencimento</label><input class="fi" id="fDu" type="date"></div>
-      <div class="fgp"><label class="fl">Valor Pago (R$)</label><input class="fi" id="fVl" type="number" placeholder="0,00" min="0" step="0.01"></div>
-      <div class="fgp" id="fVlRestWrap"><label class="fl">Valor Restante / Saldo Devedor (R$)</label><input class="fi" id="fVlRest" type="number" placeholder="0,00 — deixe vazio se quitado" min="0" step="0.01"><div style="font-size:11px;color:var(--t3);margin-top:4px">Se preenchido, cria um 2º lançamento pendente automaticamente</div></div>
+      <div class="fgp"><label class="fl">Valor (R$)</label><input class="fi" id="fVl" type="number" placeholder="0,00" min="0" step="0.01"></div>
+      <div class="fgp" id="fRecWrap"><label class="fl">Recorrência</label><select class="fse" id="fRec" onchange="toggleRec()"><option value="">Sem recorrência</option><option value="semanal">Semanal</option><option value="quinzenal">Quinzenal</option><option value="mensal">Mensal</option><option value="bimestral">Bimestral</option><option value="trimestral">Trimestral</option><option value="anual">Anual</option></select></div>
+      <div class="fgp" id="fRecQtdWrap" style="display:none"><label class="fl">Repetições</label><input class="fi" id="fRecQtd" type="number" placeholder="Ex: 12" min="2" max="60" value="12"><div style="font-size:11px;color:var(--t3);margin-top:4px">Nº total de parcelas/lançamentos</div></div>
+      <div class="fgp fc1" id="fVlRestWrap"><label class="fl">Valor Restante / Saldo Devedor (R$) — Academy</label><input class="fi" id="fVlRest" type="number" placeholder="0,00 — deixe vazio se quitado" min="0" step="0.01"><div style="font-size:11px;color:var(--t3);margin-top:4px">Se preenchido, cria um 2º lançamento pendente automaticamente</div></div>
       <div class="fgp fc1"><label class="fl">Observações</label><textarea class="fta" id="fNo" placeholder="Detalhes adicionais..."></textarea></div>
       <!-- STUDENT SECTION -->
       <div id="stuSec" class="stusec">
@@ -1018,8 +1019,14 @@ function saveCurso(){
     startDate:document.getElementById('cDtI').value,endDate:document.getElementById('cDtF').value,
     val:parseFloat(document.getElementById('cVal').value)||0,maxStu:parseInt(document.getElementById('cMax').value)||20,
     desc:document.getElementById('cDs').value};
-  if(editCursoId){const i=courses.findIndex(x=>x.id===editCursoId);if(i>=0)courses[i]=c;}else courses.push(c);
-  closeM('cursoModal');renderCursos();populateCursoSelects();saveData();
+  if(editCursoId){const i=courses.findIndex(x=>x.id===editCursoId);if(i>=0)courses[i]=c;}
+  else{
+    courses.push(c);
+    // Auto-adicionar eventos no calendário
+    if(c.startDate){const[sy,sm,sd]=c.startDate.split('-').map(Number);const sk=`${sy}-${sm}-${sd}`;if(!evs[sk])evs[sk]=[];evs[sk].push({id:evNextId++,title:'📚 '+c.name+' — Início',type:'aula',co:'rv',time:'08:00',desc:c.code});}
+    if(c.endDate){const[ey,em,ed]=c.endDate.split('-').map(Number);const ek=`${ey}-${em}-${ed}`;if(!evs[ek])evs[ek]=[];evs[ek].push({id:evNextId++,title:'🎓 '+c.name+' — Encerramento',type:'evento',co:'rv',time:'18:00',desc:c.code});}
+  }
+  closeM('cursoModal');renderCursos();populateCursoSelects();if(document.getElementById('page-calendario').classList.contains('a'))renderCal();saveData();
 }
 function delCurso(id){if(!confirm('Excluir este curso? Os lançamentos vinculados não serão removidos.'))return;courses=courses.filter(c=>c.id!==id);renderCursos();saveData();}
 
@@ -1175,6 +1182,14 @@ function toggleCursoField(){
   const isRV=document.getElementById('fCo')?.value==='rv';
   const wrap=document.getElementById('cursoFieldWrap');
   if(wrap){wrap.style.display=isRV?'':'none';if(!isRV){const s=document.getElementById('fCrs');if(s)s.value='';}}
+  const vr=document.getElementById('fVlRestWrap');
+  if(vr)vr.style.display=isRV?'':'none';
+}
+function toggleRec(){
+  const isEdit=!!editTxId;
+  const rec=document.getElementById('fRec')?.value;
+  const qw=document.getElementById('fRecQtdWrap');
+  if(qw)qw.style.display=(rec&&!isEdit)?'':'none';
 }
 function checkStu(){
   const isRV=document.getElementById('fCo')?.value==='rv';
@@ -1226,9 +1241,12 @@ function tgStu(mode){stuMode=mode;document.getElementById('stuNew').style.displa
 function openAddTx(){
   editTxId=null;document.getElementById('txMT').textContent='Novo Lançamento';
   ['fNm','fNo'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('fTy').value='pagar';document.getElementById('fCa').value='Operacional';
+  document.getElementById('fTy').value='pagar';
   document.getElementById('fCo').value=(co==='all'||co==='nf')?'nf':'rv';document.getElementById('fSt').value='sched';
   document.getElementById('fDu').value='';document.getElementById('fVl').value='';const fr=document.getElementById('fVlRest');if(fr)fr.value='';
+  const rec=document.getElementById('fRec');if(rec)rec.value='';
+  const rqw=document.getElementById('fRecQtdWrap');if(rqw)rqw.style.display='none';
+  const frw=document.getElementById('fRecWrap');if(frw)frw.style.display='';
   populateCursoSelects();toggleCursoField();checkStu();tgStu('new');
   ['sNm','sEm','sPh','sCp','sSt','sBa','sCe','sCi'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const sc=document.getElementById('sCode');if(sc)sc.value=genStuCode();
@@ -1240,9 +1258,11 @@ function editTx(id){
   const t=txs.find(x=>x.id===id);if(!t)return;
   editTxId=id;document.getElementById('txMT').textContent='Editar Lançamento';
   document.getElementById('fNm').value=t.name;document.getElementById('fTy').value=t.type;
-  document.getElementById('fCa').value=t.cat;document.getElementById('fCo').value=t.co;
+  document.getElementById('fCo').value=t.co;
   document.getElementById('fSt').value=t.status;document.getElementById('fDu').value=t.due;
   document.getElementById('fVl').value=t.val;document.getElementById('fNo').value=t.notes||'';
+  const frwE=document.getElementById('fRecWrap');if(frwE)frwE.style.display='none';
+  const rqwE=document.getElementById('fRecQtdWrap');if(rqwE)rqwE.style.display='none';
   populateCursoSelects();toggleCursoField();document.getElementById('fCrs').value=t.courseId||'';
   checkStu();const linked=students.find(s=>s.txId===id);
   if(linked){tgStu('exist');setTimeout(()=>{const sel=document.getElementById('sExSel');if(sel){sel.value=linked.id;previewExistStu();}},60);}else tgStu('new');
@@ -1250,7 +1270,8 @@ function editTx(id){
 }
 function saveTx(){
   const name=document.getElementById('fNm').value.trim();if(!name){document.getElementById('fNm').focus();return;}
-  const tx={id:editTxId||txNid++,name,type:document.getElementById('fTy').value,cat:document.getElementById('fCa').value,co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,status:document.getElementById('fSt').value,due:document.getElementById('fDu').value||new Date().toISOString().slice(0,10),val:parseFloat(document.getElementById('fVl').value)||0,notes:document.getElementById('fNo').value};
+  const existCat=editTxId?(txs.find(x=>x.id===editTxId)?.cat||''):'';
+  const tx={id:editTxId||txNid++,name,type:document.getElementById('fTy').value,cat:existCat,co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,status:document.getElementById('fSt').value,due:document.getElementById('fDu').value||new Date().toISOString().slice(0,10),val:parseFloat(document.getElementById('fVl').value)||0,notes:document.getElementById('fNo').value};
   if(editTxId){const i=txs.findIndex(x=>x.id===editTxId);if(i>=0)txs[i]=tx;}else txs.push(tx);
   const sec=document.getElementById('stuSec');
   if(sec&&sec.classList.contains('s')){
@@ -1274,10 +1295,26 @@ function saveTx(){
       }
     }
   }
-  // Criar 2º lançamento para valor restante (saldo devedor)
+  // Recorrência — gerar múltiplos lançamentos
+  const recType=document.getElementById('fRec')?.value;
+  const recQtd=parseInt(document.getElementById('fRecQtd')?.value)||12;
+  if(recType&&!editTxId){
+    for(let i=1;i<recQtd;i++){
+      const base=new Date(tx.due+'T12:00:00');
+      let nd=new Date(base);
+      if(recType==='semanal'){nd=new Date(base.getTime()+i*7*864e5);}
+      else if(recType==='quinzenal'){nd=new Date(base.getTime()+i*15*864e5);}
+      else if(recType==='mensal'){nd.setMonth(nd.getMonth()+i);}
+      else if(recType==='bimestral'){nd.setMonth(nd.getMonth()+i*2);}
+      else if(recType==='trimestral'){nd.setMonth(nd.getMonth()+i*3);}
+      else if(recType==='anual'){nd.setFullYear(nd.getFullYear()+i);}
+      txs.push({...tx,id:txNid++,due:nd.toISOString().slice(0,10)});
+    }
+  }
+  // Criar 2º lançamento para valor restante (saldo devedor — só Academy)
   const vlRest=parseFloat(document.getElementById('fVlRest')?.value)||0;
-  if(vlRest>0&&!editTxId){
-    const txRest={id:txNid++,name:tx.name+' — Saldo Devedor',type:tx.type,cat:tx.cat,co:tx.co,courseId:tx.courseId,status:'pend',due:tx.due,val:vlRest,notes:'Saldo devedor gerado automaticamente',yampiId:undefined};
+  if(vlRest>0&&!editTxId&&tx.co==='rv'){
+    const txRest={id:txNid++,name:tx.name+' — Saldo Devedor',type:tx.type,cat:tx.cat,co:tx.co,courseId:tx.courseId,status:'pend',due:tx.due,val:vlRest,notes:'Saldo devedor gerado automaticamente'};
     txs.push(txRest);
   }
   closeM('txModal');renderTx();saveData();if(document.getElementById('page-cursos').classList.contains('a'))renderCursos();
