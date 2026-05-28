@@ -688,6 +688,17 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
     </div>
     <!-- KPIs -->
     <div class="kg" style="margin-bottom:22px" id="carteiraKpis"></div>
+    <!-- Gráfico previsão -->
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:22px">
+      <div class="cc">
+        <div class="ch"><div><div class="ct">Previsão de Entradas — Próximos 3 Meses</div><div class="cs">Recebido vs A Receber por mês</div></div></div>
+        <canvas id="carteiraForecastChart" height="110"></canvas>
+      </div>
+      <div class="cc">
+        <div class="ch"><div><div class="ct">NF vs Academy</div><div class="cs">Distribuição do período</div></div></div>
+        <canvas id="carteiraDonutChart" height="110"></canvas>
+      </div>
+    </div>
     <!-- Agenda -->
     <div id="carteiraAgenda"></div>
   </div>
@@ -1719,32 +1730,61 @@ function initCarteiraFilter(){
 }
 function renderCarteira(){
   initCarteiraFilter();
-  const selMes=document.getElementById('carteiraFiltMes')?.value;
-  const selCo=document.getElementById('carteiraFiltCo')?.value||'';
-  const now=new Date();const todayStr=now.toISOString().slice(0,10);
-  const weekEnd=new Date(now);weekEnd.setDate(now.getDate()+6);const weekEndStr=weekEnd.toISOString().slice(0,10);
-  const m30=new Date(now);m30.setDate(now.getDate()+30);const m30Str=m30.toISOString().slice(0,10);
-  const fmt=v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-  const fpgLabel={pix:'PIX',debito:'Débito',credito:'Crédito',boleto:'Boleto',transferencia:'Transf.',dinheiro:'Dinheiro',''  :''};
-  const coLabel={nf:'NatureFace',rv:'Academy'};
-  const coBadge=c=>c==='nf'?'<span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(196,128,127,.15);color:#955251">NF</span>':'<span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(149,82,81,.12);color:#6B2F2E">Academy</span>';
-  // All receitas filter by co
+  var selMes=document.getElementById('carteiraFiltMes')?.value;
+  var selCo=document.getElementById('carteiraFiltCo')?.value||'';
+  var now=new Date();var todayStr=now.toISOString().slice(0,10);
+  var weekEnd=new Date(now);weekEnd.setDate(now.getDate()+6);var weekEndStr=weekEnd.toISOString().slice(0,10);
+  var m30=new Date(now);m30.setDate(now.getDate()+30);var m30Str=m30.toISOString().slice(0,10);
+  var fmt=function(v){return'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});};
+  var fpgLabel={pix:'PIX',debito:'Débito',credito:'Crédito',boleto:'Boleto',transferencia:'Transf.',dinheiro:'Dinheiro','':''};
+  var coBadge=function(c){return c==='nf'?'<span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(196,128,127,.15);color:#955251">NF</span>':'<span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(149,82,81,.12);color:#6B2F2E">Academy</span>';};
   var allRec=txs.filter(function(t){return t.type==='receber'&&(!selCo||t.co===selCo);});
-  // Faturamento = receitas whose due falls in selected month (or that were recorded in that month)
   var fatTxs=allRec.filter(function(t){return!selMes||(t.due&&t.due.startsWith(selMes));});
   var fatTotal=fatTxs.reduce(function(s,t){return s+t.val;},0);
   var recTotal=fatTxs.filter(function(t){return t.status==='paid';}).reduce(function(s,t){return s+t.val;},0);
   var pendTotal=fatTxs.filter(function(t){return t.status!=='paid';}).reduce(function(s,t){return s+t.val;},0);
-  var atrasTotal=fatTxs.filter(function(t){return t.status!=='paid'&&t.due&&t.due<todayStr;}).reduce(function(s,t){return s+t.val;},0);
-  // KPIs
+  // KPIs (sem atrasado, adicionado "Próx. 3 meses")
+  var prox3Start=todayStr;var prox3End=new Date(now);prox3End.setMonth(prox3End.getMonth()+3);var prox3Str=prox3End.toISOString().slice(0,10);
+  var prox3Total=allRec.filter(function(t){return t.status!=='paid'&&t.due&&t.due>=prox3Start&&t.due<=prox3Str;}).reduce(function(s,t){return s+t.val;},0);
   var kDiv=document.getElementById('carteiraKpis');
   if(kDiv){
-    kDiv.innerHTML='<div class="kc m"><div class="klbl">Faturamento</div><div class="kval">'+fmt(fatTotal)+'</div><div class="kft"><span class="kpr">total de vendas no período</span></div></div>'+
+    kDiv.innerHTML='<div class="kc m"><div class="klbl">Faturamento</div><div class="kval">'+fmt(fatTotal)+'</div><div class="kft"><span class="kpr">vendas no período selecionado</span></div></div>'+
     '<div class="kc g"><div class="klbl">Recebido</div><div class="kval">'+fmt(recTotal)+'</div><div class="kft"><span class="kpr">'+(fatTotal?Math.round(recTotal/fatTotal*100):0)+'% do faturamento</span></div></div>'+
-    '<div class="kc o"><div class="klbl">A Receber</div><div class="kval">'+fmt(pendTotal)+'</div><div class="kft"><span class="kpr">entradas previstas</span></div></div>'+
-    '<div class="kc '+(atrasTotal>0?'m':'g')+'"><div class="klbl">Atrasado</div><div class="kval">'+fmt(atrasTotal)+'</div><div class="kft"><span class="kpr '+(atrasTotal>0?'re':'gr')+'">'+(atrasTotal>0?'⚠️ vencido não pago':'✓ em dia')+'</span></div></div>';
+    '<div class="kc o"><div class="klbl">A Receber</div><div class="kval">'+fmt(pendTotal)+'</div><div class="kft"><span class="kpr">pendente no período</span></div></div>'+
+    '<div class="kc g"><div class="klbl">Previsão 3 Meses</div><div class="kval">'+fmt(prox3Total)+'</div><div class="kft"><span class="kpr">📈 entradas previstas</span></div></div>';
   }
-  // Agenda — all pending from ALL time for this co (not just selected month)
+  // ===== GRÁFICOS =====
+  var mNames=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  // Próximos 3 meses: M0 (atual), M+1, M+2, M+3 (inclui mês corrente)
+  var foreLabels=[],foreRec=[],forePend=[],foreNF=[],foreAcad=[];
+  for(var mi=0;mi<4;mi++){
+    var md=new Date(now.getFullYear(),now.getMonth()+mi,1);
+    var mKey=md.getFullYear()+'-'+String(md.getMonth()+1).padStart(2,'0');
+    foreLabels.push(mNames[md.getMonth()]+'/'+String(md.getFullYear()).slice(2));
+    var mTxs=allRec.filter(function(t){return t.due&&t.due.startsWith(mKey);});
+    foreRec.push(mTxs.filter(function(t){return t.status==='paid';}).reduce(function(s,t){return s+t.val;},0));
+    forePend.push(mTxs.filter(function(t){return t.status!=='paid';}).reduce(function(s,t){return s+t.val;},0));
+    foreNF.push(mTxs.filter(function(t){return t.co==='nf';}).reduce(function(s,t){return s+t.val;},0));
+    foreAcad.push(mTxs.filter(function(t){return t.co==='rv';}).reduce(function(s,t){return s+t.val;},0));
+  }
+  // Forecast bar chart
+  var fcEl=document.getElementById('carteiraForecastChart');
+  if(fcEl){
+    if(charts.cartFc){charts.cartFc.destroy();}
+    charts.cartFc=new Chart(fcEl.getContext('2d'),{type:'bar',data:{labels:foreLabels,datasets:[
+      {label:'Recebido',data:foreRec,backgroundColor:'rgba(100,180,120,.8)',borderRadius:5,borderSkipped:false,stack:'s'},
+      {label:'A Receber',data:forePend,backgroundColor:'rgba(196,165,90,.75)',borderRadius:5,borderSkipped:false,stack:'s'}
+    ]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{padding:10,usePointStyle:true,pointStyle:'circle',font:{size:11}}},tooltip:_tip({label:function(c){return' R$ '+c.raw.toLocaleString('pt-BR');}})},scales:{x:{grid:{display:false},border:{color:'transparent'},stacked:true},y:{grid:{color:'rgba(0,0,0,.05)'},border:{color:'transparent'},stacked:true,ticks:{callback:function(v){return'R$'+(v/1000).toFixed(0)+'k';}}}}}});
+  }
+  // Donut NF vs Academy
+  var dnEl=document.getElementById('carteiraDonutChart');
+  if(dnEl){
+    if(charts.cartDn){charts.cartDn.destroy();}
+    var nfT=allRec.filter(function(t){return t.co==='nf'&&t.due&&t.due>=todayStr&&t.due<=prox3Str;}).reduce(function(s,t){return s+t.val;},0);
+    var rvT=allRec.filter(function(t){return t.co==='rv'&&t.due&&t.due>=todayStr&&t.due<=prox3Str;}).reduce(function(s,t){return s+t.val;},0);
+    charts.cartDn=new Chart(dnEl.getContext('2d'),{type:'doughnut',data:{labels:['NatureFace','Rosana Academy'],datasets:[{data:[nfT||0,rvT||0],backgroundColor:['#C4807F','#955251'],borderWidth:0,hoverOffset:6}]},options:{responsive:true,cutout:'65%',plugins:{legend:{position:'bottom',labels:{padding:10,usePointStyle:true,pointStyle:'circle',font:{size:11}}},tooltip:_tip({label:function(c){return' '+c.label+': R$'+c.raw.toLocaleString('pt-BR');}})}}});
+  }
+  // ===== AGENDA =====
   var pending=allRec.filter(function(t){return t.status!=='paid';}).sort(function(a,b){return(a.due||'').localeCompare(b.due||'');});
   var paid=fatTxs.filter(function(t){return t.status==='paid';}).sort(function(a,b){return(b.due||'').localeCompare(a.due||'');});
   function txRow(t){
@@ -1758,25 +1798,23 @@ function renderCarteira(){
       '<div style="display:flex;align-items:center;gap:5px;margin-top:3px">'+coBadge(t.co)+vName+fpg+parc+'</div></div>'+
       '<div style="font-size:14px;font-weight:700;color:var(--gr);white-space:nowrap">'+fmt(t.val)+'</div></div>';
   }
-  function section(title,icon,items,emptyMsg,extra){
+  function section(title,icon,items,emptyMsg){
     if(!items.length)return'<div class="sc" style="margin-bottom:14px"><div style="padding:12px 16px;display:flex;align-items:center;gap:8px"><span style="font-size:16px">'+icon+'</span><span style="font-size:13.5px;font-weight:700;color:var(--t2)">'+title+'</span><span style="margin-left:auto;font-size:12px;color:var(--t3)">'+emptyMsg+'</span></div></div>';
     var tot=items.reduce(function(s,t){return s+t.val;},0);
     return'<div class="sc" style="margin-bottom:14px"><div style="padding:12px 16px 10px;display:flex;align-items:center;gap:8px;border-bottom:1.5px solid var(--bdr)">'+
       '<span style="font-size:16px">'+icon+'</span><span style="font-size:13.5px;font-weight:700;color:var(--t2)">'+title+'</span>'+
       '<span style="font-size:12px;color:var(--t3);margin-left:4px">'+items.length+' entrada'+(items.length>1?'s':'')+'</span>'+
-      (extra||'')+'<span style="margin-left:auto;font-size:14px;font-weight:800;color:var(--gr)">'+fmt(tot)+'</span></div>'+
+      '<span style="margin-left:auto;font-size:14px;font-weight:800;color:var(--gr)">'+fmt(tot)+'</span></div>'+
       items.map(txRow).join('')+'</div>';
   }
-  var atras=pending.filter(function(t){return t.due&&t.due<todayStr;});
   var hoje=pending.filter(function(t){return t.due===todayStr;});
   var semana=pending.filter(function(t){return t.due&&t.due>todayStr&&t.due<=weekEndStr;});
   var mes30=pending.filter(function(t){return t.due&&t.due>weekEndStr&&t.due<=m30Str;});
-  var apos=pending.filter(function(t){return !t.due||(t.due&&t.due>m30Str);});
+  var apos=pending.filter(function(t){return!t.due||(t.due&&t.due>m30Str);});
   var ag=document.getElementById('carteiraAgenda');
   if(ag){
     ag.innerHTML=
-      section('Atrasado','🔴',atras,'nada atrasado ✓')+
-      section('Vence Hoje','⚡',hoje,'nada hoje')+
+      section('Hoje','⚡',hoje,'nada hoje')+
       section('Esta Semana','📅',semana,'nada esta semana')+
       section('Próximos 30 dias','🗓',mes30,'nada nos próximos 30 dias')+
       section('Após 30 dias','📆',apos,'sem entradas futuras')+
