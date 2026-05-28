@@ -684,7 +684,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-      <div class="ct" style="font-size:16px;font-weight:700">Eventos Pendentes</div>
+      <div class="ct" style="font-size:16px;font-weight:700">Importação Automática</div>
       <span id="cePendCount" style="font-size:12px;color:var(--t3)">carregando...</span>
       <div style="margin-left:auto"><button class="bp" onclick="loadCEEvents()">🔄 Atualizar</button></div>
     </div>
@@ -2220,12 +2220,47 @@ function subscribeRealtime(){
   if(!supabaseReady)return;
   sbClient.channel('empresa-sync')
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'vai_data',filter:'key=eq.all_data'},payload=>{
-      if(payload.new?.value){
-        applyData(payload.new.value);
-        showSyncToast();
-      }
+      if(payload.new?.value){applyData(payload.new.value);showSyncToast();}
     })
     .subscribe();
+  // Auto-import CE events em tempo real
+  sbClient.channel('ce-auto')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'ce_events'},payload=>{
+      const ev=payload.new;
+      if(!ev||ev.imported)return;
+      autoImportCEEvent(ev);
+    })
+    .subscribe();
+}
+
+async function autoImportCEEvent(ev){
+  const p=ev.payload||{};
+  const{nome,val,procs,fpg}=parseCEPayload(p);
+  // Só importa eventos com valor > 0
+  if(!val||val<=0){
+    // Marca como importado para não acumular
+    try{const db=sbAdmin||sbClient;await db.from('ce_events').update({imported:true}).eq('id',ev.id);}catch(e){}
+    return;
+  }
+  const fpgMap={'CARTÃO DE CRÉDITO':'credito','CARTÃO DE DÉBITO':'debito','PIX':'pix','DINHEIRO':'dinheiro','TRANSFERÊNCIA':'transferencia','BOLETO':'boleto'};
+  const fpgVal=fpgMap[(fpg||'').toUpperCase()]||'';
+  const now=new Date().toISOString().slice(0,10);
+  const tx={id:txNid++,name:(procs&&procs!=='—'?procs:(p.type||ev.event_type))+' — '+(nome||'Paciente'),type:'receber',cat:'Procedimentos',co:'ct',courseId:null,procedureId:null,vendId:null,fpg:fpgVal,status:'paid',due:now,val,notes:'Auto-importado do Clínica Experts'};
+  txs.push(tx);
+  try{const db=sbAdmin||sbClient;await db.from('ce_events').update({imported:true,tx_id:tx.id}).eq('id',ev.id);}catch(e){console.warn('CE auto-import mark error:',e);}
+  saveData();
+  // Toast de notificação
+  showCEToast(tx.name,val);
+  refreshCurrentPage();
+}
+
+function showCEToast(nome,val){
+  let t=document.getElementById('ceToast');
+  if(!t){t=document.createElement('div');t.id='ceToast';t.style.cssText='position:fixed;bottom:60px;right:20px;background:#2A5A3A;color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;font-family:DM Sans,sans-serif;font-weight:500;z-index:500;box-shadow:0 4px 14px rgba(0,0,0,.25);max-width:300px';document.body.appendChild(t);}
+  const fmt=function(v){return'R$ '+parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2});};
+  t.innerHTML='✅ <strong>CE importado:</strong><br>'+nome+'<br><strong style="color:#7FFFA0">'+fmt(val)+'</strong>';
+  t.style.display='block';
+  clearTimeout(t._to);t._to=setTimeout(function(){t.style.display='none';},5000);
 }
 
 function showSyncToast(){
@@ -2336,20 +2371,25 @@ function delProcedimento(id){if(!confirm('Excluir este procedimento?'))return;pr
 async function loadCEEvents(){
   const el=document.getElementById('ceEventsList');
   const cnt=document.getElementById('cePendCount');
-  if(el)el.innerHTML='<div style="color:var(--t3);padding:20px;text-align:center">Carregando eventos...</div>';
+  if(el)el.innerHTML='<div style="color:var(--t3);padding:20px;text-align:center">Carregando...</div>';
   if(!supabaseReady){
     if(el)el.innerHTML='<div style="color:var(--t3);padding:20px;text-align:center">Supabase não configurado.</div>';
     return;
   }
   try{
     const db=sbAdmin||sbClient;
-    const{data,error}=await db.from('ce_events').select('*').eq('imported',false).order('received_at',{ascending:false}).limit(50);
-    if(error){if(error.code==='42P01'){if(el)el.innerHTML='<div class="cc" style="padding:20px;text-align:center;color:var(--t3)">Tabela <code>ce_events</code> não encontrada no Supabase.<br>Crie a tabela conforme o guia de configuração.</div>';return;}throw error;}
-    if(cnt)cnt.textContent=(data?.length||0)+' pendente(s)';
-    const nb=document.getElementById('nbCEPend');
-    if(nb){nb.textContent=data?.length||0;nb.style.display=data?.length?'':'none';}
-    if(!data||!data.length){if(el)el.innerHTML='<div style="color:var(--t3);padding:24px;text-align:center">✅ Nenhum evento pendente de importação.</div>';return;}
-    renderCEImport(data);
+    // Importar automaticamente todos os pendentes com valor
+    const{data:pend}=await db.from('ce_events').select('*').eq('imported',false).order('received_at',{ascending:true});
+    if(pend&&pend.length){
+      for(const ev of pend){await autoImportCEEvent(ev);}
+    }
+    // Mostrar histórico recente importado
+    const{data,error}=await db.from('ce_events').select('*').eq('imported',true).order('received_at',{ascending:false}).limit(20);
+    if(error){if(error.code==='42P01'){if(el)el.innerHTML='<div class="cc" style="padding:20px;text-align:center;color:var(--t3)">Tabela <code>ce_events</code> não encontrada.</div>';return;}throw error;}
+    if(cnt)cnt.textContent=(data?.length||0)+' importado(s)';
+    const nb=document.getElementById('nbCEPend');if(nb)nb.style.display='none';
+    if(!data||!data.length){if(el)el.innerHTML='<div style="color:var(--t3);padding:24px;text-align:center">Nenhum evento importado ainda.</div>';return;}
+    renderCEHistory(data);
   }catch(e){if(el)el.innerHTML='<div style="color:var(--m);padding:20px">Erro: '+e.message+'</div>';}
 }
 function parseCEPayload(p){
@@ -2393,6 +2433,18 @@ async function importCEEvent(eventId,metaStr){
     await db.from('ce_events').update({imported:true,tx_id:tx.id}).eq('id',eventId);
   }catch(e){console.warn('CE import update error:',e);}
   saveData();loadCEEvents();renderTx();
+}
+function renderCEHistory(events){
+  const el=document.getElementById('ceEventsList');if(!el)return;
+  const fmt=function(v){return'R$ '+parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});};
+  el.innerHTML='<div style="font-size:13px;font-weight:600;color:var(--t2);margin-bottom:10px">Histórico de importações</div>'+events.map(function(ev){
+    const p=ev.payload||{};
+    const{nome,val,procs,fpg}=parseCEPayload(p);
+    const dt=new Date(ev.received_at).toLocaleDateString('pt-BR')+' '+new Date(ev.received_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    const tipo=p.type||ev.event_type||'evento';
+    if(!val||val<=0)return'';
+    return '<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg);border:1px solid var(--bdr);border-radius:9px;margin-bottom:6px"><div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(procs!=='—'?procs:tipo)+' — '+nome+'</div><div style="font-size:11px;color:var(--t3);margin-top:2px">'+dt+(fpg?' · '+fpg:'')+'</div></div><div style="font-size:13px;font-weight:700;color:var(--gr);flex-shrink:0">'+fmt(val)+'</div><div style="font-size:11px;color:var(--gr);flex-shrink:0">✓</div></div>';
+  }).join('');
 }
 async function discardCEEvent(eventId){
   if(!confirm('Descartar este evento?'))return;
