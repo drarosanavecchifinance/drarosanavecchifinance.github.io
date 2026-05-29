@@ -1133,7 +1133,25 @@ const taxasDef={
   outros_credito:_mkCred(2.99,3.11,3.11,3.475),outros_credito_prazo:31
 };
 let taxas={nf:{...taxasDef},rv:{...taxasDef},ct:{...taxasDef}};
-let taxasMaq={nf:{...taxasDef},rv:{...taxasDef},ct:{...taxasDef}};
+// Taxas maquininha NF — baseadas no plano de recebimento da operadora (Visa/Master confirmados)
+const _taxasMaqNF={
+  pix:0,pix_prazo:1,
+  dinheiro:0,dinheiro_prazo:1,
+  transferencia:0,transferencia_prazo:1,
+  boleto:0,boleto_prazo:2,
+  visa_debito:1.46,visa_debito_prazo:1,
+  master_debito:1.46,master_debito_prazo:1,
+  elo_debito:1.46,elo_debito_prazo:1,
+  outros_debito:1.46,outros_debito_prazo:1,
+  visa_credito:_mkCred(2.54,3.11,3.11,3.47),visa_credito_prazo:31,
+  master_credito:_mkCred(2.54,3.11,3.11,3.47),master_credito_prazo:30,
+  elo_credito:_mkCred(2.54,3.11,3.11,3.47),elo_credito_prazo:31,
+  amex_credito:_mkCred(2.54,3.11,3.11,3.47),amex_credito_prazo:31,
+  diners_credito:_mkCred(2.54,3.11,3.11,3.47),diners_credito_prazo:31,
+  hipercard_credito:_mkCred(2.54,3.11,3.11,3.47),hipercard_credito_prazo:31,
+  outros_credito:_mkCred(2.54,3.11,3.11,3.47),outros_credito_prazo:31,
+};
+let taxasMaq={nf:{..._taxasMaqNF},rv:{...taxasDef},ct:{...taxasDef}};
 let courses=[
   {id:1,code:'RVC001',name:'Protocolos Faciais Avançados',cat:'Estética Clínica',color:'#955251',startDate:'2025-07-01',endDate:'2025-09-30',val:2400,maxStu:20,status:'ativo',desc:'Curso completo de protocolos faciais premium'},
   {id:2,code:'RVC002',name:'Mentoria Executiva Premium',cat:'Gestão e Liderança',color:'#C4807F',startDate:'2025-07-15',endDate:'2025-12-15',val:7500,maxStu:10,status:'ativo',desc:''},
@@ -2252,9 +2270,11 @@ function resetTaxaTabDefaults(){
   const canal=_taxaCanal||'online';
   const coName={nf:'NatureFace',rv:'Rosana Academy',ct:'Consultório'}[co]||co;
   const canalName=canal==='maquininha'?'Maquininha':'Online';
-  if(!confirm('Restaurar todos os valores padrão para '+coName+' ('+canalName+')?\n\nPIX=0%, Boleto=2%, Débito ~1.49%, Crédito ~2.99–3.5%\n\nOs valores atuais serão substituídos.'))return;
+  const isMaqNF=canal==='maquininha'&&co==='nf';
+  const hint=isMaqNF?'Débito=1.46%, Crédito 1x=2.54%, 2–6x=3.11%, 7–12x=3.47%':'PIX=0%, Boleto=2%, Débito ~1.49%, Crédito ~2.99–3.5%';
+  if(!confirm('Restaurar todos os valores padrão para '+coName+' ('+canalName+')?\n\n'+hint+'\n\nOs valores atuais serão substituídos.'))return;
   const store=canal==='maquininha'?taxasMaq:taxas;
-  store[co]={...taxasDef};
+  store[co]=canal==='maquininha'&&co==='nf'?{..._taxasMaqNF}:{...taxasDef};
   _loadTaxaFields(co,canal);
 }
 function taxaKey(t){
@@ -2695,12 +2715,13 @@ function applyData(d){
   if(d.evs&&Object.keys(d.evs).length)evs=d.evs;
   if(d.patients)patients=d.patients;
   if(d.procedures)procedures=d.procedures;
-  function _migrateTaxaStore(raw){
+  function _migrateTaxaStore(raw,isMaq){
     var store;
+    var baseNF=isMaq?_taxasMaqNF:taxasDef;
     if(raw.nf||raw.rv||raw.ct){
-      store={nf:Object.assign({...taxasDef},raw.nf),rv:Object.assign({...taxasDef},raw.rv),ct:Object.assign({...taxasDef},raw.ct)};
+      store={nf:Object.assign({...baseNF},raw.nf),rv:Object.assign({...taxasDef},raw.rv),ct:Object.assign({...taxasDef},raw.ct)};
     }else{
-      store={nf:Object.assign({...taxasDef},raw),rv:Object.assign({...taxasDef},raw),ct:Object.assign({...taxasDef},raw)};
+      store={nf:Object.assign({...baseNF},raw),rv:Object.assign({...taxasDef},raw),ct:Object.assign({...taxasDef},raw)};
     }
     const _credBandKeys=['visa','master','elo','amex','diners','hipercard','outros'];
     ['nf','rv','ct'].forEach(function(co){
@@ -2716,8 +2737,8 @@ function applyData(d){
     });
     return store;
   }
-  if(d.taxas)taxas=_migrateTaxaStore(d.taxas);
-  if(d.taxasMaq)taxasMaq=_migrateTaxaStore(d.taxasMaq);
+  if(d.taxas)taxas=_migrateTaxaStore(d.taxas,false);
+  if(d.taxasMaq)taxasMaq=_migrateTaxaStore(d.taxasMaq,true);
   if(d.ids){
     const ids=d.ids;
     if(ids.txNid)txNid=ids.txNid;if(ids.cursoNid)cursoNid=ids.cursoNid;
