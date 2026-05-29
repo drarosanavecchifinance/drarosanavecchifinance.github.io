@@ -770,6 +770,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
             <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Master Crédito (%)</label><input class="finp" id="txMasterCred" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
             <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Elo Crédito (%)</label><input class="finp" id="txEloCred" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
             <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Amex (%)</label><input class="finp" id="txAmex" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
+            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Diners (%)</label><input class="finp" id="txDiners" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
             <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Hipercard (%)</label><input class="finp" id="txHiper" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
             <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Outros Crédito (%)</label><input class="finp" id="txOutrosCred" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
             <div style="grid-column:1/-1;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;padding-top:4px">Débito</div>
@@ -908,7 +909,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
       <div class="fgp"><label class="fl">Empresa</label><select class="fse" id="fCo" onchange="checkStu();toggleCursoField();toggleVendField();toggleProcField()"><option value="nf">NatureFace</option><option value="rv">Rosana Academy</option><option value="ct">Consultório</option></select></div>
       <div class="fgp" id="fVendWrap" style="display:none"><label class="fl">Vendedora</label><select class="fse" id="fVend"><option value="">— Nenhuma —</option></select></div>
       <div class="fgp" id="fFpgWrap" style="display:none"><label class="fl">Forma de Pagamento</label><select class="fse" id="fFpg" onchange="toggleBandeiraField()"><option value="">— Selecione —</option><option value="pix">PIX</option><option value="debito">Débito</option><option value="credito">Crédito</option><option value="boleto">Boleto</option><option value="transferencia">Transferência</option><option value="dinheiro">Dinheiro</option></select></div>
-      <div class="fgp" id="fBandeiraWrap" style="display:none"><label class="fl">Bandeira</label><select class="fse" id="fBandeira"><option value="visa">Visa</option><option value="master">Mastercard</option><option value="elo">Elo</option><option value="amex">Amex</option><option value="hipercard">Hipercard</option><option value="outros">Outros</option></select></div>
+      <div class="fgp" id="fBandeiraWrap" style="display:none"><label class="fl">Bandeira</label><select class="fse" id="fBandeira"><option value="visa">Visa</option><option value="master">Mastercard</option><option value="elo">Elo</option><option value="amex">Amex</option><option value="diners">Diners</option><option value="hipercard">Hipercard</option><option value="outros">Outros</option></select></div>
       <div class="fgp" id="cursoFieldWrap"><label class="fl">Curso (opcional)</label><select class="fse" id="fCrs"><option value="">— Nenhum —</option></select></div>
       <div class="fgp" id="fProcWrap" style="display:none"><label class="fl">Procedimento (opcional)</label><select class="fse" id="fProc"><option value="">— Nenhum —</option></select></div>
       <div class="fgp"><label class="fl">Status</label><select class="fse" id="fSt"><option value="paid">Pago</option><option value="pend">Pendente</option><option value="due">Vence Hoje</option><option value="sched">Agendado</option></select></div>
@@ -1069,7 +1070,7 @@ let editProcedimentoId=null, procedureNid=1, procedureNcode=1;
 // ===== DATA =====
 let patients=[];
 let procedures=[];
-const taxasDef={pix:0,dinheiro:0,transferencia:0,boleto:2,visa_credito:2.99,visa_debito:1.49,master_credito:2.99,master_debito:1.49,elo_credito:3.19,elo_debito:1.79,amex:3.49,hipercard:3.29,outros_credito:2.99,outros_debito:1.49};
+const taxasDef={pix:0,dinheiro:0,transferencia:0,boleto:2,visa_credito:2.99,visa_debito:1.49,master_credito:2.99,master_debito:1.49,elo_credito:3.19,elo_debito:1.79,amex_credito:3.49,diners_credito:3.49,hipercard_credito:3.29,outros_credito:2.99,outros_debito:1.49};
 let taxas={nf:{...taxasDef},rv:{...taxasDef},ct:{...taxasDef}};
 let courses=[
   {id:1,code:'RVC001',name:'Protocolos Faciais Avançados',cat:'Estética Clínica',color:'#955251',startDate:'2025-07-01',endDate:'2025-09-30',val:2400,maxStu:20,status:'ativo',desc:'Curso completo de protocolos faciais premium'},
@@ -1941,7 +1942,7 @@ function openTaxasModal(){
 const _txFields=[
   ['txPix','pix'],['txBoleto','boleto'],['txTransf','transferencia'],['txDinheiro','dinheiro'],
   ['txVisaCred','visa_credito'],['txMasterCred','master_credito'],['txEloCred','elo_credito'],
-  ['txAmex','amex'],['txHiper','hipercard'],['txOutrosCred','outros_credito'],
+  ['txAmex','amex_credito'],['txDiners','diners_credito'],['txHiper','hipercard_credito'],['txOutrosCred','outros_credito'],
   ['txVisaDeb','visa_debito'],['txMasterDeb','master_debito'],['txEloDeb','elo_debito'],['txOutrosDeb','outros_debito']
 ];
 function switchTaxaTab(c){
@@ -1966,7 +1967,11 @@ function saveTaxas(){
 function taxaKey(t){
   const fpg=t.fpg||'';
   const band=t.bandeira||'';
-  if((fpg==='credito'||fpg==='debito')&&band)return band+'_'+fpg;
+  if((fpg==='credito'||fpg==='debito')&&band){
+    // amex e diners só existem como crédito
+    if((band==='amex'||band==='diners'||band==='hipercard')&&fpg==='debito')return band+'_credito';
+    return band+'_'+fpg;
+  }
   return fpg;
 }
 function getTaxa(t){const co=t.co||'nf';const key=taxaKey(t);return((taxas[co]||taxasDef)[key]||0)/100;}
@@ -2443,7 +2448,7 @@ function parseYampiPayload(p){
   const fpgMap={credit_card:'credito',pix:'pix',bank_slip:'boleto',debit_card:'debito',money:'dinheiro',transfer:'transferencia'};
   const fpg=fpgMap[fpgRaw]||'';
   const brandRaw=(r.payment?.brand||r.payment?.card_brand||r.brand||'').toLowerCase().replace(/[\s-]/g,'');
-  const brandMap={visa:'visa',mastercard:'master',master:'master',elo:'elo',amex:'amex',americanexpress:'amex',hipercard:'hipercard',hiper:'hipercard'};
+  const brandMap={visa:'visa',mastercard:'master',master:'master',elo:'elo',amex:'amex',americanexpress:'amex',diners:'diners',dinersclub:'diners',hipercard:'hipercard',hiper:'hipercard'};
   const bandeira=brandMap[brandRaw]||'outros';
   return{nome,val,items,num,fpg,bandeira};
 }
@@ -2629,7 +2634,7 @@ function parseCEPayload(p){
   const pmArr=r.payment_methods||[];
   const fpg=pmArr.map(function(m){return m.name;}).join(', ')||(r.payment_method?.name||'');
   const brandRaw=(pmArr[0]?.brand||pmArr[0]?.card_brand||r.payment_method?.brand||p.brand||'').toLowerCase().replace(/[\s-]/g,'');
-  const bMap={visa:'visa',mastercard:'master',master:'master',elo:'elo',amex:'amex',americanexpress:'amex',hipercard:'hipercard',hiper:'hipercard'};
+  const bMap={visa:'visa',mastercard:'master',master:'master',elo:'elo',amex:'amex',americanexpress:'amex',diners:'diners',dinersclub:'diners',hipercard:'hipercard',hiper:'hipercard'};
   const bandeira=bMap[brandRaw]||'outros';
   // data do atendimento
   const dtAt=r.sale_date||r.starts_at||r.due_date||'';
