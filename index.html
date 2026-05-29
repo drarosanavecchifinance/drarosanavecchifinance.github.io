@@ -748,10 +748,12 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
       <button onclick="openTaxasModal()" title="Configurar Taxas" style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:18px;color:var(--t3);padding:4px 8px;border-radius:6px;line-height:1" onmouseover="this.style.color='var(--t1)'" onmouseout="this.style.color='var(--t3)'">⚙️</button>
     </div>
     <!-- Modal Taxas -->
-    <div class="modal" id="taxasModal">
-      <div class="mbox" style="max-width:740px">
-        <div class="mhd"><span>⚙️ Taxas por Empresa</span><button class="mcl" onclick="closeM('taxasModal')">✕</button></div>
-        <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+    <div class="ov" id="taxasModal">
+      <div class="mo" style="width:740px;max-width:96vw">
+        <button class="mcl" onclick="closeM('taxasModal')">✕</button>
+        <div class="mttl">⚙️ Taxas por Empresa</div>
+        <div class="msub">Configure taxas por empresa. Cada aba salva valores independentes.</div>
+        <div style="display:flex;flex-direction:column;gap:14px">
           <p style="font-size:13px;color:var(--t3);margin:0">Configure a taxa de cada operadora por empresa. O valor líquido na Carteira é calculado automaticamente.</p>
           <div id="taxasTabBtns" style="display:flex;gap:6px">
             <button class="bs a" id="tbtNF" onclick="switchTaxaTab('nf')" style="flex:1;font-size:12px">🔴 NatureFace</button>
@@ -799,6 +801,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
         </div>
       </div>
     </div>
+    <!-- fim Modal Taxas -->
     <!-- KPIs -->
     <div class="kg" style="margin-bottom:22px" id="carteiraKpis"></div>
     <!-- Gráfico previsão -->
@@ -1978,6 +1981,8 @@ function saveEvent(){
 // ===== MODALS =====
 function closeM(id){document.getElementById(id).classList.remove('o');}
 document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('o');}));
+// taxasModal agora tem classe .ov mas pode ter sido inserido após o forEach acima
+(function(){const tm=document.getElementById('taxasModal');if(tm&&!tm._ovBound){tm._ovBound=true;tm.addEventListener('click',function(e){if(e.target===tm)closeM('taxasModal');});}})();
 
 // ===== VAI =====
 const vm={'Quanto faturamos este mês?':'Com base nos dados de julho/2025, o faturamento total atingiu <strong>R$ 284.750</strong>:<br><br>• NatureFace: <strong>R$ 148.200</strong> (52%)<br>• Rosana Academy: <strong>R$ 136.550</strong> (48%)<br><br>Crescimento de <strong>+18,3%</strong> vs junho. 🚀','Qual empresa cresceu mais?':'A <strong>Rosana Academy lidera</strong> com <strong>+22%</strong> em julho, impulsionada por +31% em novas matrículas.<br><br>NatureFace cresceu +16%, com destaque para protocolos premium. 🎯','Preveja o faturamento do próximo mês':'Previsão para <strong>agosto/2025</strong>:<br><br>📊 <strong>R$ 316.000</strong> (±8%)<br>• NatureFace: ~R$ 164.000<br>• Rosana Academy: ~R$ 152.000<br><br>Alta demanda inverno + novo curso. Confiança: 78%','Onde posso reduzir custos?':'<strong>3 oportunidades identificadas:</strong><br><br>1️⃣ <strong>Marketing Digital</strong> — 12% acima do budget<br>2️⃣ <strong>Derma+</strong> — Negociar desconto por volume (-8%)<br>3️⃣ <strong>Licenças</strong> — Consolidar ferramentas (R$ 890/mês)','Qual categoria mais lucrou?':'🏆 <strong>Top 3 por margem em julho:</strong><br><br>1. <strong>Mentorias Premium</strong> — 71% → R$ 38.400<br>2. <strong>Protocolos Avançados</strong> — 58% → R$ 24.100<br>3. <strong>Cursos Certificadores</strong> — 52% → R$ 29.300'};
@@ -2045,9 +2050,9 @@ function renderVendDesemp(){
 }
 
 // ===== TAXAS =====
-let _taxaTab='nf';
+let _taxaTab=null;
 function openTaxasModal(){
-  _taxaTab='nf';
+  _taxaTab=null; // garante que não salva lixo antes de carregar
   switchTaxaTab('nf');
   document.getElementById('taxasModal').classList.add('o');
 }
@@ -2058,7 +2063,7 @@ const _txFieldsFlat=[
 const _credBands=['visa','master','elo','amex','diners','hipercard','outros'];
 const _credTiers=[1,2,3,4,5,6,7,8,9,10,11,12];
 function switchTaxaTab(c){
-  if(_taxaTab)_saveTaxaTab(_taxaTab);
+  if(_taxaTab&&_taxaTab!==c)_saveTaxaTab(_taxaTab); // salva só ao MUDAR de aba
   _taxaTab=c;
   document.getElementById('tbtNF').classList.toggle('a',c==='nf');
   document.getElementById('tbtRV').classList.toggle('a',c==='rv');
