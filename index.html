@@ -1857,11 +1857,9 @@ function delTx(id){
   const t=txs.find(x=>x.id===id);if(!t)return;
   if(t.grupoId){
     const cnt=txs.filter(x=>x.grupoId===t.grupoId).length;
-    if(cnt>1){
-      const all=confirm('Este lançamento faz parte de um grupo de '+cnt+' parcelas.\n\nOK → Excluir TODAS as '+cnt+' parcelas\nCancelar → Excluir somente esta');
-      txs=all?txs.filter(x=>x.grupoId!==t.grupoId):txs.filter(x=>x.id!==id);
-      renderTx();saveData();return;
-    }
+    if(!confirm('Excluir todas as '+cnt+' parcelas deste grupo?'))return;
+    txs=txs.filter(x=>x.grupoId!==t.grupoId);
+    renderTx();saveData();return;
   }
   if(!confirm('Excluir este lançamento?'))return;
   txs=txs.filter(x=>x.id!==id);renderTx();saveData();
@@ -1870,11 +1868,9 @@ function delTxCart(id){
   const t=txs.find(x=>x.id===id);if(!t)return;
   if(t.grupoId){
     const cnt=txs.filter(x=>x.grupoId===t.grupoId).length;
-    if(cnt>1){
-      const all=confirm('Este lançamento faz parte de um grupo de '+cnt+' parcelas.\n\nOK → Excluir TODAS as '+cnt+' parcelas\nCancelar → Excluir somente esta');
-      txs=all?txs.filter(x=>x.grupoId!==t.grupoId):txs.filter(x=>x.id!==id);
-      renderCarteira();saveData();return;
-    }
+    if(!confirm('Excluir todas as '+cnt+' parcelas deste grupo?'))return;
+    txs=txs.filter(x=>x.grupoId!==t.grupoId);
+    renderCarteira();saveData();return;
   }
   if(!confirm('Excluir este lançamento?'))return;
   txs=txs.filter(x=>x.id!==id);renderCarteira();saveData();
