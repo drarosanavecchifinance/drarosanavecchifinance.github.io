@@ -2799,6 +2799,20 @@ function subscribeRealtime(){
       autoImportYampiEvent(ev);
     })
     .subscribe();
+  // Importa eventos Yampi que chegaram enquanto o app estava fechado
+  loadYampiPending();
+}
+
+async function loadYampiPending(){
+  if(!supabaseReady)return;
+  try{
+    const db=sbAdmin||sbClient;
+    const{data,error}=await db.from('yampi_events').select('*').eq('imported',false).order('received_at',{ascending:true});
+    if(error){console.warn('loadYampiPending error:',error);return;}
+    if(!data||!data.length)return;
+    console.log('🛒 Yampi: '+data.length+' evento(s) pendente(s) encontrado(s)');
+    for(const ev of data){await autoImportYampiEvent(ev);}
+  }catch(e){console.warn('loadYampiPending exception:',e);}
 }
 
 async function autoImportCEEvent(ev){
@@ -2827,8 +2841,9 @@ function parseYampiPayload(p){
   // nome do cliente
   const nome=(r.customer?.name||r.customer?.first_name&&(r.customer.first_name+' '+(r.customer.last_name||''))||p.customer_name||'—').trim();
   // valor total (Yampi envia em BRL como string, ex: "290.00")
-  const rawVal=parseFloat(r.total||r.total_items||r.value||p.total||0)||0;
-  const val=rawVal; // já em BRL, não em centavos
+  const rawVal=parseFloat(r.total||r.total_price||r.grand_total||r.amount||r.total_items||r.value||p.total||p.amount||0)||0;
+  // Yampi envia em BRL (ex: "290.00"); se vier em centavos (>1000 e inteiro), converte
+  const val=rawVal>1000&&Number.isInteger(rawVal)?rawVal/100:rawVal;
   // produtos
   const items=(r.items||[]).map(function(i){return(i.product?.title||i.title||i.name||'');}).filter(Boolean).join(', ')||'Venda Yampi';
   // número do pedido
@@ -2847,12 +2862,21 @@ function parseYampiPayload(p){
 async function autoImportYampiEvent(ev){
   const p=ev.payload||{};
   const evType=(ev.event_type||'').toLowerCase();
-  // Só importa pedidos pagos
-  const isPaid=evType.includes('paid')||evType.includes('order')||
-    (p.resource?.status?.alias||p.status?.alias||'').toLowerCase()==='paid';
+  // Claramente NÃO é pagamento — descarta sem criar tx
+  const isClearlyCancelled=evType.includes('cancel')||evType.includes('abandon')||evType.includes('refund')||evType.includes('fail')||evType.includes('recus');
+  if(isClearlyCancelled){
+    try{const db=sbAdmin||sbClient;await db.from('yampi_events').update({imported:true}).eq('id',ev.id);}catch(e){}
+    return;
+  }
+  // Verifica se é evento de pagamento confirmado
+  const statusStr=(p.resource?.status?.alias||p.status?.alias||p.resource?.status||'').toString().toLowerCase();
+  const isPaid=
+    evType.includes('paid')||evType.includes('payment')||evType.includes('aprovad')||evType.includes('approved')||evType.includes('confirmed')||evType.includes('complete')||
+    statusStr==='paid'||statusStr.includes('paid')||statusStr.includes('aprovad')||statusStr.includes('approved')||statusStr.includes('confirmed');
   const{nome,val,items,num,fpg,bandeira,parcelas}=parseYampiPayload(p);
   if(!val||val<=0||!isPaid){
-    try{const db=sbAdmin||sbClient;await db.from('yampi_events').update({imported:true}).eq('id',ev.id);}catch(e){}
+    // Não descarta eventos ambíguos — mantém como pending para não perder vendas
+    if(!val||val<=0){try{const db=sbAdmin||sbClient;await db.from('yampi_events').update({imported:true}).eq('id',ev.id);}catch(e){}}
     return;
   }
   const now=new Date().toISOString().slice(0,10);
