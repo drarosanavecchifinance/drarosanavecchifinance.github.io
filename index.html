@@ -589,7 +589,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
         <option>RH</option><option>Tecnologia</option><option>Cursos</option><option>Mentorias</option>
         <option>Procedimentos</option><option>Seguros</option><option>Outros</option>
       </select>
+      <input class="srch" id="fSrch" placeholder="Buscar por descrição ou valor..." oninput="renderTx()" style="min-width:220px">
       <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="bs" onclick="openGruposModal()" title="Gerenciar grupos de parcelamento">🔗 Parcelamentos</button>
         <button class="bs">📥 Exportar</button>
         <button class="bp" onclick="openAddTx()">+ Novo Lançamento</button>
       </div>
@@ -1055,6 +1057,17 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
   </div>
 </div>
 
+<!-- MODAL PARCELAMENTOS -->
+<div class="ov" id="gruposModal">
+  <div class="mo" style="width:680px;max-width:96vw">
+    <button class="mcl" onclick="closeM('gruposModal')">×</button>
+    <div class="mttl">🔗 Gerenciar Parcelamentos</div>
+    <div class="msub">Todos os grupos de parcelas de todas as empresas</div>
+    <div id="gruposBody" style="max-height:60vh;overflow-y:auto;margin-top:14px"></div>
+    <div class="mft"><button class="bp" onclick="closeM('gruposModal')">Fechar</button></div>
+  </div>
+</div>
+
 <!-- MODAL EVENTO -->
 <div class="ov" id="evModal">
   <div class="mo">
@@ -1502,17 +1515,29 @@ function renderTx(){
   const body=document.getElementById('txBody');if(!body)return;
   const mesSel=(document.getElementById('fFiltMes')?.value||'').trim();
   const catSel=(document.getElementById('fFiltCat')?.value||'').trim();
+  const srch=(document.getElementById('fSrch')?.value||'').trim().toLowerCase();
   const mesMap={Janeiro:1,Fevereiro:2,'Março':3,Abril:4,Maio:5,Junho:6,Julho:7,Agosto:8,Setembro:9,Outubro:10,Novembro:11,Dezembro:12};
   let filterMes=0,filterAno=0;
   if(mesSel){const parts=mesSel.split(' ');if(parts.length===2){filterMes=mesMap[parts[0]]||0;filterAno=parseInt(parts[1])||0;}}
   const inPeriod=t=>{if(!filterMes||!filterAno)return true;const[ty,tm]=t.due.split('-');return parseInt(tm)===filterMes&&parseInt(ty)===filterAno;};
   const today=new Date();today.setHours(0,0,0,0);
   const in30=new Date(today);in30.setDate(in30.getDate()+30);
-  // Banner filtro de grupo
+  // Banner filtro de grupo / busca
   const bannerEl=document.getElementById('grupoBanner');
-  if(bannerEl){if(filterGrupo){const cnt=txs.filter(t=>t.grupoId===filterGrupo).length;bannerEl.style.display='';bannerEl.innerHTML=`🔗 Exibindo grupo <strong>${filterGrupo}</strong> — ${cnt} parcelas <button onclick="clearGrupoFilter()">✕ Limpar</button>`;}else{bannerEl.style.display='none';}}
+  if(bannerEl){
+    if(srch){bannerEl.style.display='';bannerEl.innerHTML=`🔍 Busca ativa: "<strong>${srch}</strong>" — mostrando todas as empresas e períodos <button onclick="document.getElementById('fSrch').value='';renderTx()">✕ Limpar</button>`;}
+    else if(filterGrupo){const cnt=txs.filter(t=>t.grupoId===filterGrupo).length;bannerEl.style.display='';bannerEl.innerHTML=`🔗 Exibindo grupo <strong>${filterGrupo}</strong> — ${cnt} parcelas <button onclick="clearGrupoFilter()">✕ Limpar</button>`;}
+    else{bannerEl.style.display='none';}
+  }
   const showAllStatus=ftab==='pagar'&&(subftab==='apagar'||subftab==='avencer');
   let list=txs.filter(t=>{
+    // Busca por texto: ignora filtros de empresa/mês/tab quando há busca ativa
+    if(srch){
+      const matchName=t.name&&t.name.toLowerCase().includes(srch);
+      const matchVal=String(t.val).includes(srch)||t.val.toLocaleString('pt-BR',{minimumFractionDigits:2}).includes(srch);
+      const matchGrupo=t.grupoId&&t.grupoId.toLowerCase().includes(srch);
+      return matchName||matchVal||matchGrupo;
+    }
     if(filterGrupo){return t.grupoId===filterGrupo;}
     if(co!=='all'&&t.co!==co)return false;
     if(!showAllStatus&&t.status!=='paid')return false;
@@ -1853,6 +1878,59 @@ function delTxCart(id){
   }
   if(!confirm('Excluir este lançamento?'))return;
   txs=txs.filter(x=>x.id!==id);renderCarteira();saveData();
+}
+function openGruposModal(){
+  const body=document.getElementById('gruposBody');if(!body)return;
+  const fmt=v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const coName={nf:'NatureFace',rv:'Rosana Academy',ct:'Consultório',all:'Consolidado'};
+  // Agrupar por grupoId
+  const groups={};
+  txs.forEach(t=>{if(!t.grupoId)return;if(!groups[t.grupoId])groups[t.grupoId]=[];groups[t.grupoId].push(t);});
+  const ids=Object.keys(groups).sort();
+  if(!ids.length){
+    body.innerHTML='<div style="padding:24px;text-align:center;color:var(--t3);font-size:13.5px">Nenhum parcelamento encontrado.</div>';
+    document.getElementById('gruposModal').classList.add('o');return;
+  }
+  let html='';
+  ids.forEach(gid=>{
+    const g=groups[gid].sort((a,b)=>a.parcelaNum-b.parcelaNum);
+    const first=g[0];
+    const paid=g.filter(t=>t.status==='paid').length;
+    const pend=g.length-paid;
+    const valParcela=first.val;
+    const parcTotal=first.parcelaTotal||g.length;
+    const fullTotal=valParcela*parcTotal;
+    const rangeStart=g[0].due||'';const rangeEnd=g[g.length-1].due||'';
+    html+=`<div style="border:1.5px solid var(--bdr);border-radius:var(--r);padding:14px 16px;margin-bottom:10px;background:var(--card)">
+      <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:600;color:var(--t1);margin-bottom:4px">${first.name||'—'}</div>
+          <div style="font-size:12px;color:var(--t3)">${coName[first.co]||first.co} · ${parcTotal}x de ${fmt(valParcela)} = <strong style="color:var(--t2)">${fmt(fullTotal)}</strong></div>
+          <div style="font-size:11px;color:var(--t3);margin-top:2px">${rangeStart?fmtDateShort(rangeStart):'?'} → ${rangeEnd?fmtDateShort(rangeEnd):'?'}</div>
+          <div style="display:flex;gap:7px;margin-top:8px;flex-wrap:wrap">
+            <span style="font-size:11px;padding:2px 8px;border-radius:20px;background:var(--grb);color:var(--gr);font-weight:600">✓ ${paid} paga${paid!==1?'s':''}</span>
+            ${pend>0?`<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:var(--orb);color:var(--or);font-weight:600">⏳ ${pend} pendente${pend!==1?'s':''}</span>`:''}
+            <span style="font-size:11px;padding:2px 8px;border-radius:20px;background:var(--bg);color:var(--t3);border:1px solid var(--bdr)">${gid}</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:7px;align-items:center;flex-shrink:0;padding-top:2px">
+          <button class="bs" style="font-size:12px;padding:7px 12px" onclick="viewGrupo('${gid}');closeM('gruposModal')">🔍 Ver no Financeiro</button>
+          <button style="font-size:12px;padding:7px 12px;border-radius:8px;border:1.5px solid var(--reb);background:var(--card);color:var(--re);cursor:pointer;font-family:inherit;font-weight:500;transition:all .14s" onmouseover="this.style.background='var(--reb)'" onmouseout="this.style.background='var(--card)'" onclick="delGrupoAll('${gid}')">🗑 Excluir grupo</button>
+        </div>
+      </div>
+    </div>`;
+  });
+  body.innerHTML=html;
+  document.getElementById('gruposModal').classList.add('o');
+}
+function delGrupoAll(gid){
+  const cnt=txs.filter(t=>t.grupoId===gid).length;
+  if(!confirm('Excluir todas as '+cnt+' parcelas do grupo '+gid+'?\n\nEsta ação não pode ser desfeita.'))return;
+  txs=txs.filter(t=>t.grupoId!==gid);
+  // Re-render modal se ainda aberto
+  const m=document.getElementById('gruposModal');
+  if(m&&m.classList.contains('o'))openGruposModal();
+  renderTx();renderCarteira();saveData();
 }
 
 // ===== STUDENTS =====
