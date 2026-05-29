@@ -1748,7 +1748,7 @@ function openAddTx(){
   editTxId=null;document.getElementById('txMT').textContent='Novo Lançamento';
   ['fNm','fNo'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('fTy').value='pagar';
-  document.getElementById('fCo').value=(co==='ct')?'ct':(co==='rv')?'rv':'nf';document.getElementById('fSt').value='sched';
+  document.getElementById('fCo').value=(co==='ct')?'ct':(co==='rv')?'rv':'nf';document.getElementById('fSt').value='paid';
   document.getElementById('fDu').value='';document.getElementById('fVl').value='';const fr=document.getElementById('fVlRest');if(fr)fr.value='';
   const rec=document.getElementById('fRec');if(rec)rec.value='';
   const rqw=document.getElementById('fRecQtdWrap');if(rqw)rqw.style.display='none';
