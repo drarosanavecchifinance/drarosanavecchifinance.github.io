@@ -756,20 +756,33 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
             <button class="bs" id="tbtRV" onclick="switchTaxaTab('rv')" style="flex:1;font-size:12px">🔴 Academy</button>
             <button class="bs" id="tbtCT" onclick="switchTaxaTab('ct')" style="flex:1;font-size:12px">🟢 Consultório</button>
           </div>
-          <div id="taxasFields" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;max-height:340px;overflow-y:auto;padding-right:4px">
+          <div id="taxasFields" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;max-height:480px;overflow-y:auto;padding-right:4px">
             <div style="grid-column:1/-1;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;padding-top:4px">Outros</div>
             <div><label style="font-size:12px;font-weight:600;color:var(--t2)">PIX (%)</label><input class="finp" id="txPix" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
             <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Boleto (%)</label><input class="finp" id="txBoleto" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
             <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Transferência (%)</label><input class="finp" id="txTransf" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
             <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Dinheiro (%)</label><input class="finp" id="txDinheiro" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
-            <div style="grid-column:1/-1;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;padding-top:4px">Crédito</div>
-            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Visa Crédito (%)</label><input class="finp" id="txVisaCred" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
-            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Master Crédito (%)</label><input class="finp" id="txMasterCred" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
-            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Elo Crédito (%)</label><input class="finp" id="txEloCred" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
-            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Amex (%)</label><input class="finp" id="txAmex" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
-            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Diners (%)</label><input class="finp" id="txDiners" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
-            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Hipercard (%)</label><input class="finp" id="txHiper" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
-            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Outros Crédito (%)</label><input class="finp" id="txOutrosCred" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
+            <div style="grid-column:1/-1;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;padding-top:4px">Crédito por Parcelas (%)</div>
+            <div style="grid-column:1/-1;overflow-x:auto">
+              <table style="width:100%;border-collapse:collapse;font-size:11.5px">
+                <thead><tr style="border-bottom:1px solid var(--bdr)">
+                  <th style="text-align:left;padding:3px 8px;color:var(--t3);font-weight:600">Bandeira</th>
+                  <th style="padding:3px 6px;color:var(--t3);font-weight:600;text-align:center">1x</th>
+                  <th style="padding:3px 6px;color:var(--t3);font-weight:600;text-align:center">2-3x</th>
+                  <th style="padding:3px 6px;color:var(--t3);font-weight:600;text-align:center">4-6x</th>
+                  <th style="padding:3px 6px;color:var(--t3);font-weight:600;text-align:center">7-12x</th>
+                </tr></thead>
+                <tbody>
+                  <tr><td style="padding:3px 8px;font-weight:600;color:var(--t2)">Visa</td><td style="padding:2px 3px"><input class="finp" id="tcr_visa_1" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_visa_3" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_visa_6" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_visa_12" type="number" step="0.001" min="0" max="20"></td></tr>
+                  <tr><td style="padding:3px 8px;font-weight:600;color:var(--t2)">Master</td><td style="padding:2px 3px"><input class="finp" id="tcr_master_1" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_master_3" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_master_6" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_master_12" type="number" step="0.001" min="0" max="20"></td></tr>
+                  <tr><td style="padding:3px 8px;font-weight:600;color:var(--t2)">Elo</td><td style="padding:2px 3px"><input class="finp" id="tcr_elo_1" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_elo_3" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_elo_6" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_elo_12" type="number" step="0.001" min="0" max="20"></td></tr>
+                  <tr><td style="padding:3px 8px;font-weight:600;color:var(--t2)">Amex</td><td style="padding:2px 3px"><input class="finp" id="tcr_amex_1" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_amex_3" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_amex_6" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_amex_12" type="number" step="0.001" min="0" max="20"></td></tr>
+                  <tr><td style="padding:3px 8px;font-weight:600;color:var(--t2)">Diners</td><td style="padding:2px 3px"><input class="finp" id="tcr_diners_1" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_diners_3" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_diners_6" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_diners_12" type="number" step="0.001" min="0" max="20"></td></tr>
+                  <tr><td style="padding:3px 8px;font-weight:600;color:var(--t2)">Hipercard</td><td style="padding:2px 3px"><input class="finp" id="tcr_hipercard_1" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_hipercard_3" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_hipercard_6" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_hipercard_12" type="number" step="0.001" min="0" max="20"></td></tr>
+                  <tr><td style="padding:3px 8px;font-weight:600;color:var(--t2)">Outros</td><td style="padding:2px 3px"><input class="finp" id="tcr_outros_1" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_outros_3" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_outros_6" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_outros_12" type="number" step="0.001" min="0" max="20"></td></tr>
+                </tbody>
+              </table>
+            </div>
             <div style="grid-column:1/-1;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;padding-top:4px">Débito</div>
             <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Visa Débito (%)</label><input class="finp" id="txVisaDeb" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
             <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Master Débito (%)</label><input class="finp" id="txMasterDeb" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
@@ -907,6 +920,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
       <div class="fgp" id="fVendWrap" style="display:none"><label class="fl">Vendedora</label><select class="fse" id="fVend"><option value="">— Nenhuma —</option></select></div>
       <div class="fgp" id="fFpgWrap" style="display:none"><label class="fl">Forma de Pagamento</label><select class="fse" id="fFpg" onchange="toggleBandeiraField()"><option value="">— Selecione —</option><option value="pix">PIX</option><option value="debito">Débito</option><option value="credito">Crédito</option><option value="boleto">Boleto</option><option value="transferencia">Transferência</option><option value="dinheiro">Dinheiro</option></select></div>
       <div class="fgp" id="fBandeiraWrap" style="display:none"><label class="fl">Bandeira</label><select class="fse" id="fBandeira"><option value="visa">Visa</option><option value="master">Mastercard</option><option value="elo">Elo</option><option value="amex">Amex</option><option value="diners">Diners</option><option value="hipercard">Hipercard</option><option value="outros">Outros</option></select></div>
+      <div class="fgp" id="fParcelasWrap" style="display:none"><label class="fl">Parcelas (cartão)</label><select class="fse" id="fParcelas"><option value="1">1x (à vista)</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option><option value="6">6x</option><option value="7">7x</option><option value="8">8x</option><option value="9">9x</option><option value="10">10x</option><option value="11">11x</option><option value="12">12x</option></select></div>
       <div class="fgp" id="cursoFieldWrap"><label class="fl">Curso (opcional)</label><select class="fse" id="fCrs"><option value="">— Nenhum —</option></select></div>
       <div class="fgp" id="fProcWrap" style="display:none"><label class="fl">Procedimento (opcional)</label><select class="fse" id="fProc"><option value="">— Nenhum —</option></select></div>
       <div class="fgp"><label class="fl">Status</label><select class="fse" id="fSt"><option value="paid">Pago</option><option value="pend">Pendente</option><option value="due">Vence Hoje</option><option value="sched">Agendado</option></select></div>
@@ -1067,7 +1081,19 @@ let editProcedimentoId=null, procedureNid=1, procedureNcode=1;
 // ===== DATA =====
 let patients=[];
 let procedures=[];
-const taxasDef={pix:0,dinheiro:0,transferencia:0,boleto:2,visa_credito:2.99,visa_debito:1.49,master_credito:2.99,master_debito:1.49,elo_credito:3.19,elo_debito:1.79,amex_credito:3.49,diners_credito:3.49,hipercard_credito:3.29,outros_credito:2.99,outros_debito:1.49};
+const _cTiers=[{max:1},{max:3},{max:6},{max:12}];
+function _mkCred(t1,t2,t3,t4){return[{max:1,taxa:t1},{max:3,taxa:t2},{max:6,taxa:t3},{max:12,taxa:t4}];}
+const taxasDef={
+  pix:0,dinheiro:0,transferencia:0,boleto:2,
+  visa_debito:1.49,master_debito:1.49,elo_debito:1.79,outros_debito:1.49,
+  visa_credito:_mkCred(2.99,3.11,3.11,3.475),
+  master_credito:_mkCred(2.99,3.11,3.11,3.475),
+  elo_credito:_mkCred(3.19,3.30,3.30,3.50),
+  amex_credito:_mkCred(3.49,3.49,3.49,3.70),
+  diners_credito:_mkCred(3.49,3.49,3.49,3.70),
+  hipercard_credito:_mkCred(3.29,3.29,3.29,3.50),
+  outros_credito:_mkCred(2.99,3.11,3.11,3.475)
+};
 let taxas={nf:{...taxasDef},rv:{...taxasDef},ct:{...taxasDef}};
 let courses=[
   {id:1,code:'RVC001',name:'Protocolos Faciais Avançados',cat:'Estética Clínica',color:'#955251',startDate:'2025-07-01',endDate:'2025-09-30',val:2400,maxStu:20,status:'ativo',desc:'Curso completo de protocolos faciais premium'},
@@ -1568,8 +1594,9 @@ function toggleCursoField(){
 }
 function toggleBandeiraField(){
   const fpg=document.getElementById('fFpg')?.value;
-  const bw=document.getElementById('fBandeiraWrap');
-  if(bw)bw.style.display=(fpg==='credito'||fpg==='debito')?'':'none';
+  const isCard=fpg==='credito'||fpg==='debito';
+  const bw=document.getElementById('fBandeiraWrap');if(bw)bw.style.display=isCard?'':'none';
+  const pw=document.getElementById('fParcelasWrap');if(pw)pw.style.display=fpg==='credito'?'':'none';
 }
 function toggleProcField(){
   const coVal=document.getElementById('fCo')?.value;
@@ -1695,6 +1722,7 @@ function openAddTx(){
   const pp=document.getElementById('fParcPreview');if(pp){pp.style.display='none';pp.innerHTML='';}
   const fpgRst=document.getElementById('fFpg');if(fpgRst)fpgRst.value='';
   const bndRst=document.getElementById('fBandeiraWrap');if(bndRst)bndRst.style.display='none';
+  const parRst=document.getElementById('fParcelas');if(parRst)parRst.value='1';const parwRst=document.getElementById('fParcelasWrap');if(parwRst)parwRst.style.display='none';
   populateCursoSelects();toggleCursoField();toggleRec();toggleVendField();toggleProcField();checkStu();tgStu('new');
   ['sNm','sEm','sPh','sCp','sSt','sBa','sCe','sCi'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const sc=document.getElementById('sCode');if(sc)sc.value=genStuCode();
@@ -1715,7 +1743,7 @@ function editTx(id){
   const ppE=document.getElementById('fParcPreview');if(ppE){ppE.style.display='none';ppE.innerHTML='';}
   populateCursoSelects();toggleCursoField();document.getElementById('fCrs').value=t.courseId||'';
   toggleProcField();setTimeout(()=>{const sp=document.getElementById('fProc');if(sp&&t.procedureId)sp.value=t.procedureId;},30);
-  toggleVendField();setTimeout(()=>{const sv=document.getElementById('fVend');if(sv&&t.vendId)sv.value=t.vendId;const sf=document.getElementById('fFpg');if(sf&&t.fpg){sf.value=t.fpg;toggleBandeiraField();const sb=document.getElementById('fBandeira');if(sb&&t.bandeira)sb.value=t.bandeira;}},30);
+  toggleVendField();setTimeout(()=>{const sv=document.getElementById('fVend');if(sv&&t.vendId)sv.value=t.vendId;const sf=document.getElementById('fFpg');if(sf&&t.fpg){sf.value=t.fpg;toggleBandeiraField();const sb=document.getElementById('fBandeira');if(sb&&t.bandeira)sb.value=t.bandeira;const sp=document.getElementById('fParcelas');if(sp&&t.parcelas)sp.value=t.parcelas;}},30);
   checkStu();const linked=students.find(s=>s.txId===id);
   if(linked){tgStu('exist');setTimeout(()=>{const sel=document.getElementById('sExSel');if(sel){sel.value=linked.id;previewExistStu();}},60);}else tgStu('new');
   document.getElementById('txModal').classList.add('o');
@@ -1726,8 +1754,9 @@ function saveTx(){
   const vendIdRaw=document.getElementById('fVend')?.value;
   const fpgVal=document.getElementById('fFpg')?.value||'';
   const bandeiraVal=(fpgVal==='credito'||fpgVal==='debito')?(document.getElementById('fBandeira')?.value||''):'';
+  const parcelasVal=fpgVal==='credito'?parseInt(document.getElementById('fParcelas')?.value||'1')||1:1;
   const procIdRaw=document.getElementById('fProc')?.value;
-  const tx={id:editTxId||txNid++,name,type:document.getElementById('fTy').value,cat:existCat,co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,procedureId:procIdRaw?parseInt(procIdRaw):null,vendId:vendIdRaw?parseInt(vendIdRaw):null,fpg:fpgVal,bandeira:bandeiraVal,status:document.getElementById('fSt').value,due:document.getElementById('fDu').value||new Date().toISOString().slice(0,10),val:parseFloat(document.getElementById('fVl').value)||0,notes:document.getElementById('fNo').value};
+  const tx={id:editTxId||txNid++,name,type:document.getElementById('fTy').value,cat:existCat,co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,procedureId:procIdRaw?parseInt(procIdRaw):null,vendId:vendIdRaw?parseInt(vendIdRaw):null,fpg:fpgVal,bandeira:bandeiraVal,parcelas:parcelasVal,status:document.getElementById('fSt').value,due:document.getElementById('fDu').value||new Date().toISOString().slice(0,10),val:parseFloat(document.getElementById('fVl').value)||0,notes:document.getElementById('fNo').value};
   // Parcelamento (só para novos lançamentos)
   if(!editTxId){
     const rawPN=document.getElementById('fParcN')?.value;
@@ -2006,12 +2035,12 @@ function openTaxasModal(){
   switchTaxaTab('nf');
   document.getElementById('taxasModal').classList.add('o');
 }
-const _txFields=[
+const _txFieldsFlat=[
   ['txPix','pix'],['txBoleto','boleto'],['txTransf','transferencia'],['txDinheiro','dinheiro'],
-  ['txVisaCred','visa_credito'],['txMasterCred','master_credito'],['txEloCred','elo_credito'],
-  ['txAmex','amex_credito'],['txDiners','diners_credito'],['txHiper','hipercard_credito'],['txOutrosCred','outros_credito'],
   ['txVisaDeb','visa_debito'],['txMasterDeb','master_debito'],['txEloDeb','elo_debito'],['txOutrosDeb','outros_debito']
 ];
+const _credBands=['visa','master','elo','amex','diners','hipercard','outros'];
+const _credTiers=[1,3,6,12];
 function switchTaxaTab(c){
   if(_taxaTab)_saveTaxaTab(_taxaTab);
   _taxaTab=c;
@@ -2019,11 +2048,25 @@ function switchTaxaTab(c){
   document.getElementById('tbtRV').classList.toggle('a',c==='rv');
   document.getElementById('tbtCT').classList.toggle('a',c==='ct');
   const t=Object.assign({...taxasDef},taxas[c]||{});
-  _txFields.forEach(function(f){const el=document.getElementById(f[0]);if(el)el.value=t[f[1]]??0;});
+  _txFieldsFlat.forEach(function(f){const el=document.getElementById(f[0]);if(el)el.value=t[f[1]]??0;});
+  _credBands.forEach(function(band){
+    const rate=t[band+'_credito'];
+    _credTiers.forEach(function(tier,idx){
+      const el=document.getElementById('tcr_'+band+'_'+tier);
+      if(!el)return;
+      if(Array.isArray(rate)){el.value=rate[idx]?.taxa??0;}
+      else{el.value=typeof rate==='number'?rate:0;}
+    });
+  });
 }
 function _saveTaxaTab(c){
   if(!taxas[c])taxas[c]={};
-  _txFields.forEach(function(f){taxas[c][f[1]]=parseFloat(document.getElementById(f[0])?.value)||0;});
+  _txFieldsFlat.forEach(function(f){taxas[c][f[1]]=parseFloat(document.getElementById(f[0])?.value)||0;});
+  _credBands.forEach(function(band){
+    taxas[c][band+'_credito']=_credTiers.map(function(tier){
+      return{max:tier,taxa:parseFloat(document.getElementById('tcr_'+band+'_'+tier)?.value)||0};
+    });
+  });
 }
 function saveTaxas(){
   _saveTaxaTab(_taxaTab);
@@ -2041,7 +2084,16 @@ function taxaKey(t){
   }
   return fpg;
 }
-function getTaxa(t){const co=t.co||'nf';const key=taxaKey(t);return((taxas[co]||taxasDef)[key]||0)/100;}
+function getTaxa(t){
+  const co=t.co||'nf';const key=taxaKey(t);
+  const rate=(taxas[co]||taxasDef)[key];
+  if(Array.isArray(rate)){
+    const p=t.parcelas||1;
+    for(var i=0;i<rate.length;i++){if(p<=rate[i].max)return rate[i].taxa/100;}
+    return rate[rate.length-1].taxa/100;
+  }
+  return(rate||0)/100;
+}
 function valLiq(t){return t.val*(1-getTaxa(t));}
 
 // ===== CARTEIRA =====
@@ -2067,9 +2119,9 @@ function renderCarteira(){
   var paidImediatoTxs=paidTxs.filter(isImediato);
   var paidCreditoTxs=paidTxs.filter(function(t){return t.fpg==='credito';});
   var carteiraTotal=paidImediatoTxs.reduce(function(s,t){return s+valLiq(t);},0);
-  var carteiraTaxa=paidImediatoTxs.reduce(function(s,t){return s+t.val*getTaxa(t.fpg);},0);
+  var carteiraTaxa=paidImediatoTxs.reduce(function(s,t){return s+t.val*getTaxa(t);},0);
   var creditoCompTotal=paidCreditoTxs.reduce(function(s,t){return s+valLiq(t);},0);
-  var creditoTaxa=paidCreditoTxs.reduce(function(s,t){return s+t.val*getTaxa(t.fpg);},0);
+  var creditoTaxa=paidCreditoTxs.reduce(function(s,t){return s+t.val*getTaxa(t);},0);
   var fatTotal=fatTxs.reduce(function(s,t){return s+t.val;},0);
   var recTotal=fatTxs.filter(function(t){return t.status==='paid';}).reduce(function(s,t){return s+t.val;},0);
   var pendTotal=fatTxs.filter(function(t){return t.status!=='paid';}).reduce(function(s,t){return s+t.val;},0);
@@ -2422,6 +2474,14 @@ function applyData(d){
       // Migra formato antigo: aplica para todas as empresas
       taxas={nf:Object.assign({...taxasDef},d.taxas),rv:Object.assign({...taxasDef},d.taxas),ct:Object.assign({...taxasDef},d.taxas)};
     }
+    // Migra valores escalares de crédito para o formato array por parcelas
+    const _credBandKeys=['visa','master','elo','amex','diners','hipercard','outros'];
+    ['nf','rv','ct'].forEach(function(co){
+      _credBandKeys.forEach(function(band){
+        const v=taxas[co][band+'_credito'];
+        if(typeof v==='number'){taxas[co][band+'_credito']=_mkCred(v,v,v,v);}
+      });
+    });
   }
   if(d.ids){
     const ids=d.ids;
@@ -2480,7 +2540,7 @@ function subscribeRealtime(){
 
 async function autoImportCEEvent(ev){
   const p=ev.payload||{};
-  const{nome,val,procs,fpg,bandeira}=parseCEPayload(p);
+  const{nome,val,procs,fpg,bandeira,parcelas}=parseCEPayload(p);
   // Só importa eventos com valor > 0
   if(!val||val<=0){
     // Marca como importado para não acumular
@@ -2490,7 +2550,7 @@ async function autoImportCEEvent(ev){
   const fpgMap={'CARTÃO DE CRÉDITO':'credito','CARTÃO DE DÉBITO':'debito','PIX':'pix','DINHEIRO':'dinheiro','TRANSFERÊNCIA':'transferencia','BOLETO':'boleto'};
   const fpgVal=fpgMap[(fpg||'').toUpperCase()]||'';
   const now=new Date().toISOString().slice(0,10);
-  const tx={id:txNid++,name:(procs&&procs!=='—'?procs:(p.type||ev.event_type))+' — '+(nome||'Paciente'),type:'receber',cat:'Procedimentos',co:'ct',courseId:null,procedureId:null,vendId:null,fpg:fpgVal,bandeira:(fpgVal==='credito'||fpgVal==='debito')?bandeira:'',status:'paid',due:now,val,notes:'Auto-importado do Clínica Experts'};
+  const tx={id:txNid++,name:(procs&&procs!=='—'?procs:(p.type||ev.event_type))+' — '+(nome||'Paciente'),type:'receber',cat:'Procedimentos',co:'ct',courseId:null,procedureId:null,vendId:null,fpg:fpgVal,bandeira:(fpgVal==='credito'||fpgVal==='debito')?bandeira:'',parcelas:fpgVal==='credito'?parcelas:1,status:'paid',due:now,val,notes:'Auto-importado do Clínica Experts'};
   txs.push(tx);
   try{const db=sbAdmin||sbClient;await db.from('ce_events').update({imported:true,tx_id:tx.id}).eq('id',ev.id);}catch(e){console.warn('CE auto-import mark error:',e);}
   saveData();
@@ -2517,7 +2577,8 @@ function parseYampiPayload(p){
   const brandRaw=(r.payment?.brand||r.payment?.card_brand||r.brand||'').toLowerCase().replace(/[\s-]/g,'');
   const brandMap={visa:'visa',mastercard:'master',master:'master',elo:'elo',amex:'amex',americanexpress:'amex',diners:'diners',dinersclub:'diners',hipercard:'hipercard',hiper:'hipercard'};
   const bandeira=brandMap[brandRaw]||'outros';
-  return{nome,val,items,num,fpg,bandeira};
+  const parcelas=parseInt(r.payment?.installments||r.payment?.installment_count||r.payment?.parcelas||1)||1;
+  return{nome,val,items,num,fpg,bandeira,parcelas};
 }
 
 async function autoImportYampiEvent(ev){
@@ -2526,14 +2587,14 @@ async function autoImportYampiEvent(ev){
   // Só importa pedidos pagos
   const isPaid=evType.includes('paid')||evType.includes('order')||
     (p.resource?.status?.alias||p.status?.alias||'').toLowerCase()==='paid';
-  const{nome,val,items,num,fpg}=parseYampiPayload(p);
+  const{nome,val,items,num,fpg,bandeira,parcelas}=parseYampiPayload(p);
   if(!val||val<=0||!isPaid){
     try{const db=sbAdmin||sbClient;await db.from('yampi_events').update({imported:true}).eq('id',ev.id);}catch(e){}
     return;
   }
   const now=new Date().toISOString().slice(0,10);
   const name=items+(nome&&nome!=='—'?' — '+nome:'')+(num?' #'+num:'');
-  const tx={id:txNid++,name,type:'receber',cat:'Vendas',co:'nf',courseId:null,procedureId:null,vendId:null,fpg,bandeira:(fpg==='credito'||fpg==='debito')?bandeira:'',status:'paid',due:now,val,notes:'Auto-importado da Yampi'};
+  const tx={id:txNid++,name,type:'receber',cat:'Vendas',co:'nf',courseId:null,procedureId:null,vendId:null,fpg,bandeira:(fpg==='credito'||fpg==='debito')?bandeira:'',parcelas:fpg==='credito'?parcelas:1,status:'paid',due:now,val,notes:'Auto-importado da Yampi'};
   txs.push(tx);
   try{const db=sbAdmin||sbClient;await db.from('yampi_events').update({imported:true,tx_id:tx.id}).eq('id',ev.id);}catch(e){console.warn('Yampi import error:',e);}
   saveData();
@@ -2706,7 +2767,8 @@ function parseCEPayload(p){
   // data do atendimento
   const dtAt=r.sale_date||r.starts_at||r.due_date||'';
   const dtFmt=dtAt?new Date(dtAt).toLocaleDateString('pt-BR'):'—';
-  return{nome,val,procs,fpg,bandeira,dtAt:dtFmt};
+  const parcelas=parseInt(pmArr[0]?.installments||pmArr[0]?.installment_count||pmArr[0]?.parcelas||r.payment_method?.installments||1)||1;
+  return{nome,val,procs,fpg,bandeira,dtAt:dtFmt,parcelas};
 }
 function renderCEImport(events){
   const el=document.getElementById('ceEventsList');if(!el)return;
@@ -2714,17 +2776,17 @@ function renderCEImport(events){
   el.innerHTML=events.map(function(ev){
     const p=ev.payload||{};
     const dt=new Date(ev.received_at).toLocaleDateString('pt-BR')+' '+new Date(ev.received_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    const{nome,val,procs,fpg,bandeira,dtAt}=parseCEPayload(p);
+    const{nome,val,procs,fpg,bandeira,dtAt,parcelas}=parseCEPayload(p);
     const tipo=p.type||p.tipo||ev.event_type||'evento';
     const raw=JSON.stringify(p,null,2);
     const fpgMap={'CARTÃO DE CRÉDITO':'credito','CARTÃO DE DÉBITO':'debito','PIX':'pix','DINHEIRO':'dinheiro','TRANSFERÊNCIA':'transferencia','BOLETO':'boleto'};
     const fpgVal=fpgMap[(fpg||'').toUpperCase()]||'';
-    const fakeTx={co:'ct',fpg:fpgVal,bandeira:(fpgVal==='credito'||fpgVal==='debito')?bandeira:''};
+    const fakeTx={co:'ct',fpg:fpgVal,bandeira:(fpgVal==='credito'||fpgVal==='debito')?bandeira:'',parcelas:fpgVal==='credito'?parcelas:1};
     const taxaPct=getTaxa(fakeTx)*100;
     const valLiqCE=val*(1-getTaxa(fakeTx));
     const taxaStr=taxaPct>0?'<span style="font-size:11px;color:var(--m)">taxa '+taxaPct.toFixed(2)+'% → líquido <strong>'+fmt(valLiqCE)+'</strong></span>':'';
-    const bandeiraStr=(fpgVal==='credito'||fpgVal==='debito')?(' · <span style="font-size:10px;background:var(--blb);color:var(--bl);padding:1px 5px;border-radius:4px;font-weight:600">'+bandeira+'</span>'):'';
-    const importData=JSON.stringify({nome,val,tipo,procs,fpg,bandeira}).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    const bandeiraStr=(fpgVal==='credito'||fpgVal==='debito')?(' · <span style="font-size:10px;background:var(--blb);color:var(--bl);padding:1px 5px;border-radius:4px;font-weight:600">'+bandeira+(fpgVal==='credito'&&parcelas>1?' '+parcelas+'x':'')+'</span>'):'';
+    const importData=JSON.stringify({nome,val,tipo,procs,fpg,bandeira,parcelas}).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     return '<div class="cc" style="margin-bottom:12px"><div style="padding:16px 18px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><div style="font-weight:700;color:var(--t1)">'+tipo+'</div><div style="font-size:11px;color:var(--t3)">'+dt+'</div><div style="margin-left:auto;display:flex;gap:8px">'+(val>0?'<button class="bp" onclick="importCEEvent(\''+ev.id+'\',\''+importData+'\')">⬇ Importar</button>':'')+'<button class="ba" onclick="discardCEEvent(\''+ev.id+'\')" style="color:var(--m)">✕ Descartar</button></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:var(--t2);margin-bottom:8px"><div><span style="color:var(--t3)">Paciente: </span><strong>'+nome+'</strong></div><div><span style="color:var(--t3)">Bruto: </span><strong style="color:var(--gr)">'+fmt(val)+'</strong></div><div><span style="color:var(--t3)">Procedimento: </span>'+procs+'</div><div><span style="color:var(--t3)">Pagamento: </span>'+(fpg||'—')+bandeiraStr+'</div></div>'+(taxaStr?'<div style="margin-top:4px">'+taxaStr+'</div>':'')+'<details style="margin-top:4px"><summary style="font-size:11px;color:var(--t3);cursor:pointer">Ver payload completo</summary><pre style="font-size:10px;color:var(--t3);margin-top:6px;overflow:auto;max-height:120px">'+raw+'</pre></details></div></div>';
   }).join('');
 }
@@ -2734,7 +2796,7 @@ async function importCEEvent(eventId,metaStr){
   const fpgMap={'CARTÃO DE CRÉDITO':'credito','CARTÃO DE DÉBITO':'debito','PIX':'pix','DINHEIRO':'dinheiro','TRANSFERÊNCIA':'transferencia','BOLETO':'boleto'};
   const fpg=fpgMap[(meta.fpg||'').toUpperCase()]||'';
   const band=(fpg==='credito'||fpg==='debito')?(meta.bandeira||'outros'):'';
-  const tx={id:txNid++,name:(meta.procs&&meta.procs!=='—'?meta.procs:meta.tipo)+' — '+(meta.nome||'Paciente'),type:'receber',cat:'Procedimentos',co:'ct',courseId:null,procedureId:null,vendId:null,fpg,bandeira:band,status:'paid',due:now,val:parseFloat(meta.val)||0,notes:'Importado do Clínica Experts'};
+  const tx={id:txNid++,name:(meta.procs&&meta.procs!=='—'?meta.procs:meta.tipo)+' — '+(meta.nome||'Paciente'),type:'receber',cat:'Procedimentos',co:'ct',courseId:null,procedureId:null,vendId:null,fpg,bandeira:band,parcelas:fpg==='credito'?(parseInt(meta.parcelas)||1):1,status:'paid',due:now,val:parseFloat(meta.val)||0,notes:'Importado do Clínica Experts'};
   txs.push(tx);
   try{
     const db=sbAdmin||sbClient;
