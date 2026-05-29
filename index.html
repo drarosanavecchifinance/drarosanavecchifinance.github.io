@@ -750,21 +750,26 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
     </div>
     <!-- Modal Taxas -->
     <div class="modal" id="taxasModal">
-      <div class="mbox" style="max-width:420px">
-        <div class="mhd"><span>⚙️ Configurar Taxas</span><button class="mcl" onclick="closeM('taxasModal')">✕</button></div>
-        <div style="padding:20px;display:flex;flex-direction:column;gap:12px">
-          <p style="font-size:13px;color:var(--t3);margin:0">Taxa cobrada pela operadora por forma de pagamento. O valor líquido na Carteira será descontado automaticamente.</p>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">PIX (%)</label><input class="finp" id="txPix" type="number" step="0.01" min="0" max="10" style="margin-top:4px"></div>
-            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Débito (%)</label><input class="finp" id="txDebito" type="number" step="0.01" min="0" max="10" style="margin-top:4px"></div>
-            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Crédito (%)</label><input class="finp" id="txCredito" type="number" step="0.01" min="0" max="10" style="margin-top:4px"></div>
-            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Boleto (%)</label><input class="finp" id="txBoleto" type="number" step="0.01" min="0" max="10" style="margin-top:4px"></div>
-            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Transferência (%)</label><input class="finp" id="txTransf" type="number" step="0.01" min="0" max="10" style="margin-top:4px"></div>
-            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Dinheiro (%)</label><input class="finp" id="txDinheiro" type="number" step="0.01" min="0" max="10" style="margin-top:4px"></div>
+      <div class="mbox" style="max-width:460px">
+        <div class="mhd"><span>⚙️ Taxas por Empresa</span><button class="mcl" onclick="closeM('taxasModal')">✕</button></div>
+        <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+          <p style="font-size:13px;color:var(--t3);margin:0">Configure a taxa de cada operadora por empresa. O valor líquido na Carteira é calculado automaticamente.</p>
+          <div id="taxasTabBtns" style="display:flex;gap:6px">
+            <button class="bs a" id="tbtNF" onclick="switchTaxaTab('nf')" style="flex:1;font-size:12px">🔴 NatureFace</button>
+            <button class="bs" id="tbtRV" onclick="switchTaxaTab('rv')" style="flex:1;font-size:12px">🔴 Academy</button>
+            <button class="bs" id="tbtCT" onclick="switchTaxaTab('ct')" style="flex:1;font-size:12px">🟢 Consultório</button>
           </div>
-          <div style="display:flex;gap:10px;margin-top:6px">
+          <div id="taxasFields" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">PIX (%)</label><input class="finp" id="txPix" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
+            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Débito (%)</label><input class="finp" id="txDebito" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
+            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Crédito (%)</label><input class="finp" id="txCredito" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
+            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Boleto (%)</label><input class="finp" id="txBoleto" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
+            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Transferência (%)</label><input class="finp" id="txTransf" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
+            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Dinheiro (%)</label><input class="finp" id="txDinheiro" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:4px">
             <button class="bs" onclick="closeM('taxasModal')" style="flex:1">Cancelar</button>
-            <button class="bp" onclick="saveTaxas()" style="flex:1">Salvar</button>
+            <button class="bp" onclick="saveTaxas()" style="flex:1">Salvar Tudo</button>
           </div>
         </div>
       </div>
@@ -1052,7 +1057,8 @@ let editProcedimentoId=null, procedureNid=1, procedureNcode=1;
 // ===== DATA =====
 let patients=[];
 let procedures=[];
-let taxas={pix:0,debito:1.5,credito:2.99,boleto:2,transferencia:0,dinheiro:0};
+const taxasDef={pix:0,debito:1.5,credito:2.99,boleto:2,transferencia:0,dinheiro:0};
+let taxas={nf:{...taxasDef},rv:{...taxasDef},ct:{...taxasDef}};
 let courses=[
   {id:1,code:'RVC001',name:'Protocolos Faciais Avançados',cat:'Estética Clínica',color:'#955251',startDate:'2025-07-01',endDate:'2025-09-30',val:2400,maxStu:20,status:'ativo',desc:'Curso completo de protocolos faciais premium'},
   {id:2,code:'RVC002',name:'Mentoria Executiva Premium',cat:'Gestão e Liderança',color:'#C4807F',startDate:'2025-07-15',endDate:'2025-12-15',val:7500,maxStu:10,status:'ativo',desc:''},
@@ -1907,28 +1913,45 @@ function renderVendDesemp(){
 }
 
 // ===== TAXAS =====
+let _taxaTab='nf';
 function openTaxasModal(){
-  document.getElementById('txPix').value=taxas.pix;
-  document.getElementById('txDebito').value=taxas.debito;
-  document.getElementById('txCredito').value=taxas.credito;
-  document.getElementById('txBoleto').value=taxas.boleto;
-  document.getElementById('txTransf').value=taxas.transferencia;
-  document.getElementById('txDinheiro').value=taxas.dinheiro;
+  _taxaTab='nf';
+  switchTaxaTab('nf');
   document.getElementById('taxasModal').classList.add('o');
 }
+function switchTaxaTab(c){
+  // Salva aba atual antes de trocar
+  if(_taxaTab)_saveTaxaTab(_taxaTab);
+  _taxaTab=c;
+  ['nf','rv','ct'].forEach(function(x){
+    const b=document.getElementById('tbt'+x.toUpperCase().replace('NF','NF').replace('RV','RV').replace('CT','CT'));
+    if(b)b.classList.toggle('a',x===c);
+  });
+  const t=taxas[c]||taxasDef;
+  document.getElementById('txPix').value=t.pix;
+  document.getElementById('txDebito').value=t.debito;
+  document.getElementById('txCredito').value=t.credito;
+  document.getElementById('txBoleto').value=t.boleto;
+  document.getElementById('txTransf').value=t.transferencia;
+  document.getElementById('txDinheiro').value=t.dinheiro;
+}
+function _saveTaxaTab(c){
+  if(!taxas[c])taxas[c]={};
+  taxas[c].pix=parseFloat(document.getElementById('txPix').value)||0;
+  taxas[c].debito=parseFloat(document.getElementById('txDebito').value)||0;
+  taxas[c].credito=parseFloat(document.getElementById('txCredito').value)||0;
+  taxas[c].boleto=parseFloat(document.getElementById('txBoleto').value)||0;
+  taxas[c].transferencia=parseFloat(document.getElementById('txTransf').value)||0;
+  taxas[c].dinheiro=parseFloat(document.getElementById('txDinheiro').value)||0;
+}
 function saveTaxas(){
-  taxas.pix=parseFloat(document.getElementById('txPix').value)||0;
-  taxas.debito=parseFloat(document.getElementById('txDebito').value)||0;
-  taxas.credito=parseFloat(document.getElementById('txCredito').value)||0;
-  taxas.boleto=parseFloat(document.getElementById('txBoleto').value)||0;
-  taxas.transferencia=parseFloat(document.getElementById('txTransf').value)||0;
-  taxas.dinheiro=parseFloat(document.getElementById('txDinheiro').value)||0;
+  _saveTaxaTab(_taxaTab);
   closeM('taxasModal');
   saveData();
   renderCarteira();
 }
-function getTaxa(fpg){return (taxas[fpg]||0)/100;}
-function valLiq(t){return t.val*(1-getTaxa(t.fpg));}
+function getTaxa(t){const co=t.co||'nf';const fpg=t.fpg||'';return((taxas[co]||taxasDef)[fpg]||0)/100;}
+function valLiq(t){return t.val*(1-getTaxa(t));}
 
 // ===== CARTEIRA =====
 function initCarteiraFilter(){
@@ -2300,7 +2323,15 @@ function applyData(d){
   if(d.evs&&Object.keys(d.evs).length)evs=d.evs;
   if(d.patients)patients=d.patients;
   if(d.procedures)procedures=d.procedures;
-  if(d.taxas)taxas=Object.assign({pix:0,debito:1.5,credito:2.99,boleto:2,transferencia:0,dinheiro:0},d.taxas);
+  if(d.taxas){
+    // Suporte ao formato antigo (plano) e novo (por empresa)
+    if(d.taxas.nf||d.taxas.rv||d.taxas.ct){
+      taxas={nf:Object.assign({...taxasDef},d.taxas.nf),rv:Object.assign({...taxasDef},d.taxas.rv),ct:Object.assign({...taxasDef},d.taxas.ct)};
+    } else {
+      // Migra formato antigo: aplica para todas as empresas
+      taxas={nf:Object.assign({...taxasDef},d.taxas),rv:Object.assign({...taxasDef},d.taxas),ct:Object.assign({...taxasDef},d.taxas)};
+    }
+  }
   if(d.ids){
     const ids=d.ids;
     if(ids.txNid)txNid=ids.txNid;if(ids.cursoNid)cursoNid=ids.cursoNid;
