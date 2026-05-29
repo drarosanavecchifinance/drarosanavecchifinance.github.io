@@ -1110,6 +1110,8 @@ let editProcedimentoId=null, procedureNid=1, procedureNcode=1;
 
 // ===== DATA =====
 const _sessionId=Math.random().toString(36).slice(2,10);
+// Versão das taxas — incrementar quando defaults NF mudarem para forçar migração
+const _TAXAS_VER=2;
 let patients=[];
 let procedures=[];
 function _mkCred(t1,t2,t3,t4){
@@ -2674,7 +2676,7 @@ function undoLastDelete(){
 // ===== SALVAR =====
 async function saveData(){
   const payload={
-    txs,courses,students,vendedoras,evs,patients,procedures,taxas,taxasMaq,
+    txs,courses,students,vendedoras,evs,patients,procedures,taxas,taxasMaq,taxas_version:_TAXAS_VER,
     _sessionId,
     ids:{txNid,cursoNid,cursoNcode,stuNid,stuNcode,vendNid,vendNcode,evNextId,grupoNid,patientNid,patientNcode,procedureNid,procedureNcode}
   };
@@ -2742,6 +2744,11 @@ function applyData(d){
   }
   if(d.taxas)taxas=_migrateTaxaStore(d.taxas,false);
   if(d.taxasMaq)taxasMaq=_migrateTaxaStore(d.taxasMaq,true);
+  // Migração de versão: força defaults NF online quando dados antigos estiverem salvos
+  if(!d.taxas_version||d.taxas_version<_TAXAS_VER){
+    Object.assign(taxas.nf,_taxasNFOnline);
+    console.log('Taxa migration v'+_TAXAS_VER+': taxas.nf atualizado com valores confirmados NF');
+  }
   if(d.ids){
     const ids=d.ids;
     if(ids.txNid)txNid=ids.txNid;if(ids.cursoNid)cursoNid=ids.cursoNid;
