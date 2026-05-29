@@ -1132,9 +1132,8 @@ const taxasDef={
   hipercard_credito:_mkCred(3.29,3.29,3.29,3.50),hipercard_credito_prazo:31,
   outros_credito:_mkCred(2.99,3.11,3.11,3.475),outros_credito_prazo:31
 };
-let taxas={nf:{...taxasDef},rv:{...taxasDef},ct:{...taxasDef}};
-// Taxas maquininha NF — baseadas no plano de recebimento da operadora (Visa/Master confirmados)
-const _taxasMaqNF={
+// Taxas NatureFace Online/Yampi — confirmadas pelas screenshots da operadora (Visa/Master)
+const _taxasNFOnline={
   pix:0,pix_prazo:1,
   dinheiro:0,dinheiro_prazo:1,
   transferencia:0,transferencia_prazo:1,
@@ -1151,6 +1150,9 @@ const _taxasMaqNF={
   hipercard_credito:_mkCred(2.54,3.11,3.11,3.47),hipercard_credito_prazo:31,
   outros_credito:_mkCred(2.54,3.11,3.11,3.47),outros_credito_prazo:31,
 };
+// Taxas maquininha NF — aguardando taxas reais, usando defaults até configurar
+const _taxasMaqNF={...taxasDef};
+let taxas={nf:{..._taxasNFOnline},rv:{...taxasDef},ct:{...taxasDef}};
 let taxasMaq={nf:{..._taxasMaqNF},rv:{...taxasDef},ct:{...taxasDef}};
 let courses=[
   {id:1,code:'RVC001',name:'Protocolos Faciais Avançados',cat:'Estética Clínica',color:'#955251',startDate:'2025-07-01',endDate:'2025-09-30',val:2400,maxStu:20,status:'ativo',desc:'Curso completo de protocolos faciais premium'},
@@ -2270,11 +2272,12 @@ function resetTaxaTabDefaults(){
   const canal=_taxaCanal||'online';
   const coName={nf:'NatureFace',rv:'Rosana Academy',ct:'Consultório'}[co]||co;
   const canalName=canal==='maquininha'?'Maquininha':'Online';
-  const isMaqNF=canal==='maquininha'&&co==='nf';
-  const hint=isMaqNF?'Débito=1.46%, Crédito 1x=2.54%, 2–6x=3.11%, 7–12x=3.47%':'PIX=0%, Boleto=2%, Débito ~1.49%, Crédito ~2.99–3.5%';
+  const isNFOnline=canal==='online'&&co==='nf';
+  const hint=isNFOnline?'Débito=1.46%, Crédito 1x=2.54%, 2–6x=3.11%, 7–12x=3.47% (taxas Yampi)':'PIX=0%, Débito ~1.49%, Crédito ~2.99–3.5%';
   if(!confirm('Restaurar todos os valores padrão para '+coName+' ('+canalName+')?\n\n'+hint+'\n\nOs valores atuais serão substituídos.'))return;
   const store=canal==='maquininha'?taxasMaq:taxas;
-  store[co]=canal==='maquininha'&&co==='nf'?{..._taxasMaqNF}:{...taxasDef};
+  if(canal==='online')store[co]=co==='nf'?{..._taxasNFOnline}:{...taxasDef};
+  else store[co]=co==='nf'?{..._taxasMaqNF}:{...taxasDef};
   _loadTaxaFields(co,canal);
 }
 function taxaKey(t){
@@ -2717,7 +2720,7 @@ function applyData(d){
   if(d.procedures)procedures=d.procedures;
   function _migrateTaxaStore(raw,isMaq){
     var store;
-    var baseNF=isMaq?_taxasMaqNF:taxasDef;
+    var baseNF=isMaq?_taxasMaqNF:_taxasNFOnline;
     if(raw.nf||raw.rv||raw.ct){
       store={nf:Object.assign({...baseNF},raw.nf),rv:Object.assign({...taxasDef},raw.rv),ct:Object.assign({...taxasDef},raw.ct)};
     }else{
