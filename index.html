@@ -2161,8 +2161,11 @@ function renderCarteira(){
   var recTotal=fatTxs.filter(function(t){return t.status==='paid';}).reduce(function(s,t){return s+t.val;},0);
   var pendTotal=fatTxs.filter(function(t){return t.status!=='paid';}).reduce(function(s,t){return s+t.val;},0);
   // KPIs
-  var prox3Start=todayStr;var prox3End=new Date(now);prox3End.setMonth(prox3End.getMonth()+3);var prox3Str=prox3End.toISOString().slice(0,10);
-  var prox3Total=allRec.filter(function(t){return t.status!=='paid'&&t.due&&t.due>=prox3Start&&t.due<=prox3Str;}).reduce(function(s,t){return s+t.val;},0);
+  // prox3Str = fim do 3º mês seguinte (para o donut chart)
+  var prox3Str=new Date(now.getFullYear(),now.getMonth()+4,0).toISOString().slice(0,10);
+  // Previsão 3 Meses: soma os 3 próximos meses completos (M+1, M+2, M+3) — exclui mês corrente
+  var prox3Total=0;
+  for(var _pi=1;_pi<=3;_pi++){var _pd=new Date(now.getFullYear(),now.getMonth()+_pi,1);var _pk=_pd.getFullYear()+'-'+String(_pd.getMonth()+1).padStart(2,'0');prox3Total+=allRec.filter(function(t){return t.status!=='paid'&&t.due&&t.due.startsWith(_pk);}).reduce(function(s,t){return s+t.val;},0);}
   var kDiv=document.getElementById('carteiraKpis');
   if(kDiv){
     kDiv.innerHTML='<div class="kc g"><div class="klbl">Na Carteira</div><div class="kval">'+fmt(carteiraTotal)+'</div><div class="kft"><span class="kpr">líquido'+(carteiraTaxa>0?' · taxa: '+fmt(carteiraTaxa):'')+'</span></div></div>'+
