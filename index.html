@@ -2294,6 +2294,14 @@ function subscribeRealtime(){
       autoImportCEEvent(ev);
     })
     .subscribe();
+  // Auto-import Yampi orders em tempo real
+  sbClient.channel('yampi-auto')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'yampi_events'},payload=>{
+      const ev=payload.new;
+      if(!ev||ev.imported)return;
+      autoImportYampiEvent(ev);
+    })
+    .subscribe();
 }
 
 async function autoImportCEEvent(ev){
@@ -2315,6 +2323,54 @@ async function autoImportCEEvent(ev){
   // Toast de notificação
   showCEToast(tx.name,val);
   refreshCurrentPage();
+}
+
+function parseYampiPayload(p){
+  const r=p.resource||p;
+  // nome do cliente
+  const nome=(r.customer?.name||r.customer?.first_name&&(r.customer.first_name+' '+(r.customer.last_name||''))||p.customer_name||'—').trim();
+  // valor total (Yampi envia em BRL como string, ex: "290.00")
+  const rawVal=parseFloat(r.total||r.total_items||r.value||p.total||0)||0;
+  const val=rawVal; // já em BRL, não em centavos
+  // produtos
+  const items=(r.items||[]).map(function(i){return(i.product?.title||i.title||i.name||'');}).filter(Boolean).join(', ')||'Venda Yampi';
+  // número do pedido
+  const num=r.number||r.id||'';
+  // forma de pagamento
+  const fpgRaw=(r.payment?.method||r.payment_method||r.payment?.type||'').toLowerCase();
+  const fpgMap={credit_card:'credito',pix:'pix',bank_slip:'boleto',debit_card:'debito',money:'dinheiro',transfer:'transferencia'};
+  const fpg=fpgMap[fpgRaw]||'';
+  return{nome,val,items,num,fpg};
+}
+
+async function autoImportYampiEvent(ev){
+  const p=ev.payload||{};
+  const evType=(ev.event_type||'').toLowerCase();
+  // Só importa pedidos pagos
+  const isPaid=evType.includes('paid')||evType.includes('order')||
+    (p.resource?.status?.alias||p.status?.alias||'').toLowerCase()==='paid';
+  const{nome,val,items,num,fpg}=parseYampiPayload(p);
+  if(!val||val<=0||!isPaid){
+    try{const db=sbAdmin||sbClient;await db.from('yampi_events').update({imported:true}).eq('id',ev.id);}catch(e){}
+    return;
+  }
+  const now=new Date().toISOString().slice(0,10);
+  const name=items+(nome&&nome!=='—'?' — '+nome:'')+(num?' #'+num:'');
+  const tx={id:txNid++,name,type:'receber',cat:'Vendas',co:'nf',courseId:null,procedureId:null,vendId:null,fpg,status:'paid',due:now,val,notes:'Auto-importado da Yampi'};
+  txs.push(tx);
+  try{const db=sbAdmin||sbClient;await db.from('yampi_events').update({imported:true,tx_id:tx.id}).eq('id',ev.id);}catch(e){console.warn('Yampi import error:',e);}
+  saveData();
+  showYampiToast(name,val);
+  refreshCurrentPage();
+}
+
+function showYampiToast(nome,val){
+  let t=document.getElementById('yampiToast');
+  if(!t){t=document.createElement('div');t.id='yampiToast';t.style.cssText='position:fixed;bottom:60px;right:20px;background:#1A4A6A;color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;font-family:DM Sans,sans-serif;font-weight:500;z-index:500;box-shadow:0 4px 14px rgba(0,0,0,.25);max-width:300px';document.body.appendChild(t);}
+  const fmtV=function(v){return'R$ '+parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2});};
+  t.innerHTML='🛒 <strong>Yampi:</strong><br>'+nome+'<br><strong style="color:#7FD4FF">'+fmtV(val)+'</strong>';
+  t.style.display='block';
+  clearTimeout(t._to);t._to=setTimeout(function(){t.style.display='none';},5000);
 }
 
 function showCEToast(nome,val){
