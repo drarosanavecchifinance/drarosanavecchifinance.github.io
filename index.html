@@ -746,6 +746,28 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
         <option value="rv">Rosana Academy</option>
         <option value="ct">Consultório</option>
       </select>
+      <button class="bs" onclick="openTaxasModal()" style="margin-left:auto;gap:6px">⚙️ Taxas</button>
+    </div>
+    <!-- Modal Taxas -->
+    <div class="modal" id="taxasModal">
+      <div class="mbox" style="max-width:420px">
+        <div class="mhd"><span>⚙️ Configurar Taxas</span><button class="mcl" onclick="closeM('taxasModal')">✕</button></div>
+        <div style="padding:20px;display:flex;flex-direction:column;gap:12px">
+          <p style="font-size:13px;color:var(--t3);margin:0">Taxa cobrada pela operadora por forma de pagamento. O valor líquido na Carteira será descontado automaticamente.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">PIX (%)</label><input class="finp" id="txPix" type="number" step="0.01" min="0" max="10" style="margin-top:4px"></div>
+            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Débito (%)</label><input class="finp" id="txDebito" type="number" step="0.01" min="0" max="10" style="margin-top:4px"></div>
+            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Crédito (%)</label><input class="finp" id="txCredito" type="number" step="0.01" min="0" max="10" style="margin-top:4px"></div>
+            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Boleto (%)</label><input class="finp" id="txBoleto" type="number" step="0.01" min="0" max="10" style="margin-top:4px"></div>
+            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Transferência (%)</label><input class="finp" id="txTransf" type="number" step="0.01" min="0" max="10" style="margin-top:4px"></div>
+            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Dinheiro (%)</label><input class="finp" id="txDinheiro" type="number" step="0.01" min="0" max="10" style="margin-top:4px"></div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:6px">
+            <button class="bs" onclick="closeM('taxasModal')" style="flex:1">Cancelar</button>
+            <button class="bp" onclick="saveTaxas()" style="flex:1">Salvar</button>
+          </div>
+        </div>
+      </div>
     </div>
     <!-- KPIs -->
     <div class="kg" style="margin-bottom:22px" id="carteiraKpis"></div>
@@ -1030,6 +1052,7 @@ let editProcedimentoId=null, procedureNid=1, procedureNcode=1;
 // ===== DATA =====
 let patients=[];
 let procedures=[];
+let taxas={pix:0,debito:1.5,credito:2.99,boleto:2,transferencia:0,dinheiro:0};
 let courses=[
   {id:1,code:'RVC001',name:'Protocolos Faciais Avançados',cat:'Estética Clínica',color:'#955251',startDate:'2025-07-01',endDate:'2025-09-30',val:2400,maxStu:20,status:'ativo',desc:'Curso completo de protocolos faciais premium'},
   {id:2,code:'RVC002',name:'Mentoria Executiva Premium',cat:'Gestão e Liderança',color:'#C4807F',startDate:'2025-07-15',endDate:'2025-12-15',val:7500,maxStu:10,status:'ativo',desc:''},
@@ -1883,6 +1906,30 @@ function renderVendDesemp(){
   wrap.innerHTML=html;
 }
 
+// ===== TAXAS =====
+function openTaxasModal(){
+  document.getElementById('txPix').value=taxas.pix;
+  document.getElementById('txDebito').value=taxas.debito;
+  document.getElementById('txCredito').value=taxas.credito;
+  document.getElementById('txBoleto').value=taxas.boleto;
+  document.getElementById('txTransf').value=taxas.transferencia;
+  document.getElementById('txDinheiro').value=taxas.dinheiro;
+  document.getElementById('taxasModal').classList.add('o');
+}
+function saveTaxas(){
+  taxas.pix=parseFloat(document.getElementById('txPix').value)||0;
+  taxas.debito=parseFloat(document.getElementById('txDebito').value)||0;
+  taxas.credito=parseFloat(document.getElementById('txCredito').value)||0;
+  taxas.boleto=parseFloat(document.getElementById('txBoleto').value)||0;
+  taxas.transferencia=parseFloat(document.getElementById('txTransf').value)||0;
+  taxas.dinheiro=parseFloat(document.getElementById('txDinheiro').value)||0;
+  closeM('taxasModal');
+  saveData();
+  renderCarteira();
+}
+function getTaxa(fpg){return (taxas[fpg]||0)/100;}
+function valLiq(t){return t.val*(1-getTaxa(t.fpg));}
+
 // ===== CARTEIRA =====
 function initCarteiraFilter(){
   const sel=document.getElementById('carteiraFiltMes');if(!sel||sel.options.length>1)return;
@@ -1903,8 +1950,12 @@ function renderCarteira(){
   var fatTxs=allRec.filter(function(t){return!selMes||(t.due&&t.due.startsWith(selMes));});
   var isImediato=function(t){return['pix','debito','dinheiro','transferencia','boleto'].includes(t.fpg)||(!t.fpg&&t.status==='paid');};
   var paidTxs=fatTxs.filter(function(t){return t.status==='paid';});
-  var carteiraTotal=paidTxs.filter(isImediato).reduce(function(s,t){return s+t.val;},0);
-  var creditoCompTotal=paidTxs.filter(function(t){return t.fpg==='credito';}).reduce(function(s,t){return s+t.val;},0);
+  var paidImediatoTxs=paidTxs.filter(isImediato);
+  var paidCreditoTxs=paidTxs.filter(function(t){return t.fpg==='credito';});
+  var carteiraTotal=paidImediatoTxs.reduce(function(s,t){return s+valLiq(t);},0);
+  var carteiraTaxa=paidImediatoTxs.reduce(function(s,t){return s+t.val*getTaxa(t.fpg);},0);
+  var creditoCompTotal=paidCreditoTxs.reduce(function(s,t){return s+valLiq(t);},0);
+  var creditoTaxa=paidCreditoTxs.reduce(function(s,t){return s+t.val*getTaxa(t.fpg);},0);
   var fatTotal=fatTxs.reduce(function(s,t){return s+t.val;},0);
   var recTotal=fatTxs.filter(function(t){return t.status==='paid';}).reduce(function(s,t){return s+t.val;},0);
   var pendTotal=fatTxs.filter(function(t){return t.status!=='paid';}).reduce(function(s,t){return s+t.val;},0);
@@ -1913,8 +1964,8 @@ function renderCarteira(){
   var prox3Total=allRec.filter(function(t){return t.status!=='paid'&&t.due&&t.due>=prox3Start&&t.due<=prox3Str;}).reduce(function(s,t){return s+t.val;},0);
   var kDiv=document.getElementById('carteiraKpis');
   if(kDiv){
-    kDiv.innerHTML='<div class="kc g"><div class="klbl">Na Carteira</div><div class="kval">'+fmt(carteiraTotal)+'</div><div class="kft"><span class="kpr">PIX · Débito · Dinheiro</span></div></div>'+
-    (creditoCompTotal>0?'<div class="kc m"><div class="klbl">Crédito a Compensar</div><div class="kval">'+fmt(creditoCompTotal)+'</div><div class="kft"><span class="kpr">💳 ~30 dias para entrar</span></div></div>':'')+
+    kDiv.innerHTML='<div class="kc g"><div class="klbl">Na Carteira</div><div class="kval">'+fmt(carteiraTotal)+'</div><div class="kft"><span class="kpr">líquido'+(carteiraTaxa>0?' · taxa: '+fmt(carteiraTaxa):'')+'</span></div></div>'+
+    (creditoCompTotal>0?'<div class="kc m"><div class="klbl">Crédito a Compensar</div><div class="kval">'+fmt(creditoCompTotal)+'</div><div class="kft"><span class="kpr">💳 ~30 dias'+(creditoTaxa>0?' · taxa: '+fmt(creditoTaxa):'')+'</span></div></div>':'')+
     '<div class="kc o"><div class="klbl">A Receber</div><div class="kval">'+fmt(pendTotal)+'</div><div class="kft"><span class="kpr">pendente no período</span></div></div>'+
     '<div class="kc g"><div class="klbl">Previsão 3 Meses</div><div class="kval">'+fmt(prox3Total)+'</div><div class="kft"><span class="kpr">📈 entradas previstas</span></div></div>';
   }
@@ -2206,7 +2257,7 @@ async function doSignOut(){
 // ===== SALVAR =====
 async function saveData(){
   const payload={
-    txs,courses,students,vendedoras,evs,patients,procedures,
+    txs,courses,students,vendedoras,evs,patients,procedures,taxas,
     ids:{txNid,cursoNid,cursoNcode,stuNid,stuNcode,vendNid,vendNcode,evNextId,grupoNid,patientNid,patientNcode,procedureNid,procedureNcode}
   };
   // Sempre salva no localStorage como backup
@@ -2249,6 +2300,7 @@ function applyData(d){
   if(d.evs&&Object.keys(d.evs).length)evs=d.evs;
   if(d.patients)patients=d.patients;
   if(d.procedures)procedures=d.procedures;
+  if(d.taxas)taxas=Object.assign({pix:0,debito:1.5,credito:2.99,boleto:2,transferencia:0,dinheiro:0},d.taxas);
   if(d.ids){
     const ids=d.ids;
     if(ids.txNid)txNid=ids.txNid;if(ids.cursoNid)cursoNid=ids.cursoNid;
