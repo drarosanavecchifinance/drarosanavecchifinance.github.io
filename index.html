@@ -2408,7 +2408,7 @@ function subscribeRealtime(){
 
 async function autoImportCEEvent(ev){
   const p=ev.payload||{};
-  const{nome,val,procs,fpg}=parseCEPayload(p);
+  const{nome,val,procs,fpg,bandeira}=parseCEPayload(p);
   // Só importa eventos com valor > 0
   if(!val||val<=0){
     // Marca como importado para não acumular
@@ -2418,10 +2418,7 @@ async function autoImportCEEvent(ev){
   const fpgMap={'CARTÃO DE CRÉDITO':'credito','CARTÃO DE DÉBITO':'debito','PIX':'pix','DINHEIRO':'dinheiro','TRANSFERÊNCIA':'transferencia','BOLETO':'boleto'};
   const fpgVal=fpgMap[(fpg||'').toUpperCase()]||'';
   const now=new Date().toISOString().slice(0,10);
-  const r2=p.resource||{};const brandRaw2=(r2.payment_methods?.[0]?.brand||r2.payment_method?.brand||'').toLowerCase().replace(/[\s-]/g,'');
-  const bMap2={visa:'visa',mastercard:'master',master:'master',elo:'elo',amex:'amex',americanexpress:'amex',hipercard:'hipercard'};
-  const band2=bMap2[brandRaw2]||'outros';
-  const tx={id:txNid++,name:(procs&&procs!=='—'?procs:(p.type||ev.event_type))+' — '+(nome||'Paciente'),type:'receber',cat:'Procedimentos',co:'ct',courseId:null,procedureId:null,vendId:null,fpg:fpgVal,bandeira:(fpgVal==='credito'||fpgVal==='debito')?band2:'',status:'paid',due:now,val,notes:'Auto-importado do Clínica Experts'};
+  const tx={id:txNid++,name:(procs&&procs!=='—'?procs:(p.type||ev.event_type))+' — '+(nome||'Paciente'),type:'receber',cat:'Procedimentos',co:'ct',courseId:null,procedureId:null,vendId:null,fpg:fpgVal,bandeira:(fpgVal==='credito'||fpgVal==='debito')?bandeira:'',status:'paid',due:now,val,notes:'Auto-importado do Clínica Experts'};
   txs.push(tx);
   try{const db=sbAdmin||sbClient;await db.from('ce_events').update({imported:true,tx_id:tx.id}).eq('id',ev.id);}catch(e){console.warn('CE auto-import mark error:',e);}
   saveData();
@@ -2628,12 +2625,16 @@ function parseCEPayload(p){
   const val=rawVal>1000?rawVal/100:rawVal;
   // procedimentos
   const procs=(r.procedures||[]).map(function(pr){return pr.name;}).join(', ')||'—';
-  // forma de pagamento
-  const fpg=(r.payment_methods||[]).map(function(m){return m.name;}).join(', ')||(r.payment_method?.name||'');
+  // forma de pagamento e bandeira
+  const pmArr=r.payment_methods||[];
+  const fpg=pmArr.map(function(m){return m.name;}).join(', ')||(r.payment_method?.name||'');
+  const brandRaw=(pmArr[0]?.brand||pmArr[0]?.card_brand||r.payment_method?.brand||p.brand||'').toLowerCase().replace(/[\s-]/g,'');
+  const bMap={visa:'visa',mastercard:'master',master:'master',elo:'elo',amex:'amex',americanexpress:'amex',hipercard:'hipercard',hiper:'hipercard'};
+  const bandeira=bMap[brandRaw]||'outros';
   // data do atendimento
   const dtAt=r.sale_date||r.starts_at||r.due_date||'';
   const dtFmt=dtAt?new Date(dtAt).toLocaleDateString('pt-BR'):'—';
-  return{nome,val,procs,fpg,dtAt:dtFmt};
+  return{nome,val,procs,fpg,bandeira,dtAt:dtFmt};
 }
 function renderCEImport(events){
   const el=document.getElementById('ceEventsList');if(!el)return;
@@ -2641,11 +2642,18 @@ function renderCEImport(events){
   el.innerHTML=events.map(function(ev){
     const p=ev.payload||{};
     const dt=new Date(ev.received_at).toLocaleDateString('pt-BR')+' '+new Date(ev.received_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    const{nome,val,procs,fpg,dtAt}=parseCEPayload(p);
+    const{nome,val,procs,fpg,bandeira,dtAt}=parseCEPayload(p);
     const tipo=p.type||p.tipo||ev.event_type||'evento';
     const raw=JSON.stringify(p,null,2);
-    const importData=JSON.stringify({nome,val,tipo,procs,fpg}).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-    return '<div class="cc" style="margin-bottom:12px"><div style="padding:16px 18px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><div style="font-weight:700;color:var(--t1)">'+tipo+'</div><div style="font-size:11px;color:var(--t3)">'+dt+'</div><div style="margin-left:auto;display:flex;gap:8px">'+(val>0?'<button class="bp" onclick="importCEEvent(\''+ev.id+'\',\''+importData+'\')">⬇ Importar</button>':'')+'<button class="ba" onclick="discardCEEvent(\''+ev.id+'\')" style="color:var(--m)">✕ Descartar</button></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:var(--t2);margin-bottom:8px"><div><span style="color:var(--t3)">Paciente: </span><strong>'+nome+'</strong></div><div><span style="color:var(--t3)">Valor: </span><strong style="color:var(--gr)">'+fmt(val)+'</strong></div><div><span style="color:var(--t3)">Procedimento: </span>'+procs+'</div><div><span style="color:var(--t3)">Pagamento: </span>'+(fpg||'—')+'</div></div><details style="margin-top:4px"><summary style="font-size:11px;color:var(--t3);cursor:pointer">Ver payload completo</summary><pre style="font-size:10px;color:var(--t3);margin-top:6px;overflow:auto;max-height:120px">'+raw+'</pre></details></div></div>';
+    const fpgMap={'CARTÃO DE CRÉDITO':'credito','CARTÃO DE DÉBITO':'debito','PIX':'pix','DINHEIRO':'dinheiro','TRANSFERÊNCIA':'transferencia','BOLETO':'boleto'};
+    const fpgVal=fpgMap[(fpg||'').toUpperCase()]||'';
+    const fakeTx={co:'ct',fpg:fpgVal,bandeira:(fpgVal==='credito'||fpgVal==='debito')?bandeira:''};
+    const taxaPct=getTaxa(fakeTx)*100;
+    const valLiqCE=val*(1-getTaxa(fakeTx));
+    const taxaStr=taxaPct>0?'<span style="font-size:11px;color:var(--m)">taxa '+taxaPct.toFixed(2)+'% → líquido <strong>'+fmt(valLiqCE)+'</strong></span>':'';
+    const bandeiraStr=(fpgVal==='credito'||fpgVal==='debito')?(' · <span style="font-size:10px;background:var(--blb);color:var(--bl);padding:1px 5px;border-radius:4px;font-weight:600">'+bandeira+'</span>'):'';
+    const importData=JSON.stringify({nome,val,tipo,procs,fpg,bandeira}).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return '<div class="cc" style="margin-bottom:12px"><div style="padding:16px 18px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><div style="font-weight:700;color:var(--t1)">'+tipo+'</div><div style="font-size:11px;color:var(--t3)">'+dt+'</div><div style="margin-left:auto;display:flex;gap:8px">'+(val>0?'<button class="bp" onclick="importCEEvent(\''+ev.id+'\',\''+importData+'\')">⬇ Importar</button>':'')+'<button class="ba" onclick="discardCEEvent(\''+ev.id+'\')" style="color:var(--m)">✕ Descartar</button></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:var(--t2);margin-bottom:8px"><div><span style="color:var(--t3)">Paciente: </span><strong>'+nome+'</strong></div><div><span style="color:var(--t3)">Bruto: </span><strong style="color:var(--gr)">'+fmt(val)+'</strong></div><div><span style="color:var(--t3)">Procedimento: </span>'+procs+'</div><div><span style="color:var(--t3)">Pagamento: </span>'+(fpg||'—')+bandeiraStr+'</div></div>'+(taxaStr?'<div style="margin-top:4px">'+taxaStr+'</div>':'')+'<details style="margin-top:4px"><summary style="font-size:11px;color:var(--t3);cursor:pointer">Ver payload completo</summary><pre style="font-size:10px;color:var(--t3);margin-top:6px;overflow:auto;max-height:120px">'+raw+'</pre></details></div></div>';
   }).join('');
 }
 async function importCEEvent(eventId,metaStr){
@@ -2653,7 +2661,8 @@ async function importCEEvent(eventId,metaStr){
   const now=new Date().toISOString().slice(0,10);
   const fpgMap={'CARTÃO DE CRÉDITO':'credito','CARTÃO DE DÉBITO':'debito','PIX':'pix','DINHEIRO':'dinheiro','TRANSFERÊNCIA':'transferencia','BOLETO':'boleto'};
   const fpg=fpgMap[(meta.fpg||'').toUpperCase()]||'';
-  const tx={id:txNid++,name:(meta.procs&&meta.procs!=='—'?meta.procs:meta.tipo)+' — '+(meta.nome||'Paciente'),type:'receber',cat:'Procedimentos',co:'ct',courseId:null,procedureId:null,vendId:null,fpg,status:'paid',due:now,val:parseFloat(meta.val)||0,notes:'Importado do Clínica Experts'};
+  const band=(fpg==='credito'||fpg==='debito')?(meta.bandeira||'outros'):'';
+  const tx={id:txNid++,name:(meta.procs&&meta.procs!=='—'?meta.procs:meta.tipo)+' — '+(meta.nome||'Paciente'),type:'receber',cat:'Procedimentos',co:'ct',courseId:null,procedureId:null,vendId:null,fpg,bandeira:band,status:'paid',due:now,val:parseFloat(meta.val)||0,notes:'Importado do Clínica Experts'};
   txs.push(tx);
   try{
     const db=sbAdmin||sbClient;
