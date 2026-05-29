@@ -96,6 +96,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
 .fsel:focus{border-color:var(--m)}
 .srch{background:var(--card);border:1.5px solid var(--bdr);border-radius:9px;padding:10px 16px;font-family:'DM Sans',sans-serif;font-size:13.5px;color:var(--t1);outline:none;transition:border-color .2s;min-width:280px}
 .srch:focus{border-color:var(--m)} .srch::placeholder{color:var(--t4)}
+.finp{width:46px;padding:3px 4px;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--t1);background:var(--bg);border:1px solid var(--bdr);border-radius:5px;outline:none;text-align:center;transition:border-color .18s}
+.finp:focus{border-color:var(--m)}
 
 /* ===== KPI GRID ===== */
 .kg{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
@@ -747,7 +749,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
     </div>
     <!-- Modal Taxas -->
     <div class="modal" id="taxasModal">
-      <div class="mbox" style="max-width:460px">
+      <div class="mbox" style="max-width:740px">
         <div class="mhd"><span>⚙️ Taxas por Empresa</span><button class="mcl" onclick="closeM('taxasModal')">✕</button></div>
         <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
           <p style="font-size:13px;color:var(--t3);margin:0">Configure a taxa de cada operadora por empresa. O valor líquido na Carteira é calculado automaticamente.</p>
@@ -762,24 +764,25 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
             <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Boleto (%)</label><input class="finp" id="txBoleto" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
             <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Transferência (%)</label><input class="finp" id="txTransf" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
             <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Dinheiro (%)</label><input class="finp" id="txDinheiro" type="number" step="0.01" min="0" max="20" style="margin-top:4px"></div>
-            <div style="grid-column:1/-1;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;padding-top:4px">Crédito por Parcelas (%)</div>
-            <div style="grid-column:1/-1;overflow-x:auto">
-              <table style="width:100%;border-collapse:collapse;font-size:11.5px">
+            <div style="grid-column:1/-1;padding-top:4px">
+              <button onclick="toggleCredTiers()" id="credTiersToggle" style="background:none;border:none;cursor:pointer;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.12em;padding:2px 0;display:flex;align-items:center;gap:6px">
+                <span id="credTiersArrow">▶</span> Crédito por Parcelas (%) <span style="font-weight:400;font-size:10px;color:var(--t4)">(clique para expandir)</span>
+              </button>
+            </div>
+            <div id="credTiersSection" style="grid-column:1/-1;display:none;overflow-x:auto;margin-top:4px">
+              <table style="border-collapse:collapse;font-size:11px;white-space:nowrap">
                 <thead><tr style="border-bottom:1px solid var(--bdr)">
-                  <th style="text-align:left;padding:3px 8px;color:var(--t3);font-weight:600">Bandeira</th>
-                  <th style="padding:3px 6px;color:var(--t3);font-weight:600;text-align:center">1x</th>
-                  <th style="padding:3px 6px;color:var(--t3);font-weight:600;text-align:center">2-3x</th>
-                  <th style="padding:3px 6px;color:var(--t3);font-weight:600;text-align:center">4-6x</th>
-                  <th style="padding:3px 6px;color:var(--t3);font-weight:600;text-align:center">7-12x</th>
+                  <th style="text-align:left;padding:3px 8px;color:var(--t3);font-weight:600;min-width:72px">Bandeira</th>
+                  <th style="padding:2px 3px;color:var(--t3);font-weight:600;text-align:center">1x</th><th style="padding:2px 3px;color:var(--t3);font-weight:600;text-align:center">2x</th><th style="padding:2px 3px;color:var(--t3);font-weight:600;text-align:center">3x</th><th style="padding:2px 3px;color:var(--t3);font-weight:600;text-align:center">4x</th><th style="padding:2px 3px;color:var(--t3);font-weight:600;text-align:center">5x</th><th style="padding:2px 3px;color:var(--t3);font-weight:600;text-align:center">6x</th><th style="padding:2px 3px;color:var(--t3);font-weight:600;text-align:center">7x</th><th style="padding:2px 3px;color:var(--t3);font-weight:600;text-align:center">8x</th><th style="padding:2px 3px;color:var(--t3);font-weight:600;text-align:center">9x</th><th style="padding:2px 3px;color:var(--t3);font-weight:600;text-align:center">10x</th><th style="padding:2px 3px;color:var(--t3);font-weight:600;text-align:center">11x</th><th style="padding:2px 3px;color:var(--t3);font-weight:600;text-align:center">12x</th>
                 </tr></thead>
                 <tbody>
-                  <tr><td style="padding:3px 8px;font-weight:600;color:var(--t2)">Visa</td><td style="padding:2px 3px"><input class="finp" id="tcr_visa_1" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_visa_3" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_visa_6" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_visa_12" type="number" step="0.001" min="0" max="20"></td></tr>
-                  <tr><td style="padding:3px 8px;font-weight:600;color:var(--t2)">Master</td><td style="padding:2px 3px"><input class="finp" id="tcr_master_1" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_master_3" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_master_6" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_master_12" type="number" step="0.001" min="0" max="20"></td></tr>
-                  <tr><td style="padding:3px 8px;font-weight:600;color:var(--t2)">Elo</td><td style="padding:2px 3px"><input class="finp" id="tcr_elo_1" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_elo_3" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_elo_6" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_elo_12" type="number" step="0.001" min="0" max="20"></td></tr>
-                  <tr><td style="padding:3px 8px;font-weight:600;color:var(--t2)">Amex</td><td style="padding:2px 3px"><input class="finp" id="tcr_amex_1" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_amex_3" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_amex_6" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_amex_12" type="number" step="0.001" min="0" max="20"></td></tr>
-                  <tr><td style="padding:3px 8px;font-weight:600;color:var(--t2)">Diners</td><td style="padding:2px 3px"><input class="finp" id="tcr_diners_1" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_diners_3" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_diners_6" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_diners_12" type="number" step="0.001" min="0" max="20"></td></tr>
-                  <tr><td style="padding:3px 8px;font-weight:600;color:var(--t2)">Hipercard</td><td style="padding:2px 3px"><input class="finp" id="tcr_hipercard_1" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_hipercard_3" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_hipercard_6" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_hipercard_12" type="number" step="0.001" min="0" max="20"></td></tr>
-                  <tr><td style="padding:3px 8px;font-weight:600;color:var(--t2)">Outros</td><td style="padding:2px 3px"><input class="finp" id="tcr_outros_1" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_outros_3" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_outros_6" type="number" step="0.001" min="0" max="20"></td><td style="padding:2px 3px"><input class="finp" id="tcr_outros_12" type="number" step="0.001" min="0" max="20"></td></tr>
+                  <tr><td style="padding:3px 8px;font-weight:600;color:var(--t2)">Visa</td><td style="padding:1px 2px"><input class="finp" id="tcr_visa_1" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_visa_2" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_visa_3" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_visa_4" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_visa_5" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_visa_6" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_visa_7" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_visa_8" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_visa_9" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_visa_10" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_visa_11" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_visa_12" type="number" step="0.001" min="0" max="20"></td></tr>
+                  <tr><td style="padding:3px 8px;font-weight:600;color:var(--t2)">Master</td><td style="padding:1px 2px"><input class="finp" id="tcr_master_1" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_master_2" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_master_3" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_master_4" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_master_5" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_master_6" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_master_7" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_master_8" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_master_9" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_master_10" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_master_11" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_master_12" type="number" step="0.001" min="0" max="20"></td></tr>
+                  <tr><td style="padding:3px 8px;font-weight:600;color:var(--t2)">Elo</td><td style="padding:1px 2px"><input class="finp" id="tcr_elo_1" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_elo_2" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_elo_3" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_elo_4" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_elo_5" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_elo_6" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_elo_7" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_elo_8" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_elo_9" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_elo_10" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_elo_11" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_elo_12" type="number" step="0.001" min="0" max="20"></td></tr>
+                  <tr><td style="padding:3px 8px;font-weight:600;color:var(--t2)">Amex</td><td style="padding:1px 2px"><input class="finp" id="tcr_amex_1" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_amex_2" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_amex_3" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_amex_4" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_amex_5" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_amex_6" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_amex_7" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_amex_8" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_amex_9" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_amex_10" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_amex_11" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_amex_12" type="number" step="0.001" min="0" max="20"></td></tr>
+                  <tr><td style="padding:3px 8px;font-weight:600;color:var(--t2)">Diners</td><td style="padding:1px 2px"><input class="finp" id="tcr_diners_1" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_diners_2" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_diners_3" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_diners_4" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_diners_5" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_diners_6" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_diners_7" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_diners_8" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_diners_9" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_diners_10" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_diners_11" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_diners_12" type="number" step="0.001" min="0" max="20"></td></tr>
+                  <tr><td style="padding:3px 8px;font-weight:600;color:var(--t2)">Hipercard</td><td style="padding:1px 2px"><input class="finp" id="tcr_hipercard_1" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_hipercard_2" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_hipercard_3" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_hipercard_4" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_hipercard_5" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_hipercard_6" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_hipercard_7" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_hipercard_8" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_hipercard_9" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_hipercard_10" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_hipercard_11" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_hipercard_12" type="number" step="0.001" min="0" max="20"></td></tr>
+                  <tr><td style="padding:3px 8px;font-weight:600;color:var(--t2)">Outros</td><td style="padding:1px 2px"><input class="finp" id="tcr_outros_1" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_outros_2" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_outros_3" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_outros_4" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_outros_5" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_outros_6" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_outros_7" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_outros_8" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_outros_9" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_outros_10" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_outros_11" type="number" step="0.001" min="0" max="20"></td><td style="padding:1px 2px"><input class="finp" id="tcr_outros_12" type="number" step="0.001" min="0" max="20"></td></tr>
                 </tbody>
               </table>
             </div>
@@ -1081,8 +1084,9 @@ let editProcedimentoId=null, procedureNid=1, procedureNcode=1;
 // ===== DATA =====
 let patients=[];
 let procedures=[];
-const _cTiers=[{max:1},{max:3},{max:6},{max:12}];
-function _mkCred(t1,t2,t3,t4){return[{max:1,taxa:t1},{max:3,taxa:t2},{max:6,taxa:t3},{max:12,taxa:t4}];}
+function _mkCred(t1,t2,t3,t4){
+  return[{max:1,taxa:t1},{max:2,taxa:t2},{max:3,taxa:t2},{max:4,taxa:t3},{max:5,taxa:t3},{max:6,taxa:t3},{max:7,taxa:t4},{max:8,taxa:t4},{max:9,taxa:t4},{max:10,taxa:t4},{max:11,taxa:t4},{max:12,taxa:t4}];
+}
 const taxasDef={
   pix:0,dinheiro:0,transferencia:0,boleto:2,
   visa_debito:1.49,master_debito:1.49,elo_debito:1.79,outros_debito:1.49,
@@ -2052,7 +2056,7 @@ const _txFieldsFlat=[
   ['txVisaDeb','visa_debito'],['txMasterDeb','master_debito'],['txEloDeb','elo_debito'],['txOutrosDeb','outros_debito']
 ];
 const _credBands=['visa','master','elo','amex','diners','hipercard','outros'];
-const _credTiers=[1,3,6,12];
+const _credTiers=[1,2,3,4,5,6,7,8,9,10,11,12];
 function switchTaxaTab(c){
   if(_taxaTab)_saveTaxaTab(_taxaTab);
   _taxaTab=c;
@@ -2063,11 +2067,15 @@ function switchTaxaTab(c){
   _txFieldsFlat.forEach(function(f){const el=document.getElementById(f[0]);if(el)el.value=t[f[1]]??0;});
   _credBands.forEach(function(band){
     const rate=t[band+'_credito'];
-    _credTiers.forEach(function(tier,idx){
+    _credTiers.forEach(function(tier){
       const el=document.getElementById('tcr_'+band+'_'+tier);
       if(!el)return;
-      if(Array.isArray(rate)){el.value=rate[idx]?.taxa??0;}
-      else{el.value=typeof rate==='number'?rate:0;}
+      if(Array.isArray(rate)){
+        // getTaxa-style: find first entry where tier <= max
+        var found=null;
+        for(var i=0;i<rate.length;i++){if(tier<=rate[i].max){found=rate[i].taxa;break;}}
+        el.value=found!==null?found:(rate[rate.length-1]?.taxa??0);
+      }else{el.value=typeof rate==='number'?rate:0;}
     });
   });
 }
@@ -2079,6 +2087,16 @@ function _saveTaxaTab(c){
       return{max:tier,taxa:parseFloat(document.getElementById('tcr_'+band+'_'+tier)?.value)||0};
     });
   });
+}
+function toggleCredTiers(){
+  const sec=document.getElementById('credTiersSection');
+  const arr=document.getElementById('credTiersArrow');
+  const btn=document.getElementById('credTiersToggle');
+  if(!sec)return;
+  const open=sec.style.display==='none';
+  sec.style.display=open?'':'none';
+  if(arr)arr.textContent=open?'▼':'▶';
+  if(btn){const hint=btn.querySelector('span:last-child');if(hint)hint.textContent=open?'(clique para recolher)':'(clique para expandir)';}
 }
 function saveTaxas(){
   _saveTaxaTab(_taxaTab);
@@ -2491,12 +2509,24 @@ function applyData(d){
       // Migra formato antigo: aplica para todas as empresas
       taxas={nf:Object.assign({...taxasDef},d.taxas),rv:Object.assign({...taxasDef},d.taxas),ct:Object.assign({...taxasDef},d.taxas)};
     }
-    // Migra valores escalares de crédito para o formato array por parcelas
+    // Migra valores escalares OU arrays curtos para 12 entradas
     const _credBandKeys=['visa','master','elo','amex','diners','hipercard','outros'];
     ['nf','rv','ct'].forEach(function(co){
       _credBandKeys.forEach(function(band){
         const v=taxas[co][band+'_credito'];
-        if(typeof v==='number'){taxas[co][band+'_credito']=_mkCred(v,v,v,v);}
+        if(typeof v==='number'){
+          taxas[co][band+'_credito']=_mkCred(v,v,v,v);
+        } else if(Array.isArray(v)&&v.length<12){
+          // Expande array curto (ex: 4 entradas) para 12 usando getTaxa-style lookup
+          var expanded=[];
+          for(var p=1;p<=12;p++){
+            var found=null;
+            for(var i=0;i<v.length;i++){if(p<=v[i].max){found=v[i].taxa;break;}}
+            if(found===null)found=v[v.length-1]?.taxa??0;
+            expanded.push({max:p,taxa:found});
+          }
+          taxas[co][band+'_credito']=expanded;
+        }
       });
     });
   }
