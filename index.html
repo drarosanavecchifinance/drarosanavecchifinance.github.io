@@ -1085,6 +1085,7 @@ let editPacienteId=null, patientNid=1, patientNcode=1;
 let editProcedimentoId=null, procedureNid=1, procedureNcode=1;
 
 // ===== DATA =====
+const _sessionId=Math.random().toString(36).slice(2,10);
 let patients=[];
 let procedures=[];
 function _mkCred(t1,t2,t3,t4){
@@ -1840,6 +1841,19 @@ function delTx(id){
   if(!confirm('Excluir este lançamento?'))return;
   txs=txs.filter(x=>x.id!==id);renderTx();saveData();
 }
+function delTxCart(id){
+  const t=txs.find(x=>x.id===id);if(!t)return;
+  if(t.grupoId){
+    const cnt=txs.filter(x=>x.grupoId===t.grupoId).length;
+    if(cnt>1){
+      const all=confirm('Este lançamento faz parte de um grupo de '+cnt+' parcelas.\n\nOK → Excluir TODAS as '+cnt+' parcelas\nCancelar → Excluir somente esta');
+      txs=all?txs.filter(x=>x.grupoId!==t.grupoId):txs.filter(x=>x.id!==id);
+      renderCarteira();saveData();return;
+    }
+  }
+  if(!confirm('Excluir este lançamento?'))return;
+  txs=txs.filter(x=>x.id!==id);renderCarteira();saveData();
+}
 
 // ===== STUDENTS =====
 function genStuCode(){return 'RVA'+String(stuNcode).padStart(3,'0');}
@@ -2140,7 +2154,12 @@ function fatVal(t){
 function initCarteiraFilter(){
   const sel=document.getElementById('carteiraFiltMes');if(!sel||sel.options.length>1)return;
   const now=new Date();const mNames=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  for(let i=0;i<12;i++){const d=new Date(now.getFullYear(),now.getMonth()-i,1);const val=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');const opt=document.createElement('option');opt.value=val;opt.textContent=mNames[d.getMonth()]+' '+d.getFullYear();if(i===0)opt.selected=true;sel.appendChild(opt);}
+  // Próximos 6 meses (futuros, incluindo corrente)
+  for(let i=6;i>=1;i--){const d=new Date(now.getFullYear(),now.getMonth()+i,1);const val=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');const opt=document.createElement('option');opt.value=val;opt.textContent=mNames[d.getMonth()]+' '+d.getFullYear();sel.appendChild(opt);}
+  // Mês corrente (selecionado por padrão)
+  {const d=new Date(now.getFullYear(),now.getMonth(),1);const val=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');const opt=document.createElement('option');opt.value=val;opt.textContent=mNames[d.getMonth()]+' '+d.getFullYear();opt.selected=true;sel.appendChild(opt);}
+  // 12 meses anteriores
+  for(let i=1;i<=12;i++){const d=new Date(now.getFullYear(),now.getMonth()-i,1);const val=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');const opt=document.createElement('option');opt.value=val;opt.textContent=mNames[d.getMonth()]+' '+d.getFullYear();sel.appendChild(opt);}
 }
 function renderCarteira(){
   initCarteiraFilter();
@@ -2222,7 +2241,9 @@ function renderCarteira(){
       '<div style="min-width:72px;font-size:12px;font-weight:600;color:var(--t2)">'+fmtDateShort(t.due)+'</div>'+
       '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+t.name+'</div>'+
       '<div style="display:flex;align-items:center;gap:5px;margin-top:3px">'+coBadge(t.co)+vName+fpg+parc+'</div></div>'+
-      '<div style="font-size:14px;font-weight:700;color:var(--gr);white-space:nowrap">'+fmt(t.val)+'</div></div>';
+      '<div style="font-size:14px;font-weight:700;color:var(--gr);white-space:nowrap;margin-right:4px">'+fmt(t.val)+'</div>'+
+      '<button onclick="delTxCart('+t.id+')" title="Excluir lançamento" style="background:none;border:none;cursor:pointer;color:var(--t4);font-size:14px;padding:2px 4px;border-radius:5px;flex-shrink:0;transition:color .14s" onmouseover="this.style.color=\'var(--re)\'" onmouseout="this.style.color=\'var(--t4)\'">🗑</button>'+
+      '</div>';
   }
   function section(title,icon,items,emptyMsg){
     if(!items.length)return'<div class="sc" style="margin-bottom:14px"><div style="padding:12px 16px;display:flex;align-items:center;gap:8px"><span style="font-size:16px">'+icon+'</span><span style="font-size:13.5px;font-weight:700;color:var(--t2)">'+title+'</span><span style="margin-left:auto;font-size:12px;color:var(--t3)">'+emptyMsg+'</span></div></div>';
@@ -2244,7 +2265,9 @@ function renderCarteira(){
       '<div style="min-width:72px;font-size:12px;font-weight:600;color:var(--t2)">'+fmtDateShort(compStr)+'<div style="font-size:10px;font-weight:400;color:var(--t3)">compensação</div></div>'+
       '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+t.name+'</div>'+
       '<div style="display:flex;align-items:center;gap:5px;margin-top:3px">'+coBadge(t.co)+vName+'<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:var(--blb);color:var(--bl);font-weight:600">Crédito</span>'+parc+'</div></div>'+
-      '<div style="font-size:14px;font-weight:700;color:var(--gr);white-space:nowrap">'+fmt(t.val)+'</div></div>';
+      '<div style="font-size:14px;font-weight:700;color:var(--gr);white-space:nowrap;margin-right:4px">'+fmt(t.val)+'</div>'+
+      '<button onclick="delTxCart('+t.id+')" title="Excluir lançamento" style="background:none;border:none;cursor:pointer;color:var(--t4);font-size:14px;padding:2px 4px;border-radius:5px;flex-shrink:0;transition:color .14s" onmouseover="this.style.color=\'var(--re)\'" onmouseout="this.style.color=\'var(--t4)\'">🗑</button>'+
+      '</div>';
   }
   function sectionCredit(title,icon,items){
     if(!items.length)return'';
@@ -2467,6 +2490,7 @@ async function doSignOut(){
 async function saveData(){
   const payload={
     txs,courses,students,vendedoras,evs,patients,procedures,taxas,
+    _sessionId,
     ids:{txNid,cursoNid,cursoNcode,stuNid,stuNcode,vendNid,vendNcode,evNextId,grupoNid,patientNid,patientNcode,procedureNid,procedureNcode}
   };
   // Sempre salva no localStorage como backup
@@ -2572,7 +2596,11 @@ function subscribeRealtime(){
   if(!supabaseReady)return;
   sbClient.channel('empresa-sync')
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'vai_data',filter:'key=eq.all_data'},payload=>{
-      if(payload.new?.value){applyData(payload.new.value);showSyncToast();}
+      if(payload.new?.value){
+        // Ignora evento gerado pelo próprio salvamento desta sessão
+        if(payload.new.value._sessionId===_sessionId)return;
+        applyData(payload.new.value);showSyncToast();
+      }
     })
     .subscribe();
   // Auto-import CE events em tempo real
