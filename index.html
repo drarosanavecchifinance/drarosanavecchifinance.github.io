@@ -763,6 +763,10 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
             <button class="bs" id="tbtRV" onclick="switchTaxaTab('rv')" style="flex:1;font-size:12px">🔴 Academy</button>
             <button class="bs" id="tbtCT" onclick="switchTaxaTab('ct')" style="flex:1;font-size:12px">🟢 Consultório</button>
           </div>
+          <div id="canalTabBtns" style="display:flex;gap:6px;margin-top:6px">
+            <button class="bs a" id="cbtOnline" onclick="switchCanalTab('online')" style="flex:1;font-size:12px">🌐 Online / Link</button>
+            <button class="bs" id="cbtMaq" onclick="switchCanalTab('maquininha')" style="flex:1;font-size:12px">🏪 Maquininha</button>
+          </div>
           <div style="grid-column:1/-1;display:flex;gap:4px;align-items:center;padding:3px 0 1px;font-size:10px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.07em">
             <span style="flex:1"></span><span style="width:46px;text-align:center">Taxa %</span><span style="width:38px;text-align:center">Prazo d</span>
           </div>
@@ -933,6 +937,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
       <div class="fgp" id="fVendWrap" style="display:none"><label class="fl">Vendedora</label><select class="fse" id="fVend"><option value="">— Nenhuma —</option></select></div>
       <div class="fgp" id="fFpgWrap" style="display:none"><label class="fl">Forma de Pagamento</label><select class="fse" id="fFpg" onchange="toggleBandeiraField()"><option value="">— Selecione —</option><option value="pix">PIX</option><option value="debito">Débito</option><option value="credito">Crédito</option><option value="boleto">Boleto</option><option value="transferencia">Transferência</option><option value="dinheiro">Dinheiro</option></select></div>
       <div class="fgp" id="fBandeiraWrap" style="display:none"><label class="fl">Bandeira</label><select class="fse" id="fBandeira"><option value="visa">Visa</option><option value="master">Mastercard</option><option value="elo">Elo</option><option value="amex">Amex</option><option value="diners">Diners</option><option value="hipercard">Hipercard</option><option value="outros">Outros</option></select></div>
+      <div class="fgp" id="fCanalWrap" style="display:none"><label class="fl">Canal</label><select class="fse" id="fCanal"><option value="online">🌐 Online / Link de Pagamento</option><option value="maquininha">🏪 Maquininha (Loja Física)</option></select></div>
       <div class="fgp" id="fParcelasWrap" style="display:none"><label class="fl">Parcelas (cartão)</label><select class="fse" id="fParcelas"><option value="1">1x (à vista)</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option><option value="6">6x</option><option value="7">7x</option><option value="8">8x</option><option value="9">9x</option><option value="10">10x</option><option value="11">11x</option><option value="12">12x</option></select></div>
       <div class="fgp" id="cursoFieldWrap"><label class="fl">Curso (opcional)</label><select class="fse" id="fCrs"><option value="">— Nenhum —</option></select></div>
       <div class="fgp" id="fProcWrap" style="display:none"><label class="fl">Procedimento (opcional)</label><select class="fse" id="fProc"><option value="">— Nenhum —</option></select></div>
@@ -1127,6 +1132,7 @@ const taxasDef={
   outros_credito:_mkCred(2.99,3.11,3.11,3.475),outros_credito_prazo:31
 };
 let taxas={nf:{...taxasDef},rv:{...taxasDef},ct:{...taxasDef}};
+let taxasMaq={nf:{...taxasDef},rv:{...taxasDef},ct:{...taxasDef}};
 let courses=[
   {id:1,code:'RVC001',name:'Protocolos Faciais Avançados',cat:'Estética Clínica',color:'#955251',startDate:'2025-07-01',endDate:'2025-09-30',val:2400,maxStu:20,status:'ativo',desc:'Curso completo de protocolos faciais premium'},
   {id:2,code:'RVC002',name:'Mentoria Executiva Premium',cat:'Gestão e Liderança',color:'#C4807F',startDate:'2025-07-15',endDate:'2025-12-15',val:7500,maxStu:10,status:'ativo',desc:''},
@@ -1642,6 +1648,7 @@ function toggleBandeiraField(){
   const isCard=fpg==='credito'||fpg==='debito';
   const bw=document.getElementById('fBandeiraWrap');if(bw)bw.style.display=isCard?'':'none';
   const pw=document.getElementById('fParcelasWrap');if(pw)pw.style.display=fpg==='credito'?'':'none';
+  const cw=document.getElementById('fCanalWrap');if(cw)cw.style.display=fpg?'':'none';
 }
 function toggleProcField(){
   const coVal=document.getElementById('fCo')?.value;
@@ -1662,6 +1669,8 @@ function toggleVendField(){
   if(isRec){const sel=document.getElementById('fVend');if(sel){sel.innerHTML='<option value="">— Nenhuma —</option>'+vendedoras.filter(v=>v.status==='ativa').map(v=>`<option value="${v.id}">${v.name}</option>`).join('');}}
   const fw=document.getElementById('fFpgWrap');
   if(fw)fw.style.display=isRec?'':'none';
+  const cw=document.getElementById('fCanalWrap');
+  if(cw&&!isRec)cw.style.display='none';
 }
 function toggleRec(){
   const isEdit=!!editTxId;
@@ -1767,6 +1776,8 @@ function openAddTx(){
   const pp=document.getElementById('fParcPreview');if(pp){pp.style.display='none';pp.innerHTML='';}
   const fpgRst=document.getElementById('fFpg');if(fpgRst)fpgRst.value='';
   const bndRst=document.getElementById('fBandeiraWrap');if(bndRst)bndRst.style.display='none';
+  const canalRst=document.getElementById('fCanal');if(canalRst)canalRst.value='online';
+  const canalWRst=document.getElementById('fCanalWrap');if(canalWRst)canalWRst.style.display='none';
   const parRst=document.getElementById('fParcelas');if(parRst)parRst.value='1';const parwRst=document.getElementById('fParcelasWrap');if(parwRst)parwRst.style.display='none';
   populateCursoSelects();toggleCursoField();toggleRec();toggleVendField();toggleProcField();checkStu();tgStu('new');
   ['sNm','sEm','sPh','sCp','sSt','sBa','sCe','sCi'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
@@ -1788,7 +1799,7 @@ function editTx(id){
   const ppE=document.getElementById('fParcPreview');if(ppE){ppE.style.display='none';ppE.innerHTML='';}
   populateCursoSelects();toggleCursoField();document.getElementById('fCrs').value=t.courseId||'';
   toggleProcField();setTimeout(()=>{const sp=document.getElementById('fProc');if(sp&&t.procedureId)sp.value=t.procedureId;},30);
-  toggleVendField();setTimeout(()=>{const sv=document.getElementById('fVend');if(sv&&t.vendId)sv.value=t.vendId;const sf=document.getElementById('fFpg');if(sf&&t.fpg){sf.value=t.fpg;toggleBandeiraField();const sb=document.getElementById('fBandeira');if(sb&&t.bandeira)sb.value=t.bandeira;const sp=document.getElementById('fParcelas');if(sp&&t.parcelas)sp.value=t.parcelas;}},30);
+  toggleVendField();setTimeout(()=>{const sv=document.getElementById('fVend');if(sv&&t.vendId)sv.value=t.vendId;const sf=document.getElementById('fFpg');if(sf&&t.fpg){sf.value=t.fpg;toggleBandeiraField();const sb=document.getElementById('fBandeira');if(sb&&t.bandeira)sb.value=t.bandeira;const sp=document.getElementById('fParcelas');if(sp&&t.parcelas)sp.value=t.parcelas;const sc=document.getElementById('fCanal');if(sc)sc.value=t.canal||'online';}},30);
   checkStu();const linked=students.find(s=>s.txId===id);
   if(linked){tgStu('exist');setTimeout(()=>{const sel=document.getElementById('sExSel');if(sel){sel.value=linked.id;previewExistStu();}},60);}else tgStu('new');
   document.getElementById('txModal').classList.add('o');
@@ -1800,8 +1811,9 @@ function saveTx(){
   const fpgVal=document.getElementById('fFpg')?.value||'';
   const bandeiraVal=(fpgVal==='credito'||fpgVal==='debito')?(document.getElementById('fBandeira')?.value||''):'';
   const parcelasVal=fpgVal==='credito'?parseInt(document.getElementById('fParcelas')?.value||'1')||1:1;
+  const canalVal=fpgVal?(document.getElementById('fCanal')?.value||'online'):'online';
   const procIdRaw=document.getElementById('fProc')?.value;
-  const tx={id:editTxId||txNid++,name,type:document.getElementById('fTy').value,cat:existCat,co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,procedureId:procIdRaw?parseInt(procIdRaw):null,vendId:vendIdRaw?parseInt(vendIdRaw):null,fpg:fpgVal,bandeira:bandeiraVal,parcelas:parcelasVal,status:document.getElementById('fSt').value,due:document.getElementById('fDu').value||new Date().toISOString().slice(0,10),val:parseFloat(document.getElementById('fVl').value)||0,notes:document.getElementById('fNo').value};
+  const tx={id:editTxId||txNid++,name,type:document.getElementById('fTy').value,cat:existCat,co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,procedureId:procIdRaw?parseInt(procIdRaw):null,vendId:vendIdRaw?parseInt(vendIdRaw):null,fpg:fpgVal,bandeira:bandeiraVal,parcelas:parcelasVal,canal:canalVal,status:document.getElementById('fSt').value,due:document.getElementById('fDu').value||new Date().toISOString().slice(0,10),val:parseFloat(document.getElementById('fVl').value)||0,notes:document.getElementById('fNo').value};
   // Parcelamento (só para novos lançamentos)
   if(!editTxId){
     const rawPN=document.getElementById('fParcN')?.value;
@@ -2156,8 +2168,11 @@ function renderVendDesemp(){
 
 // ===== TAXAS =====
 let _taxaTab=null;
+let _taxaCanal='online';
 function openTaxasModal(){
-  _taxaTab=null; // garante que não salva lixo antes de carregar
+  _taxaTab=null;_taxaCanal='online'; // garante que não salva lixo antes de carregar
+  document.getElementById('cbtOnline').classList.add('a');
+  document.getElementById('cbtMaq').classList.remove('a');
   switchTaxaTab('nf');
   document.getElementById('taxasModal').classList.add('o');
 }
@@ -2173,37 +2188,46 @@ const _txFieldsFlat=[
 ];
 const _credBands=['visa','master','elo','amex','diners','hipercard','outros'];
 const _credTiers=[1,2,3,4,5,6,7,8,9,10,11,12];
-function switchTaxaTab(c){
-  if(_taxaTab&&_taxaTab!==c)_saveTaxaTab(_taxaTab); // salva só ao MUDAR de aba
-  _taxaTab=c;
-  document.getElementById('tbtNF').classList.toggle('a',c==='nf');
-  document.getElementById('tbtRV').classList.toggle('a',c==='rv');
-  document.getElementById('tbtCT').classList.toggle('a',c==='ct');
-  const t=Object.assign({...taxasDef},taxas[c]||{});
+function _loadTaxaFields(co,canal){
+  const store=canal==='maquininha'?taxasMaq:taxas;
+  const t=Object.assign({...taxasDef},store[co]||{});
   _txFieldsFlat.forEach(function(f){const el=document.getElementById(f[0]);if(el)el.value=t[f[1]]??0;});
   _credBands.forEach(function(band){
     const rate=t[band+'_credito'];
     _credTiers.forEach(function(tier){
-      const el=document.getElementById('tcr_'+band+'_'+tier);
-      if(!el)return;
+      const el=document.getElementById('tcr_'+band+'_'+tier);if(!el)return;
       if(Array.isArray(rate)){
-        // getTaxa-style: find first entry where tier <= max
-        var found=null;
-        for(var i=0;i<rate.length;i++){if(tier<=rate[i].max){found=rate[i].taxa;break;}}
+        var found=null;for(var i=0;i<rate.length;i++){if(tier<=rate[i].max){found=rate[i].taxa;break;}}
         el.value=found!==null?found:(rate[rate.length-1]?.taxa??0);
       }else{el.value=typeof rate==='number'?rate:0;}
     });
     const prazoEl=document.getElementById('tcp_'+band);if(prazoEl)prazoEl.value=t[band+'_credito_prazo']??31;
   });
 }
-function _saveTaxaTab(c){
-  if(!taxas[c])taxas[c]={};
-  _txFieldsFlat.forEach(function(f){taxas[c][f[1]]=parseFloat(document.getElementById(f[0])?.value)||0;});
+function switchTaxaTab(c){
+  if(_taxaTab&&_taxaTab!==c)_saveTaxaTab(_taxaTab,_taxaCanal);
+  _taxaTab=c;
+  document.getElementById('tbtNF').classList.toggle('a',c==='nf');
+  document.getElementById('tbtRV').classList.toggle('a',c==='rv');
+  document.getElementById('tbtCT').classList.toggle('a',c==='ct');
+  _loadTaxaFields(c,_taxaCanal);
+}
+function switchCanalTab(canal){
+  if(_taxaTab)_saveTaxaTab(_taxaTab,_taxaCanal);
+  _taxaCanal=canal;
+  document.getElementById('cbtOnline').classList.toggle('a',canal==='online');
+  document.getElementById('cbtMaq').classList.toggle('a',canal==='maquininha');
+  _loadTaxaFields(_taxaTab||'nf',canal);
+}
+function _saveTaxaTab(co,canal){
+  const store=canal==='maquininha'?taxasMaq:taxas;
+  if(!store[co])store[co]={};
+  _txFieldsFlat.forEach(function(f){store[co][f[1]]=parseFloat(document.getElementById(f[0])?.value)||0;});
   _credBands.forEach(function(band){
-    taxas[c][band+'_credito']=_credTiers.map(function(tier){
+    store[co][band+'_credito']=_credTiers.map(function(tier){
       return{max:tier,taxa:parseFloat(document.getElementById('tcr_'+band+'_'+tier)?.value)||0};
     });
-    taxas[c][band+'_credito_prazo']=parseInt(document.getElementById('tcp_'+band)?.value)||31;
+    store[co][band+'_credito_prazo']=parseInt(document.getElementById('tcp_'+band)?.value)||31;
   });
 }
 function toggleCredTiers(){
@@ -2217,7 +2241,7 @@ function toggleCredTiers(){
   if(btn){const hint=btn.querySelector('span:last-child');if(hint)hint.textContent=open?'(clique para recolher)':'(clique para expandir)';}
 }
 function saveTaxas(){
-  _saveTaxaTab(_taxaTab);
+  _saveTaxaTab(_taxaTab,_taxaCanal);
   closeM('taxasModal');
   saveData();
   renderCarteira();
@@ -2234,7 +2258,8 @@ function taxaKey(t){
 }
 function getTaxa(t){
   const co=t.co||'nf';const key=taxaKey(t);
-  const rate=(taxas[co]||taxasDef)[key];
+  const store=t.canal==='maquininha'?taxasMaq:taxas;
+  const rate=(store[co]||taxasDef)[key];
   if(Array.isArray(rate)){
     const p=t.parcelas||1;
     for(var i=0;i<rate.length;i++){if(p<=rate[i].max)return rate[i].taxa/100;}
@@ -2244,7 +2269,8 @@ function getTaxa(t){
 }
 function getPrazo(t){
   const co=t.co||'nf';const key=taxaKey(t)+'_prazo';
-  const p=(taxas[co]||taxasDef)[key];
+  const store=t.canal==='maquininha'?taxasMaq:taxas;
+  const p=(store[co]||taxasDef)[key];
   return typeof p==='number'?p:1;
 }
 function valLiq(t){return t.val*(1-getTaxa(t));}
@@ -2614,7 +2640,7 @@ function undoLastDelete(){
 // ===== SALVAR =====
 async function saveData(){
   const payload={
-    txs,courses,students,vendedoras,evs,patients,procedures,taxas,
+    txs,courses,students,vendedoras,evs,patients,procedures,taxas,taxasMaq,
     _sessionId,
     ids:{txNid,cursoNid,cursoNcode,stuNid,stuNcode,vendNid,vendNcode,evNextId,grupoNid,patientNid,patientNcode,procedureNid,procedureNcode}
   };
@@ -2658,35 +2684,29 @@ function applyData(d){
   if(d.evs&&Object.keys(d.evs).length)evs=d.evs;
   if(d.patients)patients=d.patients;
   if(d.procedures)procedures=d.procedures;
-  if(d.taxas){
-    // Suporte ao formato antigo (plano) e novo (por empresa)
-    if(d.taxas.nf||d.taxas.rv||d.taxas.ct){
-      taxas={nf:Object.assign({...taxasDef},d.taxas.nf),rv:Object.assign({...taxasDef},d.taxas.rv),ct:Object.assign({...taxasDef},d.taxas.ct)};
-    } else {
-      // Migra formato antigo: aplica para todas as empresas
-      taxas={nf:Object.assign({...taxasDef},d.taxas),rv:Object.assign({...taxasDef},d.taxas),ct:Object.assign({...taxasDef},d.taxas)};
+  function _migrateTaxaStore(raw){
+    var store;
+    if(raw.nf||raw.rv||raw.ct){
+      store={nf:Object.assign({...taxasDef},raw.nf),rv:Object.assign({...taxasDef},raw.rv),ct:Object.assign({...taxasDef},raw.ct)};
+    }else{
+      store={nf:Object.assign({...taxasDef},raw),rv:Object.assign({...taxasDef},raw),ct:Object.assign({...taxasDef},raw)};
     }
-    // Migra valores escalares OU arrays curtos para 12 entradas
     const _credBandKeys=['visa','master','elo','amex','diners','hipercard','outros'];
     ['nf','rv','ct'].forEach(function(co){
       _credBandKeys.forEach(function(band){
-        const v=taxas[co][band+'_credito'];
-        if(typeof v==='number'){
-          taxas[co][band+'_credito']=_mkCred(v,v,v,v);
-        } else if(Array.isArray(v)&&v.length<12){
-          // Expande array curto (ex: 4 entradas) para 12 usando getTaxa-style lookup
+        const v=store[co][band+'_credito'];
+        if(typeof v==='number'){store[co][band+'_credito']=_mkCred(v,v,v,v);}
+        else if(Array.isArray(v)&&v.length<12){
           var expanded=[];
-          for(var p=1;p<=12;p++){
-            var found=null;
-            for(var i=0;i<v.length;i++){if(p<=v[i].max){found=v[i].taxa;break;}}
-            if(found===null)found=v[v.length-1]?.taxa??0;
-            expanded.push({max:p,taxa:found});
-          }
-          taxas[co][band+'_credito']=expanded;
+          for(var p=1;p<=12;p++){var found=null;for(var i=0;i<v.length;i++){if(p<=v[i].max){found=v[i].taxa;break;}}if(found===null)found=v[v.length-1]?.taxa??0;expanded.push({max:p,taxa:found});}
+          store[co][band+'_credito']=expanded;
         }
       });
     });
+    return store;
   }
+  if(d.taxas)taxas=_migrateTaxaStore(d.taxas);
+  if(d.taxasMaq)taxasMaq=_migrateTaxaStore(d.taxasMaq);
   if(d.ids){
     const ids=d.ids;
     if(ids.txNid)txNid=ids.txNid;if(ids.cursoNid)cursoNid=ids.cursoNid;
