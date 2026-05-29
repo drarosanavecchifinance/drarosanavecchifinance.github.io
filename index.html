@@ -592,6 +592,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
       <input class="srch" id="fSrch" placeholder="Buscar por descrição ou valor..." oninput="renderTx()" style="min-width:220px">
       <div style="margin-left:auto;display:flex;gap:8px">
         <button class="bs" onclick="openGruposModal()" title="Gerenciar grupos de parcelamento">🔗 Parcelamentos</button>
+        <button class="bs" id="undoBtn" onclick="undoLastDelete()" title="Desfazer última exclusão" style="display:none">↩ Desfazer</button>
         <button class="bs">📥 Exportar</button>
         <button class="bp" onclick="openAddTx()">+ Novo Lançamento</button>
       </div>
@@ -1858,10 +1859,12 @@ function delTx(id){
   if(t.grupoId){
     const cnt=txs.filter(x=>x.grupoId===t.grupoId).length;
     if(!confirm('Excluir todas as '+cnt+' parcelas deste grupo?'))return;
+    snapshotBeforeDelete();
     txs=txs.filter(x=>x.grupoId!==t.grupoId);
     renderTx();saveData();return;
   }
   if(!confirm('Excluir este lançamento?'))return;
+  snapshotBeforeDelete();
   txs=txs.filter(x=>x.id!==id);renderTx();saveData();
 }
 function delTxCart(id){
@@ -1869,10 +1872,12 @@ function delTxCart(id){
   if(t.grupoId){
     const cnt=txs.filter(x=>x.grupoId===t.grupoId).length;
     if(!confirm('Excluir todas as '+cnt+' parcelas deste grupo?'))return;
+    snapshotBeforeDelete();
     txs=txs.filter(x=>x.grupoId!==t.grupoId);
     renderCarteira();saveData();return;
   }
   if(!confirm('Excluir este lançamento?'))return;
+  snapshotBeforeDelete();
   txs=txs.filter(x=>x.id!==id);renderCarteira();saveData();
 }
 function openGruposModal(){
@@ -1921,7 +1926,8 @@ function openGruposModal(){
 }
 function delGrupoAll(gid){
   const cnt=txs.filter(t=>t.grupoId===gid).length;
-  if(!confirm('Excluir todas as '+cnt+' parcelas do grupo '+gid+'?\n\nEsta ação não pode ser desfeita.'))return;
+  if(!confirm('Excluir todas as '+cnt+' parcelas do grupo '+gid+'?\n\nUso o botão "↩ Desfazer" no Financeiro se precisar recuperar.'))return;
+  snapshotBeforeDelete();
   txs=txs.filter(t=>t.grupoId!==gid);
   // Re-render modal se ainda aberto
   const m=document.getElementById('gruposModal');
@@ -2560,6 +2566,27 @@ async function doSignOut(){
   if(sbClient)await sbClient.auth.signOut();
 }
 
+// ===== SNAPSHOT PRÉ-EXCLUSÃO =====
+function snapshotBeforeDelete(){
+  try{
+    const snap={txs:JSON.parse(JSON.stringify(txs)),ts:new Date().toISOString()};
+    localStorage.setItem('vai_undo_snapshot',JSON.stringify(snap));
+    const btn=document.getElementById('undoBtn');if(btn)btn.style.display='';
+  }catch(e){}
+}
+function undoLastDelete(){
+  try{
+    const raw=localStorage.getItem('vai_undo_snapshot');
+    if(!raw){alert('Nenhum snapshot disponível para desfazer.');return;}
+    const snap=JSON.parse(raw);
+    const dt=new Date(snap.ts).toLocaleString('pt-BR');
+    if(!confirm('Restaurar '+snap.txs.length+' lançamentos do snapshot de '+dt+'?\n\nOs dados atuais serão substituídos.'))return;
+    txs=snap.txs;
+    renderTx();renderCarteira();saveData();
+    alert('✅ Dados restaurados com sucesso!');
+  }catch(e){alert('Erro ao restaurar: '+e.message);}
+}
+
 // ===== SALVAR =====
 async function saveData(){
   const payload={
@@ -2985,6 +3012,8 @@ async function discardCEEvent(eventId){
 window.addEventListener('load',async()=>{
   initMesSelect();
   initSupabase();
+  // Mostrar botão Desfazer se há snapshot salvo
+  if(localStorage.getItem('vai_undo_snapshot')){const btn=document.getElementById('undoBtn');if(btn)btn.style.display='';}
   // Mostrar tela de login por padrão, app oculto
   document.getElementById('auth-screen').style.display='flex';
   document.getElementById('app').style.display='none';
