@@ -812,6 +812,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
     <!-- fim Modal Taxas -->
     <!-- KPIs -->
     <div class="kg" style="margin-bottom:22px" id="carteiraKpis"></div>
+    <!-- Breakdown por modalidade -->
+    <div id="carteiraMod" style="margin-bottom:22px"></div>
     <!-- Gráfico previsão -->
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:22px">
       <div class="cc">
@@ -2437,6 +2439,43 @@ function renderCarteira(){
     (creditoCompTotal>0?'<div class="kc m"><div class="klbl">Crédito a Compensar</div><div class="kval">'+fmt(creditoCompTotal)+'</div><div class="kft"><span class="kpr">💳 ~30 dias'+(creditoTaxa>0?' · taxa: '+fmt(creditoTaxa):'')+'</span></div></div>':'')+
     '<div class="kc o"><div class="klbl">A Receber</div><div class="kval">'+fmt(pendTotal)+'</div><div class="kft"><span class="kpr">pendente no período</span></div></div>'+
     '<div class="kc g"><div class="klbl">Previsão 3 Meses</div><div class="kval">'+fmt(prox3Total)+'</div><div class="kft"><span class="kpr">📈 entradas previstas</span></div></div>';
+  }
+  // ===== BREAKDOWN POR MODALIDADE =====
+  var modDiv=document.getElementById('carteiraMod');
+  if(modDiv){
+    var fpgOrder=['credito','debito','pix','dinheiro','transferencia','boleto'];
+    var fpgIco={credito:'💳',debito:'💳',pix:'⚡',dinheiro:'💵',transferencia:'🔄',boleto:'📄'};
+    var fpgNm={credito:'Crédito',debito:'Débito',pix:'PIX',dinheiro:'Dinheiro',transferencia:'Transferência',boleto:'Boleto'};
+    var modData={};var modTotal=0;
+    paidTxs.forEach(function(t){
+      var key=t.fpg||'outros';
+      if(!modData[key])modData[key]={val:0,taxa:0,cnt:0};
+      modData[key].val+=t.val;
+      modData[key].taxa+=t.val*getTaxa(t);
+      modData[key].cnt++;
+      modTotal+=t.val;
+    });
+    var modKeys=Object.keys(modData);
+    if(!modKeys.length){modDiv.innerHTML='';}
+    else{
+      var cards='';
+      var ordered=[...fpgOrder,'outros'].filter(function(k){return modData[k];});
+      ordered.forEach(function(k){
+        var d=modData[k];
+        var pct=modTotal>0?Math.round(d.val/modTotal*100):0;
+        var liq=d.val-d.taxa;
+        var taxaPct=d.val>0?Math.round(d.taxa/d.val*1000)/10:0;
+        var ico=fpgIco[k]||'💰';var nm=fpgNm[k]||'Outros';
+        cards+='<div class="kc" style="min-width:140px;flex:1">'+
+          '<div class="klbl">'+ico+' '+nm+'</div>'+
+          '<div class="kval" style="font-size:18px">'+fmt(d.val)+'</div>'+
+          '<div class="kft"><span class="kpr">líq. '+fmt(liq)+(taxaPct>0?' · MDR '+taxaPct+'%':'')+' · '+pct+'%</span></div>'+
+          '<div style="font-size:11px;color:var(--t3);margin-top:2px">'+d.cnt+' lançamento'+(d.cnt!==1?'s':'')+'</div>'+
+          '</div>';
+      });
+      modDiv.innerHTML='<div class="sc"><div class="ch"><div><div class="ct">Modalidade de Recebimento</div><div class="cs">Breakdown por forma de pagamento — período selecionado</div></div></div>'+
+        '<div style="display:flex;flex-wrap:wrap;gap:12px;padding:16px">'+cards+'</div></div>';
+    }
   }
   // ===== GRÁFICOS =====
   var mNames=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
