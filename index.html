@@ -817,7 +817,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
     <!-- Gráfico previsão -->
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:22px">
       <div class="cc">
-        <div class="ch"><div><div class="ct">Previsão de Entradas — Próximos 3 Meses</div><div class="cs">Recebido vs A Receber por mês</div></div></div>
+        <div class="ch"><div><div class="ct">Previsão Completa de Entradas</div><div class="cs">Recebido vs A Receber — todos os meses com movimentação</div></div></div>
         <canvas id="carteiraForecastChart" height="110"></canvas>
       </div>
       <div class="cc">
@@ -2446,12 +2446,14 @@ function renderCarteira(){
   // Previsão 3 Meses: soma os 3 próximos meses completos (M+1, M+2, M+3) — exclui mês corrente
   var prox3Total=0;
   for(var _pi=1;_pi<=3;_pi++){var _pd=new Date(now.getFullYear(),now.getMonth()+_pi,1);var _pk=_pd.getFullYear()+'-'+String(_pd.getMonth()+1).padStart(2,'0');prox3Total+=allRec.filter(function(t){return t.status!=='paid'&&t.due&&t.due.startsWith(_pk);}).reduce(function(s,t){return s+t.val;},0);}
+  // Total de todos os recebimentos futuros pendentes (qualquer mês)
+  var totalPrevisto=allRec.filter(function(t){return t.status!=='paid'&&t.due&&t.due>=todayStr;}).reduce(function(s,t){return s+t.val;},0);
   var kDiv=document.getElementById('carteiraKpis');
   if(kDiv){
     kDiv.innerHTML='<div class="kc g"><div class="klbl">Na Carteira</div><div class="kval">'+fmt(carteiraTotal)+'</div><div class="kft"><span class="kpr">líquido'+(carteiraTaxa>0?' · taxa: '+fmt(carteiraTaxa):'')+'</span></div></div>'+
     (creditoCompTotal>0?'<div class="kc m"><div class="klbl">Crédito a Compensar</div><div class="kval">'+fmt(creditoCompTotal)+'</div><div class="kft"><span class="kpr">💳 ~30 dias'+(creditoTaxa>0?' · taxa: '+fmt(creditoTaxa):'')+'</span></div></div>':'')+
     '<div class="kc o"><div class="klbl">A Receber</div><div class="kval">'+fmt(pendTotal)+'</div><div class="kft"><span class="kpr">pendente no período</span></div></div>'+
-    '<div class="kc g"><div class="klbl">Previsão 3 Meses</div><div class="kval">'+fmt(prox3Total)+'</div><div class="kft"><span class="kpr">📈 entradas previstas</span></div></div>';
+    '<div class="kc g"><div class="klbl">Total Previsto</div><div class="kval">'+fmt(totalPrevisto)+'</div><div class="kft"><span class="kpr">📈 todas as entradas futuras</span></div></div>';
   }
   // ===== BREAKDOWN POR MODALIDADE =====
   var modDiv=document.getElementById('carteiraMod');
@@ -2492,17 +2494,19 @@ function renderCarteira(){
   }
   // ===== GRÁFICOS =====
   var mNames=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  // Próximos 3 meses: M0 (atual), M+1, M+2, M+3 (inclui mês corrente)
-  var foreLabels=[],foreRec=[],forePend=[],foreNF=[],foreAcad=[];
-  for(var mi=0;mi<4;mi++){
+  // Range dinâmico: do mês corrente até o mês da última transação pendente (mín. 4 meses)
+  var futurePend=allRec.filter(function(t){return t.status!=='paid'&&t.due&&t.due>=todayStr;});
+  var lastDue=futurePend.reduce(function(acc,t){return t.due>acc?t.due:acc;},'');
+  var lastDate=lastDue?new Date(lastDue+'T12:00:00'):new Date(now.getFullYear(),now.getMonth()+3,1);
+  var monthsTotal=Math.max(4,(lastDate.getFullYear()-now.getFullYear())*12+lastDate.getMonth()-now.getMonth()+1);
+  var foreLabels=[],foreRec=[],forePend=[];
+  for(var mi=0;mi<monthsTotal;mi++){
     var md=new Date(now.getFullYear(),now.getMonth()+mi,1);
     var mKey=md.getFullYear()+'-'+String(md.getMonth()+1).padStart(2,'0');
     foreLabels.push(mNames[md.getMonth()]+'/'+String(md.getFullYear()).slice(2));
     var mTxs=allRec.filter(function(t){return t.due&&t.due.startsWith(mKey);});
     foreRec.push(mTxs.filter(function(t){return t.status==='paid';}).reduce(function(s,t){return s+t.val;},0));
     forePend.push(mTxs.filter(function(t){return t.status!=='paid';}).reduce(function(s,t){return s+t.val;},0));
-    foreNF.push(mTxs.filter(function(t){return t.co==='nf';}).reduce(function(s,t){return s+t.val;},0));
-    foreAcad.push(mTxs.filter(function(t){return t.co==='rv';}).reduce(function(s,t){return s+t.val;},0));
   }
   // Forecast bar chart
   var fcEl=document.getElementById('carteiraForecastChart');
