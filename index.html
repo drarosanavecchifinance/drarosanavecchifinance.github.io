@@ -1790,9 +1790,19 @@ function renderParcPreview(){
   const totalVal=parseFloat(document.getElementById('fVl')?.value)||0;
   const parcVal=totalVal>0?Math.round(totalVal/n*100)/100:0;
   const baseDate=document.getElementById('fDu')?.value||new Date().toISOString().slice(0,10);
+  // Para crédito: datas começam a partir do prazo de recebimento (ex: +31 dias)
+  const fpgVal=document.getElementById('fFpg')?.value||'';
+  const coVal=document.getElementById('fCo')?.value||'nf';
+  const bandeiraVal=document.getElementById('fBandeira')?.value||'';
+  const parcelasVal=parseInt(document.getElementById('fParcelas')?.value||'1')||1;
+  const canalVal=document.getElementById('fCanal')?.value||'online';
+  const prazoOffset=(fpgVal==='credito')?getPrazo({co:coVal,fpg:fpgVal,bandeira:bandeiraVal,parcelas:parcelasVal,canal:canalVal}):0;
+  // Data de início = data da venda + prazo (para crédito) ou data da venda (demais)
+  let startDate=new Date(baseDate+'T12:00:00');
+  if(prazoOffset>0)startDate.setDate(startDate.getDate()+prazoOffset);
   let rows='';
   for(let i=0;i<n;i++){
-    let d=new Date(baseDate+'T12:00:00');d.setMonth(d.getMonth()+i);
+    let d=new Date(startDate);d.setMonth(d.getMonth()+i);
     const ds=d.toISOString().slice(0,10);
     rows+=`<div class="parc-row-p"><span class="parc-num-tag">${i+1}/${n}</span><input class="fi" type="date" id="parcDt${i}" value="${ds}" style="padding:8px 12px;font-size:13px"><span class="parc-val-tag">R$&nbsp;${parcVal.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>`;
   }
@@ -1908,10 +1918,13 @@ function saveTx(){
     if(parcN>=2){
       const gid='G'+String(grupoNid++).padStart(5,'0');
       const parcVal=Math.round(tx.val/parcN*100)/100;
+      // Para crédito: todas as parcelas nascem como 'sched' (liquidação futura pelo cartão)
+      const isCredParcela=tx.fpg==='credito';
       for(let i=0;i<parcN;i++){
         const dtEl=document.getElementById('parcDt'+i);
         const due=dtEl?.value||tx.due;
-        txs.push({...tx,id:i===0?tx.id:txNid++,val:parcVal,due,grupoId:gid,parcelaNum:i+1,parcelaTotal:parcN,status:i===0?tx.status:'sched'});
+        const parcStatus=isCredParcela?'sched':(i===0?tx.status:'sched');
+        txs.push({...tx,id:i===0?tx.id:txNid++,val:parcVal,due,grupoId:gid,parcelaNum:i+1,parcelaTotal:parcN,status:parcStatus});
       }
       closeM('txModal');renderTx();saveData();if(document.getElementById('page-cursos').classList.contains('a'))renderCursos();
       return;
