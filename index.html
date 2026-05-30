@@ -2439,7 +2439,9 @@ function renderCarteira(){
   var creditoTaxa=paidCreditoTxs.reduce(function(s,t){return s+t.val*getTaxa(t);},0);
   var fatTotal=fatTxs.reduce(function(s,t){return s+t.val;},0);
   var recTotal=fatTxs.filter(function(t){return t.status==='paid';}).reduce(function(s,t){return s+t.val;},0);
-  var pendTotal=fatTxs.filter(function(t){return t.status!=='paid';}).reduce(function(s,t){return s+t.val;},0);
+  // pendTotal = todos os futuros pendentes (independe do filtro de mês)
+  var pendTotal=allRec.filter(function(t){return t.status!=='paid'&&t.due&&t.due>=todayStr;}).reduce(function(s,t){return s+t.val;},0);
+  var pendCnt=allRec.filter(function(t){return t.status!=='paid'&&t.due&&t.due>=todayStr;}).length;
   // KPIs
   // prox3Str = fim do 3º mês seguinte (para o donut chart)
   var prox3Str=new Date(now.getFullYear(),now.getMonth()+4,0).toISOString().slice(0,10);
@@ -2452,8 +2454,7 @@ function renderCarteira(){
   if(kDiv){
     kDiv.innerHTML='<div class="kc g"><div class="klbl">Na Carteira</div><div class="kval">'+fmt(carteiraTotal)+'</div><div class="kft"><span class="kpr">líquido'+(carteiraTaxa>0?' · taxa: '+fmt(carteiraTaxa):'')+'</span></div></div>'+
     (creditoCompTotal>0?'<div class="kc m"><div class="klbl">Crédito a Compensar</div><div class="kval">'+fmt(creditoCompTotal)+'</div><div class="kft"><span class="kpr">💳 ~30 dias'+(creditoTaxa>0?' · taxa: '+fmt(creditoTaxa):'')+'</span></div></div>':'')+
-    '<div class="kc o"><div class="klbl">A Receber</div><div class="kval">'+fmt(pendTotal)+'</div><div class="kft"><span class="kpr">pendente no período</span></div></div>'+
-    '<div class="kc g"><div class="klbl">Total Previsto</div><div class="kval">'+fmt(totalPrevisto)+'</div><div class="kft"><span class="kpr">📈 todas as entradas futuras</span></div></div>';
+    '<div class="kc o"><div class="klbl">A Receber</div><div class="kval">'+fmt(pendTotal)+'</div><div class="kft"><span class="kpr">'+pendCnt+' entrada'+(pendCnt!==1?'s':'')+' futuras pendentes</span></div></div>';
   }
   // ===== BREAKDOWN POR MODALIDADE =====
   var modDiv=document.getElementById('carteiraMod');
@@ -2498,10 +2499,13 @@ function renderCarteira(){
   var futurePend=allRec.filter(function(t){return t.status!=='paid'&&t.due&&t.due>=todayStr;});
   var lastDue=futurePend.reduce(function(acc,t){return t.due>acc?t.due:acc;},'');
   var lastDate=lastDue?new Date(lastDue+'T12:00:00'):new Date(now.getFullYear(),now.getMonth()+3,1);
-  var monthsTotal=Math.max(4,(lastDate.getFullYear()-now.getFullYear())*12+lastDate.getMonth()-now.getMonth()+1);
+  // Início do gráfico: mês selecionado (se futuro) ou mês atual
+  var chartStartY=now.getFullYear(),chartStartM=now.getMonth();
+  if(selMes){var sm=new Date(selMes+'-01T12:00:00');if(sm>new Date(now.getFullYear(),now.getMonth(),1)){chartStartY=sm.getFullYear();chartStartM=sm.getMonth();}}
+  var monthsTotal=Math.max(4,(lastDate.getFullYear()-chartStartY)*12+lastDate.getMonth()-chartStartM+1);
   var foreLabels=[],foreRec=[],forePend=[];
   for(var mi=0;mi<monthsTotal;mi++){
-    var md=new Date(now.getFullYear(),now.getMonth()+mi,1);
+    var md=new Date(chartStartY,chartStartM+mi,1);
     var mKey=md.getFullYear()+'-'+String(md.getMonth()+1).padStart(2,'0');
     foreLabels.push(mNames[md.getMonth()]+'/'+String(md.getFullYear()).slice(2));
     var mTxs=allRec.filter(function(t){return t.due&&t.due.startsWith(mKey);});
