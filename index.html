@@ -531,7 +531,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
     <div class="kg">
       <div class="kc m"><div class="klbl">Faturamento Mensal</div><div class="kval" id="kF">R$&nbsp;284.750</div><div class="kft"><span class="dt up">▲ 18,3%</span><span class="kpr">vs mês anterior</span></div></div>
       <div class="kc g"><div class="klbl">Lucro Líquido</div><div class="kval" id="kL">R$&nbsp;112.340</div><div class="kft"><span class="dt up">▲ 22,1%</span><span class="kpr">margem 39,4%</span></div></div>
-      <div class="kc o"><div class="klbl">Contas a Receber</div><div class="kval" id="kR">R$&nbsp;67.200</div><div class="kft"><span class="dt dn">▼ 4,7%</span><span class="kpr">23 faturas</span></div></div>
+      <div class="kc o"><div class="klbl">Despesas do Mês</div><div class="kval" id="kR">R$&nbsp;0</div><div class="kft"><span class="kpr">total de saídas</span></div></div>
       <div class="kc g"><div class="klbl">Crescimento MoM</div><div class="kval" id="kG">+18%</div><div class="kft"><span class="dt up">▲ Meta atingida</span><span class="kpr">meta: 15%</span></div></div>
     </div>
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:22px">
@@ -1292,8 +1292,8 @@ function updateDashCharts(){
     const fatPrev=prevRec.reduce(function(s,t){return s+fatVal(t);},0);
     const despAtual=curPag.reduce(function(s,t){return s+t.val;},0);
     const lucro=fatAtual-despAtual;
-    const contasRec=txs.filter(function(t){return coFilt(t)&&t.type==='receber'&&t.status!=='paid';}).reduce(function(s,t){return s+t.val;},0);
-    const pendCt=txs.filter(function(t){return coFilt(t)&&t.type==='receber'&&t.status!=='paid';}).length;
+    const contasRec=despAtual;
+    const pendCt=curPag.length;
     const growPct=fatPrev>0?Math.round((fatAtual-fatPrev)/fatPrev*100):0;
     const s2=function(id,v){const el=document.getElementById(id);if(el)el.textContent=v;};
     s2('kF',fmt(fatAtual));
@@ -1308,7 +1308,7 @@ function updateDashCharts(){
     const margem=fatAtual>0?Math.round(lucro/fatAtual*100):0;
     if(kfEl)kfEl.innerHTML='<span class="dt '+(growPct>=0?'up':'dn')+'">'+(growPct>=0?'▲':'▼')+' '+Math.abs(growPct)+'%</span><span class="kpr">vs mês anterior</span>';
     if(klEl)klEl.innerHTML='<span class="dt '+(lucro>=0?'up':'dn')+'">'+(lucro>=0?'▲':'▼')+' '+(fatAtual>0?Math.abs(margem):0)+'%</span><span class="kpr">margem '+(fatAtual>0?Math.abs(margem):0)+'%</span>';
-    if(krEl)krEl.innerHTML='<span class="kpr">'+pendCt+' fatura'+(pendCt!==1?'s':'')+' pendente'+(pendCt!==1?'s':'')+'</span>';
+    if(krEl)krEl.innerHTML='<span class="kpr">'+pendCt+' lançamento'+(pendCt!==1?'s':'')+' de saída</span>';
     if(kgEl)kgEl.innerHTML='<span class="dt '+(growPct>=0?'up':'dn')+'">'+(growPct>=0?'▲ Meta':'▼')+' '+(growPct>=0?'atingida':'abaixo')+'</span><span class="kpr">vs mês anterior</span>';
   })();
   // --- Vendas por Vendedora (NF receitas) ---
