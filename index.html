@@ -2516,8 +2516,9 @@ function renderCarteira(){
   var periodoRecebido=fatTxs.filter(function(t){return t.status==='paid';}).reduce(function(s,t){return s+valLiq(t);},0);
   var periodoAReceber=fatTxs.filter(function(t){return t.status!=='paid';}).reduce(function(s,t){return s+valLiq(t);},0);
   var periodoAReceberCnt=fatTxs.filter(function(t){return t.status!=='paid';}).length;
-  // Total futuro global líquido (todos os meses, para referência)
-  var totalFuturo=allRec.filter(function(t){return t.status!=='paid'&&t.due&&t.due>=todayStr;}).reduce(function(s,t){return s+valLiq(t);},0);
+  // Total futuro: do mês selecionado em diante (ou hoje se nenhum mês selecionado)
+  var futuroFromStr=selMes?(selMes+'-01'):todayStr;
+  var totalFuturo=allRec.filter(function(t){return t.status!=='paid'&&t.due&&t.due>=futuroFromStr;}).reduce(function(s,t){return s+valLiq(t);},0);
   // prox3Str para o donut chart
   var prox3Str=new Date(now.getFullYear(),now.getMonth()+4,0).toISOString().slice(0,10);
   var kDiv=document.getElementById('carteiraKpis');
