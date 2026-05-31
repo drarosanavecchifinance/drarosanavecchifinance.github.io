@@ -359,6 +359,78 @@ html,body{height:100%;font-family:'Inter',sans-serif;font-size:14px;background:v
 .grupo-tag:hover{background:rgba(46,94,160,.2)}
 .grupo-banner{background:var(--blb);border:1.5px solid rgba(46,94,160,.25);border-radius:9px;padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--bl);font-weight:600}
 .grupo-banner button{background:transparent;border:none;color:var(--bl);cursor:pointer;font-size:16px;padding:0 4px}
+
+/* ===== HAMBURGER ===== */
+.hbg{display:none;flex-direction:column;gap:5px;padding:8px;border:none;background:transparent;cursor:pointer;flex-shrink:0}
+.hbg span{display:block;width:20px;height:2px;background:var(--t2);border-radius:2px;transition:all .25s}
+
+/* ===== OVERLAY ===== */
+.sb-overlay{position:fixed;inset:0;background:rgba(15,2,3,.55);z-index:150;display:none;backdrop-filter:blur(3px)}
+.sb-overlay.open{display:block}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:900px){
+  .cr{grid-template-columns:1fr}
+  .br{grid-template-columns:1fr}
+  .cgrid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:768px){
+  /* Sidebar off-canvas */
+  .sb{position:fixed;top:0;left:0;bottom:0;z-index:200;transform:translateX(-110%);transition:transform .32s cubic-bezier(.4,0,.2,1);box-shadow:none;width:280px!important}
+  .sb.open{transform:translateX(0);box-shadow:var(--sh-lg)}
+  /* Main full width */
+  #app{display:block}
+  .main{width:100vw;height:100vh;overflow-y:auto}
+  /* Topbar */
+  .hbg{display:flex}
+  .topbar{padding:12px 16px;gap:10px}
+  .tb-title{font-size:16px}
+  .tb-sub{font-size:11px}
+  .tbbg span:not(.ldot){display:none}
+  /* Pages */
+  .page{padding:14px 14px 80px}
+  /* KPI grids */
+  .kg{grid-template-columns:1fr 1fr;gap:10px}
+  .kg3{grid-template-columns:1fr 1fr}
+  .kc{padding:16px 14px 14px}
+  .kval{font-size:22px}
+  /* Charts */
+  .cr{grid-template-columns:1fr}
+  .br{grid-template-columns:1fr}
+  /* Tables: scroll horizontal */
+  .dtbl{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .dtbl table{min-width:600px}
+  /* Alunos table */
+  .atbl{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .athdr,.atrow{min-width:600px}
+  /* Cards cursos */
+  .cgrid{grid-template-columns:1fr}
+  /* Modais: bottom sheet */
+  .ov{align-items:flex-end}
+  .mo{width:100vw!important;max-width:100vw!important;border-radius:20px 20px 0 0!important;max-height:90vh;padding:24px 18px 32px}
+  .mo::before{content:'';display:block;width:40px;height:4px;background:var(--bdr2);border-radius:2px;margin:0 auto 20px}
+  /* Selects e filters */
+  .fsel,.srch{font-size:14px;padding:10px 12px}
+  /* VAI assistente */
+  .vw{grid-template-columns:1fr;height:auto}
+  .icol{display:none}
+  /* Taxas modal */
+  .cgrid{grid-template-columns:1fr}
+  /* Tabs scroll horizontal */
+  .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%}
+  /* Financeiro toolbar */
+  #page-financeiro>div:first-child{flex-wrap:wrap;gap:8px}
+  /* Carteira KPI grid */
+  .kg.carteiraKpis-inner{grid-template-columns:1fr 1fr}
+  /* Botões full-width em contextos pequenos */
+  .mft{flex-direction:column}
+  .mft .bp,.mft .bs{width:100%;justify-content:center}
+}
+@media(max-width:400px){
+  .kg{grid-template-columns:1fr}
+  .kg3{grid-template-columns:1fr}
+  .kval{font-size:20px}
+}
 </style>
 </head>
 <body>
@@ -530,8 +602,12 @@ html,body{height:100%;font-family:'Inter',sans-serif;font-size:14px;background:v
   </div>
 </aside>
 
+<div class="sb-overlay" id="sbOverlay" onclick="closeSidebar()"></div>
 <main class="main">
   <div class="topbar">
+    <button class="hbg" id="hbgBtn" onclick="toggleSidebar()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
     <div><div class="tb-title" id="tbT">Dashboard Executivo</div><div class="tb-sub" id="tbS">Visão geral estratégica · NatureFace</div></div>
     <div class="tbr">
       <div class="tbbg"><span class="ldot"></span>Online</div>
@@ -1207,6 +1283,19 @@ let evs={
 
 // ===== COMPANY =====
 const cod={nf:{fat:'R$ 148.200',luc:'R$ 58.100',rec:'R$ 32.400',inad:'1,8%',tick:'R$ 960',cli:'24',roi:'280%',grow:'+16%',name:'NatureFace'},rv:{fat:'R$ 136.550',luc:'R$ 54.240',rec:'R$ 34.800',inad:'3,1%',tick:'R$ 2.840',cli:'23',roi:'410%',grow:'+22%',name:'Rosana Academy'},ct:{fat:'R$ 0',luc:'R$ 0',rec:'R$ 0',inad:'0%',tick:'R$ 0',cli:'0',roi:'0%',grow:'+0%',name:'Consultório'},all:{fat:'R$ 284.750',luc:'R$ 112.340',rec:'R$ 67.200',inad:'2,4%',tick:'R$ 1.840',cli:'47',roi:'340%',grow:'+18%',name:'Consolidado'}};
+// ===== SIDEBAR MOBILE =====
+function toggleSidebar(){
+  const sb=document.querySelector('.sb');
+  const ov=document.getElementById('sbOverlay');
+  const open=sb.classList.toggle('open');
+  ov.classList.toggle('open',open);
+  document.body.style.overflow=open?'hidden':'';
+}
+function closeSidebar(){
+  document.querySelector('.sb').classList.remove('open');
+  document.getElementById('sbOverlay').classList.remove('open');
+  document.body.style.overflow='';
+}
 function setCo(c,btn){
   co=c;
   document.querySelectorAll('.sw-b').forEach(b=>b.classList.remove('a'));
@@ -1234,6 +1323,7 @@ function setCo(c,btn){
 // ===== NAV =====
 const pgMap={dashboard:['Dashboard Executivo','Visão geral estratégica'],financeiro:['Fluxo de Caixa','Lançamentos · Contas · Fluxo de Caixa'],carteira:['Carteira','Faturamento · Recebimentos · Agenda de entradas'],cursos:['Cursos — Rosana Academy','Controle financeiro por curso'],alunos:['Base de Alunos','Rosana Vecchi Academy'],vendedoras:['Vendedoras','Equipe de vendas — NatureFace & Academy'],pacientes:['Pacientes — Consultório','Base de pacientes'],procedimentos:['Procedimentos — Consultório','Serviços e tratamentos'],ceimport:['Clínica Experts','Integração e importação automática'],calendario:['Calendário','Agenda e eventos'],vai:['V.A.I — Assistente','Inteligência artificial executiva']};
 function sv(v,el){
+  closeSidebar(); // fecha sidebar no mobile ao navegar
   if(el){document.querySelectorAll('.ni').forEach(n=>n.classList.remove('a'));el.classList.add('a');}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('a'));
   const pg=document.getElementById('page-'+v);if(pg)pg.classList.add('a');
