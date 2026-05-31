@@ -606,7 +606,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
     <div class="dtbl">
       <table>
         <colgroup><col class="c-desc"><col class="c-cat"><col class="c-emp"><col class="c-dt"><col class="c-val"><col class="c-st"><col class="c-ac"></colgroup>
-        <thead><tr><th>Descrição</th><th>Cat.</th><th>Empresa / Curso</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
+        <thead><tr><th>Descrição</th><th>Cat.</th><th>Empresa / Curso</th><th>Lançado em</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
         <tbody id="txBody"></tbody>
       </table>
     </div>
@@ -1636,12 +1636,15 @@ function renderTx(){
     const crs=t.courseId?courses.find(x=>x.id===t.courseId):null;
     const empCell=`<span style="color:${cc[t.co]};font-weight:600">${cnm[t.co]}</span>${crs?`<br><span style="font-size:11px;color:var(--m);font-weight:500">${crs.code}</span>`:''}`;
     const typeIco=t.type==='receber'?'<span style="color:var(--gr);font-size:11px;font-weight:700;margin-right:4px">↓</span>':'<span style="color:var(--re);font-size:11px;font-weight:700;margin-right:4px">↑</span>';
-    let dueCell=fmtDate(t.due);
+    const saleDateStr=t.saleDate||t.due;
+    // Mostra data de lançamento; se for parcela com data diferente, exibe venc. como subtexto
+    const hasOffsetDue=t.parcelaNum&&t.due!==saleDateStr;
+    let dueCell=fmtDate(saleDateStr)+(hasOffsetDue?`<div style="font-size:10px;color:var(--t3);margin-top:1px">venc. ${fmtDate(t.due)}</div>`:'');
     if(ftab==='pagar'&&subftab==='avencer'){
       const dueD=new Date(t.due+'T00:00:00');
       const diff=Math.round((dueD-today)/(1000*60*60*24));
       const badge=diff===0?'<span style="background:#E07070;color:#fff;font-size:10px;padding:2px 6px;border-radius:10px;margin-left:5px">Hoje</span>':diff===1?'<span style="background:#E09070;color:#fff;font-size:10px;padding:2px 6px;border-radius:10px;margin-left:5px">Amanhã</span>':`<span style="background:#955251;color:#fff;font-size:10px;padding:2px 6px;border-radius:10px;margin-left:5px">em ${diff}d</span>`;
-      dueCell=fmtDate(t.due)+badge;
+      dueCell=fmtDate(saleDateStr)+badge;
     }
     const parcelaBadge=t.parcelaNum?`<span style="font-family:var(--num);font-size:10px;font-weight:800;color:var(--gdd);background:var(--gdp);border:1px solid rgba(196,165,90,.25);border-radius:5px;padding:2px 6px;margin-left:5px">${_collapseParcelas?t.parcelaTotal+'×':t.parcelaNum+'/'+t.parcelaTotal}</span>`:'';
     const grupoBtn=t.grupoId?`<button class="grupo-tag" onclick="viewGrupo('${t.grupoId}')" title="Ver todas as parcelas deste grupo">🔗 grupo</button>`:'';
@@ -1910,7 +1913,9 @@ function saveTx(){
   const parcelasVal=fpgVal==='credito'?parseInt(document.getElementById('fParcelas')?.value||'1')||1:1;
   const canalVal=fpgVal?(document.getElementById('fCanal')?.value||'online'):'online';
   const procIdRaw=document.getElementById('fProc')?.value;
-  const tx={id:editTxId||txNid++,name,type:document.getElementById('fTy').value,cat:existCat,co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,procedureId:procIdRaw?parseInt(procIdRaw):null,vendId:vendIdRaw?parseInt(vendIdRaw):null,fpg:fpgVal,bandeira:bandeiraVal,parcelas:parcelasVal,canal:canalVal,status:document.getElementById('fSt').value,due:document.getElementById('fDu').value||new Date().toISOString().slice(0,10),val:parseFloat(document.getElementById('fVl').value)||0,notes:document.getElementById('fNo').value};
+  const _duVal=document.getElementById('fDu').value||new Date().toISOString().slice(0,10);
+  const _existSaleDate=editTxId?(txs.find(x=>x.id===editTxId)?.saleDate||null):null;
+  const tx={id:editTxId||txNid++,name,type:document.getElementById('fTy').value,cat:existCat,co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,procedureId:procIdRaw?parseInt(procIdRaw):null,vendId:vendIdRaw?parseInt(vendIdRaw):null,fpg:fpgVal,bandeira:bandeiraVal,parcelas:parcelasVal,canal:canalVal,status:document.getElementById('fSt').value,due:_duVal,saleDate:_existSaleDate||_duVal,val:parseFloat(document.getElementById('fVl').value)||0,notes:document.getElementById('fNo').value};
   // Parcelamento (só para novos lançamentos)
   if(!editTxId){
     const rawPN=document.getElementById('fParcN')?.value;
