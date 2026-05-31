@@ -588,7 +588,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
       <div style="margin-left:auto;display:flex;gap:8px">
         <button class="bs" onclick="openGruposModal()" title="Gerenciar grupos de parcelamento">🔗 Parcelamentos</button>
         <button class="bs" id="undoBtn" onclick="undoLastDelete()" title="Desfazer última exclusão" style="display:none">↩ Desfazer</button>
-        <button class="bs">📥 Exportar</button>
+        <button class="bs" onclick="exportTx()">📥 Exportar</button>
         <button class="bp" onclick="openAddTx()">+ Novo Lançamento</button>
       </div>
     </div>
@@ -1665,6 +1665,8 @@ function renderTx(){
       <td><div class="ract"><button class="rb e" onclick="editTx(${t.id})" title="Editar">✏️</button><button class="rb d" onclick="delTx(${t.id})" title="Excluir">🗑</button></div></td>
     </tr>`;
   });
+  // Salva lista para exportação
+  window._exportTxList=list.map(function(t){return Object.assign({},t,{_dispVal:_dispVal(t)});});
   body.innerHTML=html;
   // Summary cards — only paid, filtered by empresa
   const allP=txs.filter(t=>inPeriod(t)&&(co==='all'||t.co===co)&&t.status==='paid'&&(!_collapseParcelas||!t.parcelaNum||t.parcelaNum===1));
@@ -2361,6 +2363,48 @@ function toggleCredTiers(){
   sec.style.display=open?'':'none';
   if(arr)arr.textContent=open?'▼':'▶';
   if(btn){const hint=btn.querySelector('span:last-child');if(hint)hint.textContent=open?'(clique para recolher)':'(clique para expandir)';}
+}
+function exportTx(){
+  const list=window._exportTxList||[];
+  if(!list.length){alert('Nenhum lançamento para exportar.');return;}
+  const mesSel=document.getElementById('fxMes')?.options[document.getElementById('fxMes')?.selectedIndex]?.text||'todos';
+  const coNm={nf:'NatureFace',rv:'Rosana Academy',ct:'Consultório',all:'Consolidado'};
+  const fpgNm={credito:'Crédito',debito:'Débito',pix:'PIX',dinheiro:'Dinheiro',transferencia:'Transferência',boleto:'Boleto','':''};
+  const canalNm={online:'Online/Yampi',link:'Link de Pagamento',maquininha:'Maquininha','':''};
+  const stNm={paid:'Pago',pend:'Pendente',sched:'Agendado',due:'Vence Hoje'};
+  const n2=function(v){return String(v).replace('.',',');};
+  // Cabeçalho
+  const rows=[['Descrição','Tipo','Categoria','Empresa','Data Lançamento','Vencimento','Forma Pagamento','Canal','Bandeira','Parc. Cartão','Parc. Sistema','Valor Bruto (R$)','Taxa MDR (%)','Valor Líquido (R$)','Status','Observações']];
+  list.forEach(function(t){
+    var bruto=t._dispVal||t.val;
+    var taxaP=Math.round(getTaxa(t)*1000)/10;
+    var liq=bruto*(1-getTaxa(t));
+    rows.push([
+      t.name||'',
+      t.type==='receber'?'Receita':'Despesa',
+      t.cat||'',
+      coNm[t.co]||t.co||'',
+      t.saleDate||t.due||'',
+      t.due||'',
+      fpgNm[t.fpg||'']||t.fpg||'',
+      canalNm[t.canal||'']||t.canal||'',
+      t.bandeira||'',
+      t.parcelas||1,
+      t.parcelaTotal||1,
+      n2(bruto.toFixed(2)),
+      n2(taxaP.toFixed(1))+'%',
+      n2(liq.toFixed(2)),
+      stNm[t.status]||t.status||'',
+      t.notes||''
+    ]);
+  });
+  var csv='﻿'+rows.map(function(r){return r.map(function(v){return'"'+String(v).replace(/"/g,'""')+'"';}).join(';');}).join('\r\n');
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download='vai-lancamentos-'+mesSel.replace(/\s/g,'-')+'.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 function saveTaxas(){
   _saveTaxaTab(_taxaTab,_taxaCanal);
