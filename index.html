@@ -1266,9 +1266,9 @@ function updateDashCharts(){
     for(var mi=0;mi<=curMo;mi++){
       const mk=yr+'-'+String(mi+1).padStart(2,'0');
       labels.push(mNames[mi]);
-      nfAcc+=txs.filter(function(t){return t.co==='nf'&&t.type==='receber'&&t.due&&t.due.startsWith(mk);}).reduce(function(s,t){return s+fatVal(t);},0);
-      rvAcc+=txs.filter(function(t){return t.co==='rv'&&t.type==='receber'&&t.due&&t.due.startsWith(mk);}).reduce(function(s,t){return s+fatVal(t);},0);
-      ctAcc+=txs.filter(function(t){return t.co==='ct'&&t.type==='receber'&&t.due&&t.due.startsWith(mk);}).reduce(function(s,t){return s+fatVal(t);},0);
+      nfAcc+=txs.filter(function(t){return t.co==='nf'&&t.type==='receber'&&(t.saleDate||t.due||'').startsWith(mk);}).reduce(function(s,t){return s+fatVal(t);},0);
+      rvAcc+=txs.filter(function(t){return t.co==='rv'&&t.type==='receber'&&(t.saleDate||t.due||'').startsWith(mk);}).reduce(function(s,t){return s+fatVal(t);},0);
+      ctAcc+=txs.filter(function(t){return t.co==='ct'&&t.type==='receber'&&(t.saleDate||t.due||'').startsWith(mk);}).reduce(function(s,t){return s+fatVal(t);},0);
       nfD.push(nfAcc);rvD.push(rvAcc);ctD.push(ctAcc);
     }
     charts.rev.data.labels=labels;
@@ -1287,9 +1287,11 @@ function updateDashCharts(){
     const prev=new Date(now2.getFullYear(),now2.getMonth()-1,1);
     const prevM=prev.getFullYear()+'-'+String(prev.getMonth()+1).padStart(2,'0');
     const coFilt=function(t){return co==='all'||t.co===co;};
-    const curRec=txs.filter(function(t){return coFilt(t)&&t.type==='receber'&&t.due&&t.due.startsWith(curM);});
+    // saleDate para receitas (competência); due para despesas (caixa)
+    const sdRec=function(t){return t.saleDate||t.due||'';};
+    const curRec=txs.filter(function(t){return coFilt(t)&&t.type==='receber'&&sdRec(t).startsWith(curM);});
     const curPag=txs.filter(function(t){return coFilt(t)&&t.type==='pagar'&&t.due&&t.due.startsWith(curM);});
-    const prevRec=txs.filter(function(t){return coFilt(t)&&t.type==='receber'&&t.due&&t.due.startsWith(prevM);});
+    const prevRec=txs.filter(function(t){return coFilt(t)&&t.type==='receber'&&sdRec(t).startsWith(prevM);});
     const fatAtual=curRec.reduce(function(s,t){return s+fatVal(t);},0);
     const fatPrev=prevRec.reduce(function(s,t){return s+fatVal(t);},0);
     const despAtual=curPag.reduce(function(s,t){return s+t.val;},0);
@@ -1328,7 +1330,10 @@ function updateDashCharts(){
   if(charts.rd){
     const now=new Date();const rdRec={};const rdDes={};const rdLabels=[];
     for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;const lbl=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][d.getMonth()]+'/'+String(d.getFullYear()).slice(2);rdLabels.push(lbl);rdRec[k]=0;rdDes[k]=0;}
-    txs.forEach(t=>{const k=t.due?t.due.slice(0,7):'';if(rdRec[k]!==undefined){if(t.type==='receber')rdRec[k]+=fatVal(t);else if(!t.parcelaNum||t.parcelaNum===1)rdDes[k]+=fatVal(t);}});
+    txs.forEach(t=>{
+      const k=t.type==='receber'?(t.saleDate||t.due||'').slice(0,7):(t.due||'').slice(0,7);
+      if(rdRec[k]!==undefined){if(t.type==='receber')rdRec[k]+=fatVal(t);else if(!t.parcelaNum||t.parcelaNum===1)rdDes[k]+=fatVal(t);}
+    });
     const keys=Object.keys(rdRec);
     charts.rd.data.labels=rdLabels;
     charts.rd.data.datasets[0].data=keys.map(k=>rdRec[k]);
@@ -1586,7 +1591,8 @@ function renderTx(){
   const mesMap={Janeiro:1,Fevereiro:2,'Março':3,Abril:4,Maio:5,Junho:6,Julho:7,Agosto:8,Setembro:9,Outubro:10,Novembro:11,Dezembro:12};
   let filterMes=0,filterAno=0;
   if(mesSel){const parts=mesSel.split(' ');if(parts.length===2){filterMes=mesMap[parts[0]]||0;filterAno=parseInt(parts[1])||0;}}
-  const inPeriod=t=>{if(!filterMes||!filterAno)return true;const[ty,tm]=t.due.split('-');return parseInt(tm)===filterMes&&parseInt(ty)===filterAno;};
+  // Usa saleDate (data da venda) para regime de competência; fallback: due
+  const inPeriod=t=>{if(!filterMes||!filterAno)return true;const ds=(t.saleDate||t.due||'');const[ty,tm]=ds.split('-');return parseInt(tm)===filterMes&&parseInt(ty)===filterAno;};
   const today=new Date();today.setHours(0,0,0,0);
   const in30=new Date(today);in30.setDate(in30.getDate()+30);
   // Banner filtro de grupo / busca
