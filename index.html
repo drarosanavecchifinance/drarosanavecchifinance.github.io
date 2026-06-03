@@ -2300,10 +2300,11 @@ function resetTaxaTabDefaults(){
 function taxaKey(t){
   const fpg=t.fpg||'';
   const band=t.bandeira||'';
-  if((fpg==='credito'||fpg==='debito')&&band){
-    // amex e diners só existem como crédito
-    if((band==='amex'||band==='diners'||band==='hipercard')&&fpg==='debito')return band+'_credito';
-    return band+'_'+fpg;
+  if(fpg==='credito'||fpg==='debito'){
+    // Sem bandeira: usa 'outros' como fallback para não perder a taxa
+    const b=band||'outros';
+    if((b==='amex'||b==='diners'||b==='hipercard')&&fpg==='debito')return b+'_credito';
+    return b+'_'+fpg;
   }
   return fpg;
 }
@@ -2785,6 +2786,13 @@ function applyData(d){
     if(ids.grupoNid)grupoNid=ids.grupoNid;
     if(ids.patientNid)patientNid=ids.patientNid;if(ids.patientNcode)patientNcode=ids.patientNcode;
     if(ids.procedureNid)procedureNid=ids.procedureNid;if(ids.procedureNcode)procedureNcode=ids.procedureNcode;
+  }
+  // Migração: remove transações Yampi importadas com fpg errado (parser antigo)
+  // Serão re-importadas corretamente ao clicar ↺ Yampi
+  {
+    const _before=txs.length;
+    txs=txs.filter(function(t){return!(t.notes==='Auto-importado da Yampi'&&(!t.fpg||t.fpg===''));});
+    if(txs.length<_before){console.log('Yampi migration: removidas '+(_before-txs.length)+' txs com fpg vazio para reimport');saveData();}
   }
   // Migração: remove dados de demonstração salvos em sessões anteriores
   {
