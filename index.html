@@ -522,6 +522,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
     <div><div class="tb-title" id="tbT">Dashboard Executivo</div><div class="tb-sub" id="tbS">Visão geral estratégica · NatureFace</div></div>
     <div class="tbr">
       <div class="tbbg"><span class="ldot"></span>Online</div>
+      <button class="bs" id="yampiSyncBtn" onclick="syncYampiManual()" title="Verificar pedidos Yampi pendentes" style="padding:5px 11px;font-size:12px;gap:5px">↺ Yampi</button>
       <div class="tbico"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 2a6 6 0 0 1 6 6v2l1.3 2.6A1 1 0 0 1 16.4 14H3.6a1 1 0 0 1-.9-1.4L4 10V8a6 6 0 0 1 6-6z"/><path d="M8 14a2 2 0 0 0 4 0"/></svg><span class="ndot"></span></div>
     </div>
   </div>
@@ -1183,20 +1184,8 @@ let students=[
   {id:3,code:'RVA003',name:'Marina Souza Ferreira',email:'marina@med.com',phone:'(31) 98765-4321',cpf:'567.890.123-45',course:'Protocolos Faciais 2025',courseId:1,status:'ativo',enrolledAt:'2025-06-18',street:'Rua da Bahia, 500',bairro:'Lourdes',city:'Belo Horizonte',state:'MG',cep:'30160-010',notes:'',txId:null},
   {id:4,code:'RVA004',name:'Ana Paula Mota',email:'anapaula@outlook.com',phone:'(41) 99234-5678',cpf:'678.901.234-56',course:'Curso Básico de Estética',courseId:3,status:'inativo',enrolledAt:'2025-05-10',street:'Rua XV de Novembro, 1200',bairro:'Centro',city:'Curitiba',state:'PR',cep:'80020-310',notes:'Trancou em junho',txId:null},
 ];
-let txs=[
-  {id:1,name:'Aluguel — Clínica Faria Lima',cat:'Operacional',co:'nf',courseId:null,due:'2025-07-05',val:4200,status:'paid',type:'pagar',notes:''},
-  {id:2,name:'Fornecedora Derma+ Insumos',cat:'Insumos',co:'nf',courseId:null,due:'2025-07-10',val:3840,status:'paid',type:'pagar',notes:''},
-  {id:3,name:'Plataforma de Cursos Online',cat:'Tecnologia',co:'rv',courseId:1,due:'2025-07-15',val:1890,status:'pend',type:'pagar',notes:''},
-  {id:4,name:'Marketing Digital — Agência Nova',cat:'Marketing',co:'all',courseId:null,due:'2025-07-18',val:5200,status:'due',type:'pagar',notes:'Contrato mensal'},
-  {id:5,name:'Folha de Pagamento — Julho',cat:'RH',co:'nf',courseId:null,due:'2025-07-25',val:18400,status:'sched',type:'pagar',notes:''},
-  {id:6,name:'Material Didático RVC001',cat:'Insumos',co:'rv',courseId:1,due:'2025-07-08',val:1200,status:'paid',type:'pagar',notes:''},
-  {id:7,name:'Seguro Empresarial Anual',cat:'Seguros',co:'all',courseId:null,due:'2025-07-31',val:4000,status:'sched',type:'pagar',notes:''},
-  {id:8,name:'Matrícula — Dra. Beatriz Lemos',cat:'Cursos',co:'rv',courseId:1,due:'2025-07-12',val:2400,status:'paid',type:'receber',notes:''},
-  {id:9,name:'Matrícula — Marina Souza',cat:'Cursos',co:'rv',courseId:1,due:'2025-07-18',val:2400,status:'paid',type:'receber',notes:''},
-  {id:10,name:'Mentoria Premium — Renata Campos',cat:'Mentorias',co:'rv',courseId:2,due:'2025-07-22',val:7500,status:'sched',type:'receber',notes:''},
-  {id:11,name:'Protocolo Facial Premium x3',cat:'Procedimentos',co:'nf',courseId:null,due:'2025-07-20',val:2550,status:'pend',type:'receber',notes:''},
-];
-txNid=12;
+let txs=[];
+txNid=1;
 let editingEv=null, evNextId=20;
 let evs={
   '2025-7-5':[{id:1,title:'Pagamento Aluguel',type:'pagamento',co:'nf',time:'09:00',desc:''}],
@@ -2797,6 +2786,24 @@ function applyData(d){
     if(ids.patientNid)patientNid=ids.patientNid;if(ids.patientNcode)patientNcode=ids.patientNcode;
     if(ids.procedureNid)procedureNid=ids.procedureNid;if(ids.procedureNcode)procedureNcode=ids.procedureNcode;
   }
+  // Migração: remove dados de demonstração salvos em sessões anteriores
+  {
+    const _demoNames=['Aluguel — Clínica Faria Lima','Fornecedora Derma+ Insumos','Plataforma de Cursos Online',
+      'Marketing Digital — Agência Nova','Folha de Pagamento — Julho','Material Didático RVC001',
+      'Seguro Empresarial Anual','Matrícula — Dra. Beatriz Lemos','Matrícula — Marina Souza',
+      'Mentoria Premium — Renata Campos','Protocolo Facial Premium x3'];
+    const _demoIds=new Set([1,2,3,4,5,6,7,8,9,10,11]);
+    const _before=txs.length;
+    txs=txs.filter(function(t){return!(_demoIds.has(t.id)&&_demoNames.includes(t.name));});
+    if(txs.length<_before){console.log('Demo migration: removidos '+(_before-txs.length)+' lançamentos de demo');saveData();}
+  }
+  // Migração: parcelas futuras com status paid → sched
+  {
+    const _today=new Date().toISOString().slice(0,10);
+    let _migCount=0;
+    txs.forEach(function(t){if(t.parcelaNum>1&&t.status==='paid'&&t.due&&t.due>_today){t.status='sched';_migCount++;}});
+    if(_migCount>0){console.log('Parcela migration: '+_migCount+' corrigidas');saveData();}
+  }
   // Re-renderizar a página atual após carregar dados
   refreshCurrentPage();
 }
@@ -2848,6 +2855,12 @@ function subscribeRealtime(){
   loadYampiPending();
 }
 
+async function syncYampiManual(){
+  const btn=document.getElementById('yampiSyncBtn');
+  if(btn){btn.textContent='↺ ...';btn.disabled=true;}
+  await loadYampiPending();
+  if(btn){btn.textContent='↺ Yampi';btn.disabled=false;}
+}
 async function loadYampiPending(){
   if(!supabaseReady)return;
   try{
@@ -2913,17 +2926,21 @@ async function autoImportYampiEvent(ev){
     try{const db=sbAdmin||sbClient;await db.from('yampi_events').update({imported:true}).eq('id',ev.id);}catch(e){}
     return;
   }
-  // Verifica se é evento de pagamento confirmado
-  const statusStr=(p.resource?.status?.alias||p.status?.alias||p.resource?.status||'').toString().toLowerCase();
+  // Verifica se é evento de pagamento confirmado (critérios ampliados para não perder vendas)
+  const statusStr=(p.resource?.status?.alias||p.status?.alias||p.resource?.status||p.resource?.status?.value||'').toString().toLowerCase();
   const isPaid=
-    evType.includes('paid')||evType.includes('payment')||evType.includes('aprovad')||evType.includes('approved')||evType.includes('confirmed')||evType.includes('complete')||
-    statusStr==='paid'||statusStr.includes('paid')||statusStr.includes('aprovad')||statusStr.includes('approved')||statusStr.includes('confirmed');
+    evType.includes('paid')||evType.includes('payment')||evType.includes('aprovad')||evType.includes('approved')||
+    evType.includes('confirmed')||evType.includes('complete')||evType.includes('order')||
+    statusStr==='paid'||statusStr.includes('paid')||statusStr.includes('aprovad')||statusStr.includes('approved')||
+    statusStr.includes('confirmed')||statusStr.includes('complete')||statusStr==='4'||statusStr==='3';
   const{nome,val,items,num,fpg,bandeira,parcelas}=parseYampiPayload(p);
-  if(!val||val<=0||!isPaid){
-    // Não descarta eventos ambíguos — mantém como pending para não perder vendas
-    if(!val||val<=0){try{const db=sbAdmin||sbClient;await db.from('yampi_events').update({imported:true}).eq('id',ev.id);}catch(e){}}
+  if(!val||val<=0){
+    // Sem valor — descarta definitivamente
+    try{const db=sbAdmin||sbClient;await db.from('yampi_events').update({imported:true}).eq('id',ev.id);}catch(e){}
     return;
   }
+  // Se tem valor mas não é claramente cancelamento, importa mesmo assim
+  if(!isPaid){console.log('Yampi evento ambíguo ('+evType+'/'+statusStr+') val='+val+' — importando');}
   const now=new Date().toISOString().slice(0,10);
   const name=items+(nome&&nome!=='—'?' — '+nome:'')+(num?' #'+num:'');
   const tx={id:txNid++,name,type:'receber',cat:'Vendas',co:'nf',courseId:null,procedureId:null,vendId:null,fpg,bandeira:(fpg==='credito'||fpg==='debito')?bandeira:'',parcelas:fpg==='credito'?parcelas:1,status:'paid',due:now,val,notes:'Auto-importado da Yampi'};
