@@ -2713,7 +2713,7 @@ function undoLastDelete(){
 // ===== SALVAR =====
 async function saveData(){
   const payload={
-    txs,courses,students,vendedoras,evs,patients,procedures,taxas,taxasMaq,taxas_version:_TAXAS_VER,
+    txs,courses,students,vendedoras,evs,patients,procedures,taxas,taxasMaq,taxas_version:_TAXAS_VER,_yampiParserV:2,
     _sessionId,
     ids:{txNid,cursoNid,cursoNcode,stuNid,stuNcode,vendNid,vendNcode,evNextId,grupoNid,patientNid,patientNcode,procedureNid,procedureNcode}
   };
@@ -2796,12 +2796,12 @@ function applyData(d){
     if(ids.patientNid)patientNid=ids.patientNid;if(ids.patientNcode)patientNcode=ids.patientNcode;
     if(ids.procedureNid)procedureNid=ids.procedureNid;if(ids.procedureNcode)procedureNcode=ids.procedureNcode;
   }
-  // Migração: remove transações Yampi importadas com fpg errado (parser antigo)
-  // Serão re-importadas corretamente ao clicar ↺ Yampi
-  {
+  // Migração v2: remove TODAS as Yampi txs para reimport limpo com parser correto
+  // Roda apenas uma vez (_yampiParserV < 2). Após reimport, saveData grava v=2.
+  if(!d._yampiParserV||d._yampiParserV<2){
     const _before=txs.length;
-    txs=txs.filter(function(t){return!(t.notes==='Auto-importado da Yampi'&&(!t.fpg||t.fpg===''));});
-    if(txs.length<_before){console.log('Yampi migration: removidas '+(_before-txs.length)+' txs com fpg vazio para reimport');saveData();}
+    txs=txs.filter(function(t){return t.notes!=='Auto-importado da Yampi';});
+    if(txs.length<_before){console.log('Yampi v2 migration: removidas '+(_before-txs.length)+' txs para reimport limpo');}
   }
   // Migração: remove dados de demonstração salvos em sessões anteriores
   {
