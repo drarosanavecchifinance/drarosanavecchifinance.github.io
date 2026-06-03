@@ -2896,25 +2896,31 @@ async function autoImportCEEvent(ev){
 
 function parseYampiPayload(p){
   const r=p.resource||p;
-  // nome do cliente
-  const nome=(r.customer?.name||r.customer?.first_name&&(r.customer.first_name+' '+(r.customer.last_name||''))||p.customer_name||'—').trim();
-  // valor total (Yampi envia em BRL como string, ex: "290.00")
-  const rawVal=parseFloat(r.total||r.total_price||r.grand_total||r.amount||r.total_items||r.value||p.total||p.amount||0)||0;
-  // Yampi envia em BRL (ex: "290.00"); se vier em centavos (>1000 e inteiro), converte
-  const val=rawVal>1000&&Number.isInteger(rawVal)?rawVal/100:rawVal;
-  // produtos
-  const items=(r.items||[]).map(function(i){return(i.product?.title||i.title||i.name||'');}).filter(Boolean).join(', ')||'Venda Yampi';
+  // nome — Yampi usa customer.data.name
+  const cust=r.customer?.data||r.customer||{};
+  const nome=(cust.name||(cust.first_name&&(cust.first_name+' '+(cust.last_name||'')))||p.customer_name||'—').trim();
+  // valor — campo correto é value_total (não total/amount que não existem)
+  const rawVal=parseFloat(r.value_total||r.buyer_value_total||r.total||r.total_price||r.grand_total||r.amount||r.total_items||r.value||p.value_total||p.total||p.amount||0)||0;
+  const val=rawVal>10000&&Number.isInteger(rawVal)?rawVal/100:rawVal;
+  // produtos — itens ficam em items.data na Yampi
+  const itemsArr=r.items?.data||r.items||[];
+  const items=itemsArr.map(function(i){return(i.sku?.data?.title||i.product?.title||i.title||i.name||'');}).filter(Boolean).join(', ')||'Venda Yampi';
   // número do pedido
   const num=r.number||r.id||'';
-  // forma de pagamento
-  const fpgRaw=(r.payment?.method||r.payment_method||r.payment?.type||'').toLowerCase();
+  // pagamento — payments[0].alias ou transactions.data[0].payment.data.alias
+  const tx0=r.transactions?.data?.[0];
+  const fpgRaw=(r.payments?.[0]?.alias||tx0?.payment?.data?.alias||r.payment?.method||r.payment_method||r.payment?.type||'').toLowerCase();
   const fpgMap={credit_card:'credito',pix:'pix',bank_slip:'boleto',debit_card:'debito',money:'dinheiro',transfer:'transferencia'};
-  const fpg=fpgMap[fpgRaw]||'';
-  const brandRaw=(r.payment?.brand||r.payment?.card_brand||r.brand||'').toLowerCase().replace(/[\s-]/g,'');
+  const fpg=fpgMap[fpgRaw]||(fpgRaw==='pix'?'pix':fpgRaw.includes('credit')?'credito':fpgRaw.includes('debit')?'debito':'');
+  // bandeira
+  const brandRaw=(tx0?.brand||r.payment?.brand||r.payment?.card_brand||r.brand||'').toLowerCase().replace(/[\s-]/g,'');
   const brandMap={visa:'visa',mastercard:'master',master:'master',elo:'elo',amex:'amex',americanexpress:'amex',diners:'diners',dinersclub:'diners',hipercard:'hipercard',hiper:'hipercard'};
   const bandeira=brandMap[brandRaw]||'outros';
-  const parcelas=parseInt(r.payment?.installments||r.payment?.installment_count||r.payment?.parcelas||1)||1;
-  return{nome,val,items,num,fpg,bandeira,parcelas};
+  // parcelas
+  const parcelas=parseInt(tx0?.installments||r.payment?.installments||r.payment?.installment_count||1)||1;
+  // data da venda
+  const saleDate=(r.created_at?.date||p.time||'').slice(0,10)||new Date().toISOString().slice(0,10);
+  return{nome,val,items,num,fpg,bandeira,parcelas,saleDate};
 }
 
 async function autoImportYampiEvent(ev){
@@ -2933,7 +2939,7 @@ async function autoImportYampiEvent(ev){
     evType.includes('confirmed')||evType.includes('complete')||evType.includes('order')||
     statusStr==='paid'||statusStr.includes('paid')||statusStr.includes('aprovad')||statusStr.includes('approved')||
     statusStr.includes('confirmed')||statusStr.includes('complete')||statusStr==='4'||statusStr==='3';
-  const{nome,val,items,num,fpg,bandeira,parcelas}=parseYampiPayload(p);
+  const{nome,val,items,num,fpg,bandeira,parcelas,saleDate}=parseYampiPayload(p);
   if(!val||val<=0){
     // Sem valor — descarta definitivamente
     try{const db=sbAdmin||sbClient;await db.from('yampi_events').update({imported:true}).eq('id',ev.id);}catch(e){}
@@ -2943,7 +2949,7 @@ async function autoImportYampiEvent(ev){
   if(!isPaid){console.log('Yampi evento ambíguo ('+evType+'/'+statusStr+') val='+val+' — importando');}
   const now=new Date().toISOString().slice(0,10);
   const name=items+(nome&&nome!=='—'?' — '+nome:'')+(num?' #'+num:'');
-  const tx={id:txNid++,name,type:'receber',cat:'Vendas',co:'nf',courseId:null,procedureId:null,vendId:null,fpg,bandeira:(fpg==='credito'||fpg==='debito')?bandeira:'',parcelas:fpg==='credito'?parcelas:1,status:'paid',due:now,val,notes:'Auto-importado da Yampi'};
+  const tx={id:txNid++,name,type:'receber',cat:'Vendas',co:'nf',canal:'online',courseId:null,procedureId:null,vendId:null,fpg,bandeira:(fpg==='credito'||fpg==='debito')?bandeira:'',parcelas:fpg==='credito'?parcelas:1,status:'paid',due:saleDate||now,saleDate:saleDate||now,val,notes:'Auto-importado da Yampi'};
   txs.push(tx);
   try{const db=sbAdmin||sbClient;await db.from('yampi_events').update({imported:true,tx_id:tx.id}).eq('id',ev.id);}catch(e){console.warn('Yampi import error:',e);}
   saveData();
