@@ -1598,7 +1598,16 @@ function renderTx(){
     }
     return ftab==='pagar'&&subftab==='avencer'?true:inPeriod(t);
   });
-  list=ftab==='pagar'&&subftab==='avencer'?list.sort((a,b)=>new Date(a.due)-new Date(b.due)):list;
+  // Ordenação: A Vencer = mais próximo primeiro; demais = mais recente primeiro
+  if(ftab==='pagar'&&subftab==='avencer'){
+    list=list.sort((a,b)=>new Date(a.due)-new Date(b.due));
+  }else{
+    list=list.sort((a,b)=>{
+      const da=(a.saleDate||a.due||'');const db=(b.saleDate||b.due||'');
+      if(da!==db)return da>db?-1:1;
+      return b.id-a.id; // tiebreaker: mais recente
+    });
+  }
   const bmap={paid:'<span class="bdg paid">✓ Pago</span>',pend:'<span class="bdg pend">⏳ Pendente</span>',due:'<span class="bdg due">🔴 Hoje</span>',sched:'<span class="bdg sched">📅 Agendado</span>'};
   const cnm={nf:'NatureFace',rv:'Academy',ct:'Consultório',all:'Consolidado'};
   const cc={nf:'#C4807F',rv:'#955251',ct:'#7B9E87',all:'#5C3535'};
