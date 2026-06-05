@@ -817,6 +817,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
     <!-- fim Modal Taxas -->
     <!-- KPIs -->
     <div class="kg" style="margin-bottom:22px" id="carteiraKpis"></div>
+    <!-- Vendas por Modalidade (PIX / Crédito / Débito) -->
+    <div id="carteiraModalidades" style="margin-bottom:22px"></div>
     <!-- Gráfico previsão -->
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:22px">
       <div class="cc">
@@ -2448,6 +2450,55 @@ function renderCarteira(){
       (totalCancelado>0?'<div class="kc"><div class="klbl">Cancelado</div><div class="kval" style="color:var(--t3)">'+fmt(totalCancelado)+'</div><div class="kft"><span class="kpr">'+cancelados.length+' cancel.</span></div></div>':'')+
       (totalEstornado>0?'<div class="kc"><div class="klbl">Estornado</div><div class="kval" style="color:var(--t3)">'+fmt(totalEstornado)+'</div><div class="kft"><span class="kpr">'+estornados.length+' estorno</span></div></div>':'')+
       '<div class="kc b"><div class="klbl">Prev. 3 Meses</div><div class="kval">'+fmt(prox3Total)+'</div><div class="kft"><span class="kpr">entradas previstas</span></div></div>';
+  }
+  // ===== VENDAS POR MODALIDADE (regime de competência — saleDate) =====
+  var modDiv=document.getElementById('carteiraModalidades');
+  if(modDiv){
+    // Vendas no mês = pela saleDate, sem duplicar parcelas (só parcela 1 e PIX/débito únicos)
+    var vendasMes=allRec.filter(function(t){
+      var sd=t.saleDate||t.due;
+      if(!sd||(selMes&&!sd.startsWith(selMes)))return false;
+      // Colapsa parcelas: só conta parcela 1 ou tx sem parcelaNum
+      return !t.parcelaNum||t.parcelaNum===1;
+    });
+    var modal={pix:{nome:'PIX',ico:'⚡',count:0,bruto:0,liq:0,cls:'g'},
+               credito:{nome:'Crédito',ico:'💳',count:0,bruto:0,liq:0,cls:'b'},
+               debito:{nome:'Débito',ico:'💳',count:0,bruto:0,liq:0,cls:'m'},
+               boleto:{nome:'Boleto',ico:'📄',count:0,bruto:0,liq:0,cls:'o'},
+               dinheiro:{nome:'Dinheiro',ico:'💵',count:0,bruto:0,liq:0,cls:'g'},
+               transferencia:{nome:'Transferência',ico:'🔄',count:0,bruto:0,liq:0,cls:'b'},
+               outros:{nome:'Outros',ico:'❓',count:0,bruto:0,liq:0,cls:''}};
+    vendasMes.forEach(function(t){
+      var k=t.fpg||'outros';
+      if(!modal[k])k='outros';
+      var bruto=t.parcelaNum===1?t.val*(t.parcelaTotal||1):t.val;
+      // Cria objeto sintético com valor bruto para calcular MDR total da venda
+      var liqTotal=t.parcelaNum===1?bruto*(1-getTaxa(t)):t.val*(1-getTaxa(t));
+      modal[k].count++;
+      modal[k].bruto+=bruto;
+      modal[k].liq+=liqTotal;
+    });
+    var totalBruto=Object.values(modal).reduce(function(s,m){return s+m.bruto;},0);
+    var cards='';
+    ['pix','credito','debito','boleto','dinheiro','transferencia','outros'].forEach(function(k){
+      var m=modal[k];
+      if(m.count===0)return;
+      var pct=totalBruto>0?Math.round(m.bruto/totalBruto*100):0;
+      var mdr=m.bruto>0?Math.round((m.bruto-m.liq)/m.bruto*100*10)/10:0;
+      cards+='<div class="kc '+m.cls+'" style="min-width:170px;flex:1">'+
+        '<div class="klbl">'+m.ico+' '+m.nome+'</div>'+
+        '<div class="kval" style="font-size:21px">'+fmt(m.bruto)+'</div>'+
+        '<div class="kft"><span class="kpr">líq. '+fmt(m.liq)+(mdr>0?' · MDR '+mdr.toString().replace('.',',')+'%':'')+'</span></div>'+
+        '<div style="font-size:11px;color:var(--t3);margin-top:4px">'+m.count+' venda'+(m.count!==1?'s':'')+' · '+pct+'% do total</div>'+
+        '</div>';
+    });
+    var _mNs=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    var mesLabel=selMes?(function(){var p=selMes.split('-');return _mNs[parseInt(p[1])-1]+'/'+p[0];})():'período';
+    if(cards){
+      modDiv.innerHTML='<div class="sc" style="overflow:visible"><div class="ch" style="padding:18px 22px;border-bottom:1px solid var(--bdr);margin-bottom:0"><div><div class="ct">Vendas por Forma de Pagamento</div><div class="cs">O que foi vendido em '+mesLabel+' · agrupado por modalidade</div></div><div style="font-family:var(--num);font-size:18px;font-weight:800;color:var(--t1)">'+fmt(totalBruto)+'</div></div><div style="display:flex;flex-wrap:wrap;gap:12px;padding:18px 22px">'+cards+'</div></div>';
+    }else{
+      modDiv.innerHTML='<div class="sc"><div style="padding:24px;text-align:center;color:var(--t3);font-size:13px">Nenhuma venda em '+mesLabel+'</div></div>';
+    }
   }
   // GRAFICOS
   var mNames=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
