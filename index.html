@@ -2382,14 +2382,21 @@ function renderCarteira(){
   var parciais=fatTxs.filter(function(t){return getStatusReal(t)==='parcial';});
   var cancelados=fatTxs.filter(function(t){return getStatusReal(t)==='cancelado';});
   var estornados=fatTxs.filter(function(t){return getStatusReal(t)==='estornado';});
-  // REGIME DE CAIXA — separa o que JÁ caiu na conta do que ainda está em compensação
-  // Compensação: data da venda + prazo de recebimento <= hoje
+  // REGIME DE CAIXA — para mês selecionado: considera fim do mês como referência
+  // (para mês futuro mostra "saldo projetado", para mês atual/passado é o saldo real)
+  var refDate=now;
+  if(selMes){
+    var _selParts=selMes.split('-');
+    var _selY=parseInt(_selParts[0]);var _selM=parseInt(_selParts[1])-1;
+    var endOfSel=new Date(_selY,_selM+1,0,23,59,59); // último dia do mês selecionado
+    if(endOfSel>now)refDate=endOfSel; // se futuro, usa fim do mês; senão hoje
+  }
   var jaCompensou=function(t){
     var sd=t.saleDate||t.due;
     if(!sd)return true;
     var dC=new Date(sd+'T00:00:00');
     dC.setDate(dC.getDate()+(getPrazo(t)||0));
-    return dC<=now;
+    return dC<=refDate;
   };
   // Recebidos já liquidados (dinheiro na conta agora)
   var recebidosLiquidados=recebidos.filter(jaCompensou);
@@ -2418,7 +2425,7 @@ function renderCarteira(){
   var kDiv=document.getElementById('carteiraKpis');
   if(kDiv){
     kDiv.innerHTML=
-      '<div class="kc g"><div class="klbl">Saldo na Conta</div><div class="kval">'+fmt(saldoCarteira)+'</div><div class="kft"><span class="kpr">disponível agora · líq. MDR</span></div></div>'+
+      '<div class="kc g"><div class="klbl">'+(refDate>now?'Saldo Projetado':'Saldo na Conta')+'</div><div class="kval">'+fmt(saldoCarteira)+'</div><div class="kft"><span class="kpr">'+(refDate>now?'previsto ao fim do mês':'disponível agora')+' · líq. MDR</span></div></div>'+
       '<div class="kc m"><div class="klbl">Total Recebido</div><div class="kval">'+fmt(totalRecebido)+'</div><div class="kft"><span class="kpr">'+recebidos.length+' venda'+(recebidos.length!==1?'s':'')+' paga'+(recebidos.length!==1?'s':'')+'</span></div></div>'+
       '<div class="kc o"><div class="klbl">A Receber</div><div class="kval">'+fmt(aReceberLiq)+'</div><div class="kft"><span class="kpr">'+aReceberCnt+' entrada'+(aReceberCnt!==1?'s':'')+(totalEmProc>0?' · '+fmt(totalEmProc)+' em compens.':'')+'</span></div></div>'+
       (totalVencido>0?'<div class="kc r"><div class="klbl">Vencido</div><div class="kval" style="color:var(--re)">'+fmt(totalVencido)+'</div><div class="kft"><span class="kpr" style="color:var(--re)">'+atrasados.length+' em atraso</span></div></div>':'')+
