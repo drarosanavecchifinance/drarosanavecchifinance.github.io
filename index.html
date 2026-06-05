@@ -2859,12 +2859,12 @@ function applyData(d){
     txs=txs.filter(function(t){return!(_demoIds.has(t.id)&&_demoNames.includes(t.name));});
     if(txs.length<_before){console.log('Demo migration: removidos '+(_before-txs.length)+' lançamentos de demo');saveData();}
   }
-  // Migração: parcelas futuras com status paid → sched
+  // Migração: parcelas Yampi com status='sched' voltam para 'paid' (cliente pagou no cartão)
+  // A "compensação" é controlada por jaCompensou(t) na Carteira (regime de caixa)
   {
-    const _today=new Date().toISOString().slice(0,10);
-    let _migCount=0;
-    txs.forEach(function(t){if(t.parcelaNum>1&&t.status==='paid'&&t.due&&t.due>_today){t.status='sched';_migCount++;}});
-    if(_migCount>0){console.log('Parcela migration: '+_migCount+' corrigidas');saveData();}
+    let _fixCount=0;
+    txs.forEach(function(t){if(t.notes==='Auto-importado da Yampi'&&t.parcelaNum>1&&t.status==='sched'){t.status='paid';_fixCount++;}});
+    if(_fixCount>0){console.log('Yampi sched→paid: '+_fixCount+' parcelas corrigidas');saveData();}
   }
   // Re-renderizar a página atual após carregar dados
   refreshCurrentPage();
