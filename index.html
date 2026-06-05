@@ -2736,7 +2736,7 @@ function undoLastDelete(){
 // ===== SALVAR =====
 async function saveData(){
   const payload={
-    txs,courses,students,vendedoras,evs,patients,procedures,taxas,taxasMaq,taxas_version:_TAXAS_VER,_yampiParserV:6,
+    txs,courses,students,vendedoras,evs,patients,procedures,taxas,taxasMaq,taxas_version:_TAXAS_VER,_yampiParserV:7,
     _sessionId,
     ids:{txNid,cursoNid,cursoNcode,stuNid,stuNcode,vendNid,vendNcode,evNextId,grupoNid,patientNid,patientNcode,procedureNid,procedureNcode}
   };
@@ -2820,7 +2820,7 @@ function applyData(d){
     if(ids.procedureNid)procedureNid=ids.procedureNid;if(ids.procedureNcode)procedureNcode=ids.procedureNcode;
   }
   // Migração v6: remove Yampi txs antigas E reseta eventos no Supabase para reimport
-  if(!d._yampiParserV||d._yampiParserV<6){
+  if(!d._yampiParserV||d._yampiParserV<7){
     const _before=txs.length;
     txs=txs.filter(function(t){return t.notes!=='Auto-importado da Yampi';});
     if(txs.length<_before){
