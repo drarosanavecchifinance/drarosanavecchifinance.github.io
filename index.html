@@ -1565,7 +1565,8 @@ function renderTx(){
   const mesMap={Janeiro:1,Fevereiro:2,'Março':3,Abril:4,Maio:5,Junho:6,Julho:7,Agosto:8,Setembro:9,Outubro:10,Novembro:11,Dezembro:12};
   let filterMes=0,filterAno=0;
   if(mesSel){const parts=mesSel.split(' ');if(parts.length===2){filterMes=mesMap[parts[0]]||0;filterAno=parseInt(parts[1])||0;}}
-  const inPeriod=t=>{if(!filterMes||!filterAno)return true;const[ty,tm]=t.due.split('-');return parseInt(tm)===filterMes&&parseInt(ty)===filterAno;};
+  // Fluxo de Caixa = regime de competência → usa saleDate (mês da venda), não due (mês da parcela)
+  const inPeriod=t=>{if(!filterMes||!filterAno)return true;const ds=(t.saleDate||t.due||'');const[ty,tm]=ds.split('-');return parseInt(tm)===filterMes&&parseInt(ty)===filterAno;};
   const today=new Date();today.setHours(0,0,0,0);
   const in30=new Date(today);in30.setDate(in30.getDate()+30);
   // Banner filtro de grupo / busca
@@ -1598,14 +1599,19 @@ function renderTx(){
     }
     return ftab==='pagar'&&subftab==='avencer'?true:inPeriod(t);
   });
-  // Ordenação: A Vencer = mais próximo primeiro; demais = mais recente primeiro
+  // Fluxo de Caixa: colapsa parcelamentos — mostra só parcela 1 (com valor bruto)
+  // A Carteira é onde se vê as parcelas individuais
+  if(!filterGrupo){
+    list=list.filter(t=>!t.parcelaNum||t.parcelaNum===1);
+  }
+  // Ordenação
   if(ftab==='pagar'&&subftab==='avencer'){
     list=list.sort((a,b)=>new Date(a.due)-new Date(b.due));
   }else{
     list=list.sort((a,b)=>{
       const da=(a.saleDate||a.due||'');const db=(b.saleDate||b.due||'');
       if(da!==db)return da>db?-1:1;
-      return b.id-a.id; // tiebreaker: mais recente
+      return b.id-a.id;
     });
   }
   const bmap={paid:'<span class="bdg paid">✓ Pago</span>',pend:'<span class="bdg pend">⏳ Pendente</span>',due:'<span class="bdg due">🔴 Hoje</span>',sched:'<span class="bdg sched">📅 Agendado</span>'};
@@ -1639,7 +1645,8 @@ function renderTx(){
   });
   body.innerHTML=html;
   // Summary cards — only paid, filtered by empresa
-  const allP=txs.filter(t=>inPeriod(t)&&(co==='all'||t.co===co)&&t.status==='paid');
+  // Colapsa parcelas: só conta parcela 1 com valor bruto (val * parcelaTotal)
+  const allP=txs.filter(t=>inPeriod(t)&&(co==='all'||t.co===co)&&t.status==='paid'&&(!t.parcelaNum||t.parcelaNum===1));
   const receber=allP.filter(t=>t.type==='receber');
   const pagar=allP.filter(t=>t.type==='pagar');
   const totalRec=receber.reduce((a,t)=>a+fatVal(t),0);
