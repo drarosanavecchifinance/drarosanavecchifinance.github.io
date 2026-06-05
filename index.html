@@ -2713,7 +2713,7 @@ function undoLastDelete(){
 // ===== SALVAR =====
 async function saveData(){
   const payload={
-    txs,courses,students,vendedoras,evs,patients,procedures,taxas,taxasMaq,taxas_version:_TAXAS_VER,_yampiParserV:3,
+    txs,courses,students,vendedoras,evs,patients,procedures,taxas,taxasMaq,taxas_version:_TAXAS_VER,_yampiParserV:4,
     _sessionId,
     ids:{txNid,cursoNid,cursoNcode,stuNid,stuNcode,vendNid,vendNcode,evNextId,grupoNid,patientNid,patientNcode,procedureNid,procedureNcode}
   };
@@ -2798,7 +2798,7 @@ function applyData(d){
   }
   // Migração v3: remove Yampi txs com parser antigo (fpg/bandeira/parcelas errados)
   // NÃO chama saveData aqui — loadYampiPending() vai reimportar e salvar corretamente
-  if(!d._yampiParserV||d._yampiParserV<3){
+  if(!d._yampiParserV||d._yampiParserV<4){
     const _before=txs.length;
     txs=txs.filter(function(t){return t.notes!=='Auto-importado da Yampi';});
     if(txs.length<_before)console.log('Yampi v3: removidas '+(_before-txs.length)+' txs antigas — aguardando reimport automático');
@@ -2924,15 +2924,30 @@ function parseYampiPayload(p){
   const items=itemsArr.map(function(i){return(i.sku?.data?.title||i.product?.title||i.title||i.name||'');}).filter(Boolean).join(', ')||'Venda Yampi';
   // número do pedido
   const num=r.number||r.id||'';
-  // pagamento — payments[0].alias ou transactions.data[0].payment.data.alias
+  // pagamento — Yampi retorna ALIAS = bandeira (visa/elo/master) ou 'pix'/'bank_slip'/etc.
+  // is_credit_card flag também ajuda a detectar cartão de crédito
   const tx0=r.transactions?.data?.[0];
-  const fpgRaw=(r.payments?.[0]?.alias||tx0?.payment?.data?.alias||r.payment?.method||r.payment_method||r.payment?.type||'').toLowerCase();
-  const fpgMap={credit_card:'credito',pix:'pix',bank_slip:'boleto',debit_card:'debito',money:'dinheiro',transfer:'transferencia'};
-  const fpg=fpgMap[fpgRaw]||(fpgRaw==='pix'?'pix':fpgRaw.includes('credit')?'credito':fpgRaw.includes('debit')?'debito':'');
-  // bandeira
-  const brandRaw=(tx0?.brand||r.payment?.brand||r.payment?.card_brand||r.brand||'').toLowerCase().replace(/[\s-]/g,'');
+  const payData=r.payments?.[0]||tx0?.payment?.data||{};
+  const fpgRaw=(payData.alias||r.payment?.method||r.payment_method||r.payment?.type||'').toLowerCase();
+  const isCreditCard=payData.is_credit_card===true||tx0?.payment?.data?.is_credit_card===true;
+  const isDebitCard=payData.is_debit_card===true;
+  const isPix=payData.is_pix===true||fpgRaw==='pix';
+  const isBoleto=payData.is_billet===true||fpgRaw==='bank_slip'||fpgRaw==='boleto';
+  // Mapa direto para tipos não-cartão
+  const fpgMap={credit_card:'credito',pix:'pix',bank_slip:'boleto',debit_card:'debito',money:'dinheiro',transfer:'transferencia',dinheiro:'dinheiro',boleto:'boleto'};
+  // Bandeiras de cartão que vêm como alias
+  const brandAsAlias=['visa','mastercard','master','elo','amex','americanexpress','diners','dinersclub','hipercard','hiper'];
+  let fpg='';
+  if(isPix)fpg='pix';
+  else if(isBoleto)fpg='boleto';
+  else if(isCreditCard||brandAsAlias.includes(fpgRaw))fpg='credito';
+  else if(isDebitCard)fpg='debito';
+  else fpg=fpgMap[fpgRaw]||(fpgRaw.includes('credit')?'credito':fpgRaw.includes('debit')?'debito':'');
+  // bandeira — se alias é o nome da bandeira (cartão), usa direto; senão tenta tx0.brand
+  const brandFromAlias=brandAsAlias.includes(fpgRaw)?fpgRaw:'';
+  const brandRaw=(brandFromAlias||tx0?.brand||tx0?.truncated_card||r.payment?.brand||r.payment?.card_brand||r.brand||'').toLowerCase().replace(/[\s-]/g,'');
   const brandMap={visa:'visa',mastercard:'master',master:'master',elo:'elo',amex:'amex',americanexpress:'amex',diners:'diners',dinersclub:'diners',hipercard:'hipercard',hiper:'hipercard'};
-  const bandeira=brandMap[brandRaw]||'outros';
+  const bandeira=(fpg==='credito'||fpg==='debito')?(brandMap[brandRaw]||'outros'):'';
   // parcelas
   const parcelas=parseInt(tx0?.installments||r.payment?.installments||r.payment?.installment_count||1)||1;
   // data da venda
