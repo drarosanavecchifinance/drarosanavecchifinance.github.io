@@ -2736,7 +2736,7 @@ function undoLastDelete(){
 // ===== SALVAR =====
 async function saveData(){
   const payload={
-    txs,courses,students,vendedoras,evs,patients,procedures,taxas,taxasMaq,taxas_version:_TAXAS_VER,_yampiParserV:5,
+    txs,courses,students,vendedoras,evs,patients,procedures,taxas,taxasMaq,taxas_version:_TAXAS_VER,_yampiParserV:6,
     _sessionId,
     ids:{txNid,cursoNid,cursoNcode,stuNid,stuNcode,vendNid,vendNcode,evNextId,grupoNid,patientNid,patientNcode,procedureNid,procedureNcode}
   };
@@ -2821,7 +2821,7 @@ function applyData(d){
   }
   // Migração v3: remove Yampi txs com parser antigo (fpg/bandeira/parcelas errados)
   // NÃO chama saveData aqui — loadYampiPending() vai reimportar e salvar corretamente
-  if(!d._yampiParserV||d._yampiParserV<5){
+  if(!d._yampiParserV||d._yampiParserV<6){
     const _before=txs.length;
     txs=txs.filter(function(t){return t.notes!=='Auto-importado da Yampi';});
     if(txs.length<_before)console.log('Yampi v3: removidas '+(_before-txs.length)+' txs antigas — aguardando reimport automático');
@@ -2895,11 +2895,14 @@ function subscribeRealtime(){
   loadYampiPending();
 }
 
+let _yampiSyncRunning=false;
 async function syncYampiManual(){
+  if(_yampiSyncRunning)return; // previne duplo clique
+  _yampiSyncRunning=true;
   const btn=document.getElementById('yampiSyncBtn');
   if(btn){btn.textContent='↺ ...';btn.disabled=true;}
-  await loadYampiPending();
-  if(btn){btn.textContent='↺ Yampi';btn.disabled=false;}
+  try{await loadYampiPending();}
+  finally{_yampiSyncRunning=false;if(btn){btn.textContent='↺ Yampi';btn.disabled=false;}}
 }
 async function loadYampiPending(){
   if(!supabaseReady)return;
@@ -2978,13 +2981,24 @@ function parseYampiPayload(p){
   return{nome,val,items,num,fpg,bandeira,parcelas,saleDate};
 }
 
+const _yampiImporting=new Set();
 async function autoImportYampiEvent(ev){
+  // Idempotência: bloqueia importação simultânea do mesmo evento
+  if(_yampiImporting.has(ev.id))return;
+  _yampiImporting.add(ev.id);
+  // Se já existe tx com esse yampiEventId, não cria de novo
+  if(txs.some(function(t){return t.yampiEventId===ev.id;})){
+    _yampiImporting.delete(ev.id);
+    try{const db=sbAdmin||sbClient;await db.from('yampi_events').update({imported:true}).eq('id',ev.id);}catch(e){}
+    return;
+  }
   const p=ev.payload||{};
   const evType=(ev.event_type||'').toLowerCase();
   // Claramente NÃO é pagamento — descarta sem criar tx
   const isClearlyCancelled=evType.includes('cancel')||evType.includes('abandon')||evType.includes('refund')||evType.includes('fail')||evType.includes('recus');
   if(isClearlyCancelled){
     try{const db=sbAdmin||sbClient;await db.from('yampi_events').update({imported:true}).eq('id',ev.id);}catch(e){}
+    _yampiImporting.delete(ev.id);
     return;
   }
   // Verifica se é evento de pagamento confirmado (critérios ampliados para não perder vendas)
@@ -2998,6 +3012,7 @@ async function autoImportYampiEvent(ev){
   if(!val||val<=0){
     // Sem valor — descarta definitivamente
     try{const db=sbAdmin||sbClient;await db.from('yampi_events').update({imported:true}).eq('id',ev.id);}catch(e){}
+    _yampiImporting.delete(ev.id);
     return;
   }
   // Se tem valor mas não é claramente cancelamento, importa mesmo assim
@@ -3008,11 +3023,9 @@ async function autoImportYampiEvent(ev){
   const isCred=fpg==='credito'&&parcelas>1;
   let firstId=txNid;
   if(isCred){
-    // Cria N parcelas individuais com due cada 30 dias após primeiro recebimento (prazo MDR)
     const gid='G'+String(grupoNid++).padStart(5,'0');
     const parcVal=Math.round(val/parcelas*100)/100;
-    const baseTx={name,type:'receber',cat:'Vendas',co:'nf',canal:'online',courseId:null,procedureId:null,vendId:null,fpg,bandeira:(fpg==='credito'||fpg==='debito')?bandeira:'',parcelas,status:'paid',saleDate:realSaleDate,notes:'Auto-importado da Yampi'};
-    // Calcula data da primeira parcela: saleDate + prazo do MDR
+    const baseTx={name,type:'receber',cat:'Vendas',co:'nf',canal:'online',courseId:null,procedureId:null,vendId:null,fpg,bandeira:(fpg==='credito'||fpg==='debito')?bandeira:'',parcelas,status:'paid',saleDate:realSaleDate,notes:'Auto-importado da Yampi',yampiEventId:ev.id};
     const prazoBase=getPrazo({co:'nf',fpg:'credito',bandeira,parcelas,canal:'online'})||31;
     const baseDate=new Date(realSaleDate+'T12:00:00');
     baseDate.setDate(baseDate.getDate()+prazoBase);
@@ -3022,10 +3035,11 @@ async function autoImportYampiEvent(ev){
       txs.push({...baseTx,id:txNid++,val:parcVal,due,grupoId:gid,parcelaNum:i+1,parcelaTotal:parcelas});
     }
   }else{
-    const tx={id:txNid++,name,type:'receber',cat:'Vendas',co:'nf',canal:'online',courseId:null,procedureId:null,vendId:null,fpg,bandeira:(fpg==='credito'||fpg==='debito')?bandeira:'',parcelas:1,status:'paid',due:realSaleDate,saleDate:realSaleDate,val,notes:'Auto-importado da Yampi'};
+    const tx={id:txNid++,name,type:'receber',cat:'Vendas',co:'nf',canal:'online',courseId:null,procedureId:null,vendId:null,fpg,bandeira:(fpg==='credito'||fpg==='debito')?bandeira:'',parcelas:1,status:'paid',due:realSaleDate,saleDate:realSaleDate,val,notes:'Auto-importado da Yampi',yampiEventId:ev.id};
     txs.push(tx);
   }
   try{const db=sbAdmin||sbClient;await db.from('yampi_events').update({imported:true,tx_id:firstId}).eq('id',ev.id);}catch(e){console.warn('Yampi import error:',e);}
+  _yampiImporting.delete(ev.id);
   saveData();
   showYampiToast(name,val);
   refreshCurrentPage();
