@@ -2423,7 +2423,8 @@ function renderCarteira(){
   var totalCancelado=cancelados.reduce(function(s,t){return s+t.val;},0);
   var totalEstornado=estornados.reduce(function(s,t){return s+t.val;},0);
   var totalEmProc=emProc.reduce(function(s,t){return s+valLiq(t);},0);
-  // Previsao 3 meses — a partir do mês filtrado (ou mês atual se nenhum filtro)
+  // Previsao 3 meses — a partir do mês filtrado (ou mês atual)
+  // Soma entradas previstas (pagas mas ainda em compensação + pendentes) nos 3 meses seguintes
   var prox3Total=0;
   var _baseY,_baseM;
   if(selMes){var _bp=selMes.split('-');_baseY=parseInt(_bp[0]);_baseM=parseInt(_bp[1])-1;}
@@ -2431,7 +2432,11 @@ function renderCarteira(){
   for(var _pi=1;_pi<=3;_pi++){
     var _pd=new Date(_baseY,_baseM+_pi,1);
     var _pk=_pd.getFullYear()+'-'+String(_pd.getMonth()+1).padStart(2,'0');
-    prox3Total+=allRec.filter(function(t){var sr=getStatusReal(t);return sr!=='paid'&&sr!=='cancelado'&&sr!=='estornado'&&t.due&&t.due.startsWith(_pk);}).reduce(function(s,t){return s+t.val;},0);
+    // Tudo que vai cair naquele mês (paid em compensação OU pendente), exceto cancelado/estornado
+    prox3Total+=allRec.filter(function(t){
+      var sr=getStatusReal(t);
+      return sr!=='cancelado'&&sr!=='estornado'&&t.due&&t.due.startsWith(_pk);
+    }).reduce(function(s,t){return s+valLiq(t);},0);
   }
   // KPIs - 7 indicadores financeiros
   var kDiv=document.getElementById('carteiraKpis');
@@ -2439,7 +2444,6 @@ function renderCarteira(){
     kDiv.innerHTML=
       '<div class="kc g"><div class="klbl">'+(refDate>now?'Saldo Projetado':'Saldo na Conta')+'</div><div class="kval">'+fmt(saldoCarteira)+'</div><div class="kft"><span class="kpr">'+(refDate>now?'previsto ao fim do mês':'disponível agora')+' · líq. MDR</span></div></div>'+
       '<div class="kc m"><div class="klbl">Total Recebido</div><div class="kval">'+fmt(totalRecebido)+'</div><div class="kft"><span class="kpr">'+recebidos.length+' venda'+(recebidos.length!==1?'s':'')+' paga'+(recebidos.length!==1?'s':'')+'</span></div></div>'+
-      '<div class="kc o"><div class="klbl">A Receber</div><div class="kval">'+fmt(aReceberLiq)+'</div><div class="kft"><span class="kpr">'+aReceberCnt+' entrada'+(aReceberCnt!==1?'s':'')+(totalEmProc>0?' · '+fmt(totalEmProc)+' em compens.':'')+'</span></div></div>'+
       (totalVencido>0?'<div class="kc r"><div class="klbl">Vencido</div><div class="kval" style="color:var(--re)">'+fmt(totalVencido)+'</div><div class="kft"><span class="kpr" style="color:var(--re)">'+atrasados.length+' em atraso</span></div></div>':'')+
       (totalCancelado>0?'<div class="kc"><div class="klbl">Cancelado</div><div class="kval" style="color:var(--t3)">'+fmt(totalCancelado)+'</div><div class="kft"><span class="kpr">'+cancelados.length+' cancel.</span></div></div>':'')+
       (totalEstornado>0?'<div class="kc"><div class="klbl">Estornado</div><div class="kval" style="color:var(--t3)">'+fmt(totalEstornado)+'</div><div class="kft"><span class="kpr">'+estornados.length+' estorno</span></div></div>':'')+
