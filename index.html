@@ -2382,14 +2382,30 @@ function renderCarteira(){
   var parciais=fatTxs.filter(function(t){return getStatusReal(t)==='parcial';});
   var cancelados=fatTxs.filter(function(t){return getStatusReal(t)==='cancelado';});
   var estornados=fatTxs.filter(function(t){return getStatusReal(t)==='estornado';});
-  // CALCULO DO SALDO DA CARTEIRA = liquido de pendentes + vencidos + parciais
-  var saldoCarteira=[].concat(pendentes,atrasados,parciais).reduce(function(s,t){return s+valLiq(t);},0);
+  // REGIME DE CAIXA — separa o que JÁ caiu na conta do que ainda está em compensação
+  // Compensação: data da venda + prazo de recebimento <= hoje
+  var jaCompensou=function(t){
+    var sd=t.saleDate||t.due;
+    if(!sd)return true;
+    var dC=new Date(sd+'T00:00:00');
+    dC.setDate(dC.getDate()+(getPrazo(t)||0));
+    return dC<=now;
+  };
+  // Recebidos já liquidados (dinheiro na conta agora)
+  var recebidosLiquidados=recebidos.filter(jaCompensou);
+  // Recebidos em compensação (cartão pago mas dinheiro ainda não caiu)
+  var emProc=recebidos.filter(function(t){return!jaCompensou(t);});
+  // SALDO DA CARTEIRA = só o que já está disponível (PIX, débito, dinheiro, crédito compensado)
+  var saldoCarteira=recebidosLiquidados.reduce(function(s,t){return s+valLiq(t);},0);
+  // Total recebido (todo paid, para histórico)
   var totalRecebido=recebidos.reduce(function(s,t){return s+valLiq(t);},0);
+  // A Receber = pendentes/vencidos + crédito em compensação (dinheiro ainda vai chegar)
+  var aReceberLiq=[].concat(pendentes,atrasados,parciais,emProc).reduce(function(s,t){return s+valLiq(t);},0);
+  var aReceberCnt=pendentes.length+atrasados.length+parciais.length+emProc.length;
   var totalPendente=pendentes.reduce(function(s,t){return s+t.val;},0);
   var totalVencido=atrasados.reduce(function(s,t){return s+t.val;},0);
   var totalCancelado=cancelados.reduce(function(s,t){return s+t.val;},0);
   var totalEstornado=estornados.reduce(function(s,t){return s+t.val;},0);
-  var emProc=recebidos.filter(function(t){return t.fpg==='credito'&&getPrazo(t)>2;});
   var totalEmProc=emProc.reduce(function(s,t){return s+valLiq(t);},0);
   // Previsao 3 meses
   var prox3Total=0;
@@ -2402,9 +2418,9 @@ function renderCarteira(){
   var kDiv=document.getElementById('carteiraKpis');
   if(kDiv){
     kDiv.innerHTML=
-      '<div class="kc m"><div class="klbl">Saldo da Carteira</div><div class="kval">'+fmt(saldoCarteira)+'</div><div class="kft"><span class="kpr">liquido apos MDR</span></div></div>'+
-      '<div class="kc g"><div class="klbl">Total Recebido</div><div class="kval">'+fmt(totalRecebido)+'</div><div class="kft"><span class="kpr">'+recebidos.length+' receb.'+(totalEmProc>0?' - '+fmt(totalEmProc)+' process.':'')+'</span></div></div>'+
-      '<div class="kc o"><div class="klbl">A Receber</div><div class="kval">'+fmt(totalPendente)+'</div><div class="kft"><span class="kpr">'+pendentes.length+' pendente'+(pendentes.length!==1?'s':'')+'</span></div></div>'+
+      '<div class="kc g"><div class="klbl">Saldo na Conta</div><div class="kval">'+fmt(saldoCarteira)+'</div><div class="kft"><span class="kpr">disponível agora · líq. MDR</span></div></div>'+
+      '<div class="kc m"><div class="klbl">Total Recebido</div><div class="kval">'+fmt(totalRecebido)+'</div><div class="kft"><span class="kpr">'+recebidos.length+' venda'+(recebidos.length!==1?'s':'')+' paga'+(recebidos.length!==1?'s':'')+'</span></div></div>'+
+      '<div class="kc o"><div class="klbl">A Receber</div><div class="kval">'+fmt(aReceberLiq)+'</div><div class="kft"><span class="kpr">'+aReceberCnt+' entrada'+(aReceberCnt!==1?'s':'')+(totalEmProc>0?' · '+fmt(totalEmProc)+' em compens.':'')+'</span></div></div>'+
       (totalVencido>0?'<div class="kc r"><div class="klbl">Vencido</div><div class="kval" style="color:var(--re)">'+fmt(totalVencido)+'</div><div class="kft"><span class="kpr" style="color:var(--re)">'+atrasados.length+' em atraso</span></div></div>':'')+
       (totalCancelado>0?'<div class="kc"><div class="klbl">Cancelado</div><div class="kval" style="color:var(--t3)">'+fmt(totalCancelado)+'</div><div class="kft"><span class="kpr">'+cancelados.length+' cancel.</span></div></div>':'')+
       (totalEstornado>0?'<div class="kc"><div class="klbl">Estornado</div><div class="kval" style="color:var(--t3)">'+fmt(totalEstornado)+'</div><div class="kft"><span class="kpr">'+estornados.length+' estorno</span></div></div>':'')+
