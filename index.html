@@ -1292,9 +1292,11 @@ function updateDashCharts(){
     const prev=new Date(now2.getFullYear(),now2.getMonth()-1,1);
     const prevM=prev.getFullYear()+'-'+String(prev.getMonth()+1).padStart(2,'0');
     const coFilt=function(t){return co==='all'||t.co===co;};
-    const curRec=txs.filter(function(t){return coFilt(t)&&t.type==='receber'&&t.due&&t.due.startsWith(curM);});
+    // Regime de competência: receitas pela saleDate; despesas pelo due (pagamento)
+    const sdR=function(t){return t.saleDate||t.due||'';};
+    const curRec=txs.filter(function(t){return coFilt(t)&&t.type==='receber'&&sdR(t).startsWith(curM);});
     const curPag=txs.filter(function(t){return coFilt(t)&&t.type==='pagar'&&t.due&&t.due.startsWith(curM);});
-    const prevRec=txs.filter(function(t){return coFilt(t)&&t.type==='receber'&&t.due&&t.due.startsWith(prevM);});
+    const prevRec=txs.filter(function(t){return coFilt(t)&&t.type==='receber'&&sdR(t).startsWith(prevM);});
     const fatAtual=curRec.reduce(function(s,t){return s+fatVal(t);},0);
     const fatPrev=prevRec.reduce(function(s,t){return s+fatVal(t);},0);
     const despAtual=curPag.reduce(function(s,t){return s+t.val;},0);
@@ -2421,10 +2423,13 @@ function renderCarteira(){
   var totalCancelado=cancelados.reduce(function(s,t){return s+t.val;},0);
   var totalEstornado=estornados.reduce(function(s,t){return s+t.val;},0);
   var totalEmProc=emProc.reduce(function(s,t){return s+valLiq(t);},0);
-  // Previsao 3 meses
+  // Previsao 3 meses — a partir do mês filtrado (ou mês atual se nenhum filtro)
   var prox3Total=0;
+  var _baseY,_baseM;
+  if(selMes){var _bp=selMes.split('-');_baseY=parseInt(_bp[0]);_baseM=parseInt(_bp[1])-1;}
+  else{_baseY=now.getFullYear();_baseM=now.getMonth();}
   for(var _pi=1;_pi<=3;_pi++){
-    var _pd=new Date(now.getFullYear(),now.getMonth()+_pi,1);
+    var _pd=new Date(_baseY,_baseM+_pi,1);
     var _pk=_pd.getFullYear()+'-'+String(_pd.getMonth()+1).padStart(2,'0');
     prox3Total+=allRec.filter(function(t){var sr=getStatusReal(t);return sr!=='paid'&&sr!=='cancelado'&&sr!=='estornado'&&t.due&&t.due.startsWith(_pk);}).reduce(function(s,t){return s+t.val;},0);
   }
