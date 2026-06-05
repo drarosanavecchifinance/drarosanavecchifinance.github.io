@@ -2819,12 +2819,22 @@ function applyData(d){
     if(ids.patientNid)patientNid=ids.patientNid;if(ids.patientNcode)patientNcode=ids.patientNcode;
     if(ids.procedureNid)procedureNid=ids.procedureNid;if(ids.procedureNcode)procedureNcode=ids.procedureNcode;
   }
-  // Migração v3: remove Yampi txs com parser antigo (fpg/bandeira/parcelas errados)
-  // NÃO chama saveData aqui — loadYampiPending() vai reimportar e salvar corretamente
+  // Migração v6: remove Yampi txs antigas E reseta eventos no Supabase para reimport
   if(!d._yampiParserV||d._yampiParserV<6){
     const _before=txs.length;
     txs=txs.filter(function(t){return t.notes!=='Auto-importado da Yampi';});
-    if(txs.length<_before)console.log('Yampi v3: removidas '+(_before-txs.length)+' txs antigas — aguardando reimport automático');
+    if(txs.length<_before){
+      console.log('Yampi v6: removidas '+(_before-txs.length)+' txs antigas. Resetando eventos para reimport...');
+      // Reseta eventos no Supabase para imported=false (assíncrono — não bloqueia)
+      (async function(){
+        try{
+          const db=sbAdmin||sbClient;
+          if(db)await db.from('yampi_events').update({imported:false,tx_id:null}).neq('event_type','desconhecido');
+          console.log('Eventos Yampi resetados. Disparando loadYampiPending...');
+          if(typeof loadYampiPending==='function')await loadYampiPending();
+        }catch(e){console.warn('Yampi reset error:',e);}
+      })();
+    }
   }
   // Migração: remove dados de demonstração salvos em sessões anteriores
   {
