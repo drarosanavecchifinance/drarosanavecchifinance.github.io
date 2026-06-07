@@ -2204,8 +2204,8 @@ function renderVendDesemp(){
   vendedoras.forEach(function(v){
     var nfTxs=txs.filter(function(t){var ds=t.saleDate||t.due||'';return t.co==='nf'&&t.type==='receber'&&t.vendId===v.id&&ds.startsWith(prefix);});
     var rvTxs=txs.filter(function(t){var ds=t.saleDate||t.due||'';return t.co==='rv'&&t.type==='receber'&&t.vendId===v.id&&ds.startsWith(prefix);});
-    var nfTotal=nfTxs.reduce(function(s,t){return s+t.val;},0);
-    var rvTotal=rvTxs.reduce(function(s,t){return s+t.val;},0);
+    var nfTotal=nfTxs.reduce(function(s,t){return s+fatVal(t);},0);
+    var rvTotal=rvTxs.reduce(function(s,t){return s+fatVal(t);},0);
     var total=nfTotal+rvTotal;
     var statusCls=v.status==='ativa'?'gr':'re';
     var nfRows=nfTxs.length?nfTxs.map(function(t){return'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bdr);font-size:12.5px"><span style="color:var(--t2)">'+t.name+'</span><span style="font-weight:600;color:var(--gr)">'+fmt(t.val)+'</span></div>';}).join(''):'<div style="font-size:12px;color:var(--t3);padding:6px 0">Nenhuma venda NatureFace</div>';
