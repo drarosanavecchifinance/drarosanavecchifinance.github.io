@@ -978,7 +978,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
       <div class="fgp" id="cursoFieldWrap"><label class="fl">Curso (opcional)</label><select class="fse" id="fCrs"><option value="">— Nenhum —</option></select></div>
       <div class="fgp" id="fProcWrap" style="display:none"><label class="fl">Procedimento (opcional)</label><select class="fse" id="fProc"><option value="">— Nenhum —</option></select></div>
       <div class="fgp"><label class="fl">Status</label><select class="fse" id="fSt"><option value="paid">Pago</option><option value="pend">Pendente</option><option value="due">Vence Hoje</option><option value="sched">Agendado</option></select></div>
-      <div class="fgp"><label class="fl">Vencimento</label><input class="fi" id="fDu" type="date"></div>
+      <div class="fgp"><label class="fl">Data de Lançamento</label><input class="fi" id="fDu" type="date"></div>
       <div class="fgp"><label class="fl">Valor (R$)</label><input class="fi" id="fVl" type="number" placeholder="0,00" min="0" step="0.01"></div>
       <div class="fgp" id="fRecWrap"><label class="fl">Recorrência</label><select class="fse" id="fRec" onchange="toggleRec()"><option value="">Sem recorrência</option><option value="semanal">Semanal</option><option value="quinzenal">Quinzenal</option><option value="mensal">Mensal</option><option value="bimestral">Bimestral</option><option value="trimestral">Trimestral</option><option value="anual">Anual</option></select></div>
       <div class="fgp" id="fRecQtdWrap" style="display:none"><label class="fl">Repetições</label><input class="fi" id="fRecQtd" type="number" placeholder="Ex: 12" min="2" max="60" value="12"><div style="font-size:11px;color:var(--t3);margin-top:4px">Nº total de parcelas/lançamentos</div></div>
@@ -1882,7 +1882,7 @@ function editTx(id){
   editTxId=id;document.getElementById('txMT').textContent='Editar Lançamento';
   document.getElementById('fNm').value=t.name;document.getElementById('fTy').value=t.type;
   document.getElementById('fCo').value=t.co;
-  document.getElementById('fSt').value=t.status;document.getElementById('fDu').value=t.due;
+  document.getElementById('fSt').value=t.status;document.getElementById('fDu').value=t.saleDate||t.due;
   document.getElementById('fVl').value=t.val;document.getElementById('fNo').value=t.notes||'';
   const frwE=document.getElementById('fRecWrap');if(frwE)frwE.style.display='none';
   const rqwE=document.getElementById('fRecQtdWrap');if(rqwE)rqwE.style.display='none';
@@ -1905,7 +1905,10 @@ function saveTx(){
   const canalVal=fpgVal?(document.getElementById('fCanal')?.value||'online'):'online';
   const procIdRaw=document.getElementById('fProc')?.value;
   const origTx=editTxId?(txs.find(x=>x.id===editTxId)||{}):{};
-  const tx={...origTx,id:editTxId||txNid++,name,type:document.getElementById('fTy').value,cat:existCat,co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,procedureId:procIdRaw?parseInt(procIdRaw):null,vendId:vendIdRaw?parseInt(vendIdRaw):null,fpg:fpgVal,bandeira:bandeiraVal,parcelas:parcelasVal,canal:canalVal,status:document.getElementById('fSt').value,due:document.getElementById('fDu').value||new Date().toISOString().slice(0,10),val:parseFloat(document.getElementById('fVl').value)||0,notes:document.getElementById('fNo').value};
+  const fDuVal=document.getElementById('fDu').value||new Date().toISOString().slice(0,10);
+  // Para parcelado, preserva o due original (data de vencimento da parcela); atualiza só saleDate
+  const dueVal=(editTxId&&origTx.parcelaNum)?origTx.due:fDuVal;
+  const tx={...origTx,id:editTxId||txNid++,name,type:document.getElementById('fTy').value,cat:existCat,co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,procedureId:procIdRaw?parseInt(procIdRaw):null,vendId:vendIdRaw?parseInt(vendIdRaw):null,fpg:fpgVal,bandeira:bandeiraVal,parcelas:parcelasVal,canal:canalVal,status:document.getElementById('fSt').value,due:dueVal,saleDate:fDuVal,val:parseFloat(document.getElementById('fVl').value)||0,notes:document.getElementById('fNo').value};
   // Garante parcelaNum/parcelaTotal ao editar transação parcelada
   if(editTxId&&fpgVal==='credito'&&parcelasVal>1){
     tx.parcelaNum=origTx.parcelaNum||1;
