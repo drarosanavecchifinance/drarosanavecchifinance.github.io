@@ -2202,8 +2202,8 @@ function renderVendDesemp(){
   let html='<div style="font-size:13px;color:var(--t3);margin-bottom:16px;font-weight:600">📅 '+mLabel+' — vendas por vendedora</div>';
   html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px">';
   vendedoras.forEach(function(v){
-    var nfTxs=txs.filter(function(t){return t.co==='nf'&&t.type==='receber'&&t.vendId===v.id&&t.due&&t.due.startsWith(prefix);});
-    var rvTxs=txs.filter(function(t){return t.co==='rv'&&t.type==='receber'&&t.vendId===v.id&&t.due&&t.due.startsWith(prefix);});
+    var nfTxs=txs.filter(function(t){var ds=t.saleDate||t.due||'';return t.co==='nf'&&t.type==='receber'&&t.vendId===v.id&&ds.startsWith(prefix);});
+    var rvTxs=txs.filter(function(t){var ds=t.saleDate||t.due||'';return t.co==='rv'&&t.type==='receber'&&t.vendId===v.id&&ds.startsWith(prefix);});
     var nfTotal=nfTxs.reduce(function(s,t){return s+t.val;},0);
     var rvTotal=rvTxs.reduce(function(s,t){return s+t.val;},0);
     var total=nfTotal+rvTotal;
