@@ -530,46 +530,76 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
 
   <!-- DASHBOARD -->
   <div class="page a" id="page-dashboard">
+    <!-- KPIs -->
     <div class="kg">
-      <div class="kc m"><div class="klbl">Fat. Bruto Mensal</div><div class="kval" id="kF">R$&nbsp;284.750</div><div class="kft"><span class="dt up">▲ 18,3%</span><span class="kpr">vs mês anterior</span></div></div>
-      <div class="kc g"><div class="klbl">Lucro Líquido</div><div class="kval" id="kL">R$&nbsp;112.340</div><div class="kft"><span class="dt up">▲ 22,1%</span><span class="kpr">margem 39,4%</span></div></div>
-      <div class="kc o"><div class="klbl">Despesas do Mês</div><div class="kval" id="kR">R$&nbsp;0</div><div class="kft"><span class="kpr">total de saídas</span></div></div>
-      <div class="kc g"><div class="klbl">Crescimento MoM</div><div class="kval" id="kG">+18%</div><div class="kft"><span class="dt up">▲ Meta atingida</span><span class="kpr">meta: 15%</span></div></div>
+      <div class="kc m"><div class="klbl">Fat. Bruto Mensal</div><div class="kval" id="kF">—</div><div class="kft" id="kFft"><span class="kpr">vs mês anterior</span></div></div>
+      <div class="kc g"><div class="klbl">Lucro Líquido</div><div class="kval" id="kL">—</div><div class="kft" id="kLft"><span class="kpr">margem estimada</span></div></div>
+      <div class="kc o"><div class="klbl">Despesas do Mês</div><div class="kval" id="kR">—</div><div class="kft"><span class="kpr">total de saídas</span></div></div>
+      <div class="kc b"><div class="klbl">Crescimento MoM</div><div class="kval" id="kG">—</div><div class="kft" id="kGft"><span class="kpr">vs mês anterior</span></div></div>
     </div>
-    <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:22px">
-      <div class="cc">
-        <div class="ch">
-          <div><div class="ct">Faturamento 2025</div><div class="cs">Receita mensal acumulada</div></div>
-          <div class="lg"><div class="li"><div class="ld" style="background:#C4807F"></div>NatureFace</div><div class="li"><div class="ld" style="background:#955251"></div>Rosana Academy</div></div>
-        </div>
-        <canvas id="revChart" height="120"></canvas>
-      </div>
+    <!-- Alertas + Acesso Rápido -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px">
       <div class="sc" style="border-radius:var(--r)">
-        <div class="sh"><div class="st">V.A.I — Insights</div><button class="lnk" onclick="sv('vai',null)">Abrir →</button></div>
+        <div class="sh"><div class="st">⚡ Alertas & Notificações</div></div>
         <div id="dashInsights"><div style="padding:12px 16px;font-size:12px;color:var(--t3)">Carregando...</div></div>
       </div>
+      <div class="sc" style="border-radius:var(--r)">
+        <div class="sh"><div class="st">🗂 Acesso Rápido</div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
+          <button onclick="sv('financeiro',document.querySelector('[onclick*=financeiro]'))" style="display:flex;align-items:center;gap:10px;padding:14px 18px;background:transparent;border:none;border-right:1.5px solid var(--bdr);border-bottom:1.5px solid var(--bdr);cursor:pointer;text-align:left;transition:background .15s" onmouseover="this.style.background='var(--mp)'" onmouseout="this.style.background='transparent'">
+            <div style="width:34px;height:34px;border-radius:9px;background:var(--mp);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--m)" stroke-width="1.8"><path d="M2 10h16M5 6h10M7 14h6"/><rect x="2" y="3" width="16" height="14" rx="2"/></svg></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--t1)">Fluxo de Caixa</div><div style="font-size:11px;color:var(--t3)">Receitas & despesas</div></div>
+          </button>
+          <button onclick="sv('carteira',document.querySelector('[onclick*=carteira]'))" style="display:flex;align-items:center;gap:10px;padding:14px 18px;background:transparent;border:none;border-bottom:1.5px solid var(--bdr);cursor:pointer;text-align:left;transition:background .15s" onmouseover="this.style.background='var(--mp)'" onmouseout="this.style.background='transparent'">
+            <div style="width:34px;height:34px;border-radius:9px;background:var(--orb);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--or)" stroke-width="1.8"><rect x="2" y="5" width="16" height="12" rx="2"/><path d="M2 8h16"/><circle cx="14.5" cy="13" r="1.5"/></svg></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--t1)">Carteira</div><div style="font-size:11px;color:var(--t3)">A receber & pagar</div></div>
+          </button>
+          <button onclick="sv('cursos',document.querySelector('[onclick*=cursos]'))" style="display:flex;align-items:center;gap:10px;padding:14px 18px;background:transparent;border:none;border-right:1.5px solid var(--bdr);border-bottom:1.5px solid var(--bdr);cursor:pointer;text-align:left;transition:background .15s" onmouseover="this.style.background='var(--mp)'" onmouseout="this.style.background='transparent'">
+            <div style="width:34px;height:34px;border-radius:9px;background:rgba(46,94,160,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--bl)" stroke-width="1.8"><path d="M2 5l8-3 8 3v6c0 4-8 7-8 7S2 15 2 11V5z"/></svg></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--t1)">Cursos</div><div style="font-size:11px;color:var(--t3)">Rosana Academy</div></div>
+          </button>
+          <button onclick="sv('alunos',document.querySelector('[onclick*=alunos]'))" style="display:flex;align-items:center;gap:10px;padding:14px 18px;background:transparent;border:none;border-bottom:1.5px solid var(--bdr);cursor:pointer;text-align:left;transition:background .15s" onmouseover="this.style.background='var(--mp)'" onmouseout="this.style.background='transparent'">
+            <div style="width:34px;height:34px;border-radius:9px;background:var(--grb);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--gr)" stroke-width="1.8"><circle cx="8" cy="7" r="3"/><path d="M2 17c0-3.3 2.7-6 6-6"/><path d="M13 14h5m-2.5-2.5v5"/></svg></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--t1)">Base de Alunos</div><div style="font-size:11px;color:var(--t3)" id="dashAlunosCount">—</div></div>
+          </button>
+          <button onclick="sv('vendedoras',document.querySelector('[onclick*=vendedoras]'))" style="display:flex;align-items:center;gap:10px;padding:14px 18px;background:transparent;border:none;border-right:1.5px solid var(--bdr);cursor:pointer;text-align:left;transition:background .15s" onmouseover="this.style.background='var(--mp)'" onmouseout="this.style.background='transparent'">
+            <div style="width:34px;height:34px;border-radius:9px;background:rgba(196,165,90,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="#9A7D3A" stroke-width="1.8"><circle cx="7" cy="7" r="3"/><path d="M1 17c0-3.3 2.7-6 6-6"/><circle cx="14" cy="7" r="3"/><path d="M11 17c0-3.3 1.3-5.4 3-6"/></svg></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--t1)">Vendedoras</div><div style="font-size:11px;color:var(--t3)" id="dashVendCount">—</div></div>
+          </button>
+          <button onclick="sv('calendario',document.querySelector('[onclick*=calendario]'))" style="display:flex;align-items:center;gap:10px;padding:14px 18px;background:transparent;border:none;cursor:pointer;text-align:left;transition:background .15s" onmouseover="this.style.background='var(--mp)'" onmouseout="this.style.background='transparent'">
+            <div style="width:34px;height:34px;border-radius:9px;background:rgba(123,158,135,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="#7B9E87" stroke-width="1.8"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M14 2v4M6 2v4M3 9h14"/></svg></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--t1)">Calendário</div><div style="font-size:11px;color:var(--t3)">Agenda & eventos</div></div>
+          </button>
+        </div>
+      </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:22px">
+    <!-- Gráficos -->
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px;margin-bottom:22px">
       <div class="cc">
-        <div class="ch"><div><div class="ct">Vendas por Vendedora</div><div class="cs">NatureFace — receitas acumuladas</div></div></div>
-        <canvas id="vendChart" height="190"></canvas>
+        <div class="ch">
+          <div><div class="ct">Faturamento Mensal</div><div class="cs">Receita acumulada por empresa</div></div>
+          <div class="lg"><div class="li"><div class="ld" style="background:#C4807F"></div>NatureFace</div><div class="li"><div class="ld" style="background:#955251"></div>Academy</div></div>
+        </div>
+        <canvas id="revChart" height="130"></canvas>
       </div>
       <div class="cc">
-        <div class="ch"><div><div class="ct">Receita vs Despesa</div><div class="cs">Mensal — últimos 6 meses</div></div></div>
-        <canvas id="rdChart" height="190"></canvas>
+        <div class="ch"><div><div class="ct">Receita vs Despesa</div><div class="cs">Últimos 6 meses</div></div></div>
+        <canvas id="rdChart" height="160"></canvas>
       </div>
       <div class="cc">
-        <div class="ch"><div><div class="ct">Distribuição por Empresa</div><div class="cs">% da receita total</div></div></div>
-        <canvas id="empresaChart" height="190"></canvas>
+        <div class="ch"><div><div class="ct">Distribuição</div><div class="cs">% por empresa</div></div></div>
+        <canvas id="empresaChart" height="160"></canvas>
       </div>
     </div>
-    <div class="sc">
-      <div class="sh"><div class="st">Movimentações Recentes</div><button class="lnk" onclick="sv('financeiro',null)">Ver todas →</button></div>
-      <div style="display:grid;grid-template-columns:repeat(2,1fr)">
-        <div class="tr"><div class="tic" style="background:var(--grb)">💆</div><div style="flex:1"><div class="tnm">Protocolo Facial Premium</div><div class="tmt">NatureFace · Hoje 14:23</div></div><div class="tam cr">+R$&nbsp;850</div></div>
-        <div class="tr"><div class="tic" style="background:var(--mp)">🎓</div><div style="flex:1"><div class="tnm">Matrícula — Curso Avançado</div><div class="tmt">Rosana Academy · Hoje 11:05</div></div><div class="tam cr">+R$&nbsp;2.400</div></div>
-        <div class="tr" style="border-top:1.5px solid var(--bdr)"><div class="tic" style="background:var(--orb)">🏢</div><div style="flex:1"><div class="tnm">Aluguel Clínica — Julho</div><div class="tmt">NatureFace · Hoje 09:00</div></div><div class="tam db">-R$&nbsp;4.200</div></div>
-        <div class="tr" style="border-top:1.5px solid var(--bdr)"><div class="tic" style="background:var(--mp)">🎯</div><div style="flex:1"><div class="tnm">Mentoria Executiva</div><div class="tmt">Rosana Academy · Ontem</div></div><div class="tam cr">+R$&nbsp;7.500</div></div>
+    <!-- Movimentações Recentes + Vendedoras -->
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px">
+      <div class="sc">
+        <div class="sh"><div class="st">Movimentações Recentes</div><button class="lnk" onclick="sv('financeiro',document.querySelector('[onclick*=financeiro]'))">Ver todas →</button></div>
+        <div id="dashRecentTxs"><div style="padding:16px;font-size:12px;color:var(--t3)">Carregando...</div></div>
+      </div>
+      <div class="cc" style="padding:0">
+        <div class="ch"><div><div class="ct">Vendedoras — Mês Atual</div><div class="cs">NatureFace</div></div></div>
+        <canvas id="vendChart" height="200"></canvas>
       </div>
     </div>
   </div>
@@ -1402,6 +1432,16 @@ function updateInsights(){
   el.innerHTML=items.slice(0,4).map(function(i){
     return'<div class="nr"><div class="nic" style="background:'+i.bg+'">'+i.icon+'</div><div style="flex:1"><div class="ntt">'+i.title+'</div><div class="nds">'+i.desc+'</div></div></div>';
   }).join('');
+  // Movimentações recentes
+  var rt=document.getElementById('dashRecentTxs');
+  if(rt){
+    var recent=txs.filter(function(t){return t.status==='paid';}).sort(function(a,b){return(b.paidAt||b.due||'').localeCompare(a.paidAt||a.due||'');}).slice(0,6);
+    if(!recent.length){rt.innerHTML='<div style="padding:16px;font-size:12px;color:var(--t3)">Nenhuma movimentação</div>';}
+    else{rt.innerHTML=recent.map(function(t,i){var isRec=t.type==='receber';var coNames={nf:'NatureFace',rv:'Rosana Academy',ct:'Consultório'};var bg=isRec?'var(--grb)':'var(--orb)';var icon=isRec?'↑':'↓';var iconColor=isRec?'var(--gr)':'var(--or)';var borderTop=i>0?'border-top:1.5px solid var(--bdr);':'';return'<div class="tr" style="'+borderTop+'"><div class="tic" style="background:'+bg+';color:'+iconColor+';font-weight:700;font-size:14px">'+icon+'</div><div style="flex:1"><div class="tnm">'+t.name+'</div><div class="tmt">'+(coNames[t.co]||t.co)+' · '+(t.paidAt||t.due||'')+'</div></div><div class="tam '+(isRec?'cr':'db')+'">'+(isRec?'+':'-')+'R$ '+t.val.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div></div>';}).join('');}
+  }
+  // Contadores acesso rápido
+  var dac=document.getElementById('dashAlunosCount');if(dac)dac.textContent=students.length+' aluno'+(students.length!==1?'s':'');
+  var dvc=document.getElementById('dashVendCount');if(dvc){var vAtivas=vendedoras.filter(function(v){return v.status==='ativa';});dvc.textContent=vAtivas.length+' ativa'+(vAtivas.length!==1?'s':'');}
 }
 
 // ===== COURSES =====
