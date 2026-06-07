@@ -2844,7 +2844,23 @@ function applyData(d){
     txs=d.txs;
     // Restaura saleDate de transações Yampi que perderam o campo ao serem editadas
     let fixed=false;
-    txs.forEach(function(t){if(t.yampiEventId&&!t.saleDate&&t.due){t.saleDate=t.due;fixed=true;}});
+    // Não-parceladas: saleDate = due
+    txs.forEach(function(t){if(t.yampiEventId&&!t.saleDate&&t.due&&!t.parcelaNum){t.saleDate=t.due;fixed=true;}});
+    // Parceladas: recalcula saleDate a partir da 1ª parcela menos o prazo
+    // Também corrige txs onde a migração anterior colocou saleDate = due erroneamente
+    var grupos={};
+    txs.forEach(function(t){if(t.yampiEventId&&t.parcelaNum&&t.grupoId)grupos[t.grupoId]=grupos[t.grupoId]||[];if(t.grupoId)grupos[t.grupoId].push(t);});
+    Object.values(grupos).forEach(function(group){
+      var first=group.find(function(t){return t.parcelaNum===1;});
+      if(!first||!first.due)return;
+      var needsFix=group.some(function(t){return !t.saleDate||(t.saleDate===t.due);});
+      if(!needsFix)return;
+      var prazo=getPrazo(first)||31;
+      var d=new Date(first.due+'T12:00:00');d.setDate(d.getDate()-prazo);
+      var sd=d.toISOString().slice(0,10);
+      group.forEach(function(t){t.saleDate=sd;});
+      fixed=true;
+    });
     if(fixed)setTimeout(saveData,500);
   }
   if(d.courses&&d.courses.length)courses=d.courses;
