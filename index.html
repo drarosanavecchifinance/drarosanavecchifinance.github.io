@@ -1905,6 +1905,11 @@ function saveTx(){
   const procIdRaw=document.getElementById('fProc')?.value;
   const origTx=editTxId?(txs.find(x=>x.id===editTxId)||{}):{};
   const tx={...origTx,id:editTxId||txNid++,name,type:document.getElementById('fTy').value,cat:existCat,co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,procedureId:procIdRaw?parseInt(procIdRaw):null,vendId:vendIdRaw?parseInt(vendIdRaw):null,fpg:fpgVal,bandeira:bandeiraVal,parcelas:parcelasVal,canal:canalVal,status:document.getElementById('fSt').value,due:document.getElementById('fDu').value||new Date().toISOString().slice(0,10),val:parseFloat(document.getElementById('fVl').value)||0,notes:document.getElementById('fNo').value};
+  // Garante parcelaNum/parcelaTotal ao editar transação parcelada
+  if(editTxId&&fpgVal==='credito'&&parcelasVal>1){
+    tx.parcelaNum=origTx.parcelaNum||1;
+    tx.parcelaTotal=parcelasVal;
+  }
   // Parcelamento (só para novos lançamentos)
   if(!editTxId){
     const rawPN=document.getElementById('fParcN')?.value;
