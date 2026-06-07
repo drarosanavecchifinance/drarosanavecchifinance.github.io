@@ -608,8 +608,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
   <div class="page" id="page-financeiro">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
       <div id="mainTabsFin" class="tabs" style="margin-bottom:0">
-        <button class="tab a" onclick="swTab(this,'pagar')">Contas a Pagar</button>
-        <button class="tab" onclick="swTab(this,'receber')">Contas a Receber</button>
+        <button class="tab a" onclick="swTab(this,'receber')">Contas a Receber</button>
+        <button class="tab" onclick="swTab(this,'pagar')">Contas a Pagar</button>
         <button class="tab" onclick="swTab(this,'todos')">Todos</button>
       </div>
       <select class="fsel" id="fFiltMes" onchange="renderTx()">
@@ -1133,7 +1133,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
 
 <script>
 // ===== STATE =====
-let co='nf', ftab='pagar', subftab='pagas', editTxId=null, txNid=11;
+let co='nf', ftab='receber', subftab='pagas', editTxId=null, txNid=11;
 let grupoNid=1, filterGrupo=null;
 let editStuId=null, stuMode='new', stuNid=5, stuNcode=5;
 let editCursoId=null, cursoNid=4, cursoNcode=4;
