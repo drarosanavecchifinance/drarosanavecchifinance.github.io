@@ -2842,7 +2842,13 @@ async function loadData(){
 }
 
 function applyData(d){
-  if(d.txs&&d.txs.length)txs=d.txs;
+  if(d.txs&&d.txs.length){
+    txs=d.txs;
+    // Restaura saleDate de transações Yampi que perderam o campo ao serem editadas
+    let fixed=false;
+    txs.forEach(function(t){if(t.yampiEventId&&!t.saleDate&&t.due){t.saleDate=t.due;fixed=true;}});
+    if(fixed)setTimeout(saveData,500);
+  }
   if(d.courses&&d.courses.length)courses=d.courses;
   if(d.students&&d.students.length)students=d.students;
   if(d.vendedoras&&d.vendedoras.length)vendedoras=d.vendedoras;
