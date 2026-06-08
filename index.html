@@ -1872,9 +1872,7 @@ function updateSaldoPreview(){
   const parcVal=val/parc;
   const fmt=v=>'R$\xa0'+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   prev.style.display='block';
-  prev.innerHTML=parc===1
-    ?`📋 Será criado <strong>1 lançamento pendente</strong> de <strong>${fmt(val)}</strong>`
-    :`📋 Serão criados <strong>${parc} lançamentos mensais</strong> de <strong>${fmt(parcVal)}</strong> cada · Total: <strong>${fmt(val)}</strong>`;
+  prev.innerHTML=`📋 Saldo de <strong>${fmt(val)}</strong> registrado na ficha da aluna · você lança cada pagamento quando receber`;
 }
 function toggleBandeiraField(){
   const fpg=document.getElementById('fFpg')?.value;
@@ -2203,21 +2201,23 @@ function saveTx(){
       txs.push({...tx,id:txNid++,due:nd.toISOString().slice(0,10)});
     }
   }
-  // Criar 2º lançamento para valor restante (saldo devedor — só Academy)
+  // Saldo devedor — salva na ficha da aluna, NÃO cria transações
   const vlRest=parseFloat(document.getElementById('fVlRest')?.value)||0;
   if(vlRest>0&&!editTxId&&tx.co==='rv'){
-    const parcRest=parseInt(document.getElementById('fVlRestParc')?.value)||1;
-    const parcVal=Math.round(vlRest/parcRest*100)/100;
-    const baseDue=tx.due||new Date().toISOString().slice(0,10);
-    if(parcRest<=1){
-      txs.push({id:txNid++,name:tx.name+' — Saldo Devedor',type:tx.type,cat:tx.cat,co:tx.co,fpg:tx.fpg,bandeira:tx.bandeira,courseId:tx.courseId,status:'pendente',due:baseDue,saleDate:tx.saleDate||baseDue,val:vlRest,notes:'Saldo devedor gerado automaticamente'});
-    }else{
-      const gid='G'+String(grupoNid++).padStart(5,'0');
-      for(let i=0;i<parcRest;i++){
-        const d=new Date(baseDue+'T12:00:00');d.setMonth(d.getMonth()+i+1);
-        const due=d.toISOString().slice(0,10);
-        txs.push({id:txNid++,name:tx.name+' — Saldo '+String(i+1).padStart(2,'0')+'/'+String(parcRest).padStart(2,'0'),type:tx.type,cat:tx.cat,co:tx.co,fpg:tx.fpg,bandeira:tx.bandeira,courseId:tx.courseId,status:'pendente',due,saleDate:tx.saleDate||baseDue,val:parcVal,grupoId:gid,parcelaNum:i+1,parcelaTotal:parcRest,notes:'Saldo devedor parcelado'});
+    // Encontra a aluna vinculada e salva o saldo devedor nela
+    const sec=document.getElementById('stuSec');
+    let stuRef=null;
+    if(sec&&sec.classList.contains('s')){
+      if(stuMode==='new'){
+        // A aluna acabou de ser criada — pega a última adicionada
+        stuRef=students[students.length-1];
+      }else{
+        const sid=parseInt(document.getElementById('sExSel')?.value);
+        if(sid)stuRef=students.find(x=>x.id===sid);
       }
+    }
+    if(stuRef){
+      stuRef.saldoDevedor=(stuRef.saldoDevedor||0)+vlRest;
     }
   }
   closeM('txModal');renderTx();saveData();if(document.getElementById('page-cursos').classList.contains('a'))renderCursos();
@@ -2316,7 +2316,9 @@ function renderAlunos(){
     // Calcula saldo financeiro da aluna
     const sTxs=txs.filter(t=>t.co==='rv'&&t.type==='receber'&&(t.stuId===s.id||(s.txId&&(t.id===s.txId||t.grupoId&&txs.find(x=>x.id===s.txId)?.grupoId===t.grupoId))));
     const pago=sTxs.filter(t=>t.status==='paid').reduce((a,t)=>a+t.val,0);
-    const pendente=sTxs.filter(t=>t.status!=='paid'&&t.status!=='cancelado'&&t.status!=='estornado').reduce((a,t)=>a+t.val,0);
+    const entradaVal=s.txId?txs.find(t=>t.id===s.txId)?.val||0:0;
+    const saldoRest=s.saldoDevedor?Math.max(0,s.saldoDevedor-Math.max(0,pago-entradaVal)):0;
+    const pendente=s.saldoDevedor?saldoRest:sTxs.filter(t=>t.status!=='paid'&&t.status!=='cancelado'&&t.status!=='estornado').reduce((a,t)=>a+t.val,0);
     const temSaldo=pendente>0.01;
     const saldoBadge=temSaldo
       ?`<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;background:var(--orb);color:var(--or)">⚠ R$\xa0${pendente.toLocaleString('pt-BR',{minimumFractionDigits:2})} a receber</span>`
@@ -2347,13 +2349,15 @@ function viewAlunoFinanceiro(id){
   ));
   const pagas=aTxs.filter(t=>t.status==='paid');
   const pendentes=aTxs.filter(t=>t.status!=='paid'&&t.status!=='cancelado'&&t.status!=='estornado').sort((a,b)=>(a.due||'').localeCompare(b.due||''));
-  const canceladas=aTxs.filter(t=>t.status==='cancelado'||t.status==='estornado');
   const totalPago=pagas.reduce((a,t)=>a+t.val,0);
-  const totalPendente=pendentes.reduce((a,t)=>a+t.val,0);
-  const totalGeral=totalPago+totalPendente;
-  const pct=totalGeral>0?Math.round(totalPago/totalGeral*100):0;
+  // Saldo devedor: usa o campo salvo na aluna menos o que já foi pago além da entrada
+  const saldoDevedorOriginal=s.saldoDevedor||0;
+  const saldoRestante=Math.max(0,saldoDevedorOriginal-Math.max(0,totalPago-(s.txId?txs.find(t=>t.id===s.txId)?.val||0:0)));
+  const totalPendente=saldoDevedorOriginal>0?saldoRestante:pendentes.reduce((a,t)=>a+t.val,0);
+  const totalGeral=totalPago+(saldoDevedorOriginal||pendentes.reduce((a,t)=>a+t.val,0));
+  const pct=totalGeral>0?Math.round(totalPago/totalGeral*100):100;
   const statusColor=totalPendente>0.01?'var(--or)':'var(--gr)';
-  const statusTxt=totalPendente>0.01?`⚠ Saldo devedor: ${fmt(totalPendente)}`:'✅ Totalmente quitada';
+  const statusTxt=totalPendente>0.01?`⚠ Falta receber: ${fmt(totalPendente)}`:'✅ Totalmente quitada';
 
   // Próxima parcela
   const proxima=pendentes[0];
