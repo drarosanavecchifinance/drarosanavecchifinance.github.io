@@ -1557,7 +1557,7 @@ function fmtDateShort(d){if(!d)return'—';const[y,m,dd]=d.split('-');const ms=[
 
 function renderCursos(){
   const filt=document.getElementById('cfStat')?.value||'';
-  const list=courses.filter(c=>!filt||c.status===filt);
+  const list=courses.filter(c=>!filt||c.status===filt).sort((a,b)=>(b.startDate||'').localeCompare(a.startDate||''));
   const activeCount=courses.filter(c=>c.status==='ativo').length;
   const totalRev=courses.reduce((a,c)=>a+getCourseRevenue(c.id),0);
   const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
