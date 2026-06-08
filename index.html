@@ -1206,7 +1206,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
 
 <script>
 // ===== STATE =====
-let co='nf', ftab='receber', subftab='pagas', editTxId=null, txNid=11;
+let co='all', ftab='receber', subftab='pagas', editTxId=null, txNid=11;
 let grupoNid=1, filterGrupo=null;
 let editStuId=null, stuMode='new', stuNid=5, stuNcode=5;
 let editCursoId=null, cursoNid=4, cursoNcode=4;
@@ -3919,10 +3919,14 @@ window.addEventListener('load',async()=>{
       setTimeout(initCharts,120);
     }
   }
+  // Inicia no modo Consolidado (todas as empresas)
   ['navSecAcademy','navCursos','navAlunos'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   ['navSecConsultorio','navPacientes','navProced','navCEImport'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
-  ['navSecNF'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='';});
+  ['navSecNF'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   const nvInit=document.getElementById('navVendedoras');if(nvInit)nvInit.style.display='';
+  // Marca botão Consolidado como ativo
+  document.querySelectorAll('.sw-b').forEach(b=>b.classList.remove('a'));
+  const allBtn=document.querySelector('[onclick*="setCo(\'all\')"]');if(allBtn)allBtn.classList.add('a');
 });
 </script>
 </body>
