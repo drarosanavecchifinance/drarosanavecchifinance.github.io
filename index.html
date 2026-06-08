@@ -727,15 +727,29 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
 
   <!-- CALENDARIO -->
   <div class="page" id="page-calendario">
-    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
-      <div class="calnav" style="flex:1;margin-bottom:0">
-        <div class="calmon" id="calMon"></div>
-        <div class="calarr"><button class="cala" onclick="navCal(-1)">‹</button><button class="cala" onclick="navCal(1)">›</button></div>
+    <div style="display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+          <button class="cala" onclick="navCal(-1)">‹</button>
+          <div class="calmon" id="calMon" style="flex:1;text-align:center"></div>
+          <button class="cala" onclick="navCal(1)">›</button>
+          <button class="cala" onclick="goToday()" title="Hoje" style="font-size:11px;font-weight:700;width:auto;padding:0 10px;color:var(--m);border-color:rgba(149,82,81,.3)">Hoje</button>
+          <button class="bp" onclick="openAddEvent('')" style="padding:8px 14px;font-size:12.5px">+ Evento</button>
+        </div>
+        <div class="caldhdr"><div class="caldn">Dom</div><div class="caldn">Seg</div><div class="caldn">Ter</div><div class="caldn">Qua</div><div class="caldn">Qui</div><div class="caldn">Sex</div><div class="caldn">Sáb</div></div>
+        <div class="calgrid" id="calGrid"></div>
       </div>
-      <button class="bp" onclick="openAddEvent('')">+ Novo Evento</button>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="sc" style="border-radius:var(--r)">
+          <div class="sh"><div class="st">📅 Eventos do Mês</div></div>
+          <div id="calSideEvents" style="max-height:340px;overflow-y:auto"><div style="padding:14px;font-size:12px;color:var(--t3)">Nenhum evento</div></div>
+        </div>
+        <div class="sc" style="border-radius:var(--r)">
+          <div class="sh"><div class="st">💳 Vencimentos</div></div>
+          <div id="calSideDue" style="max-height:280px;overflow-y:auto"><div style="padding:14px;font-size:12px;color:var(--t3)">Nenhum vencimento</div></div>
+        </div>
+      </div>
     </div>
-    <div class="caldhdr"><div class="caldn">Dom</div><div class="caldn">Seg</div><div class="caldn">Ter</div><div class="caldn">Qua</div><div class="caldn">Qui</div><div class="caldn">Sex</div><div class="caldn">Sáb</div></div>
-    <div class="calgrid" id="calGrid"></div>
   </div>
 
   <!-- VAI -->
@@ -2134,17 +2148,36 @@ function renderCal(){
   for(let i=fd-1;i>=0;i--)cells.push({d:dp-i,om:true,realM:m===0?11:m-1,realY:m===0?y-1:y});
   for(let d=1;d<=dim;d++)cells.push({d,om:false,realM:m,realY:y});
   const rem=42-cells.length;for(let d=1;d<=rem;d++)cells.push({d,om:true,realM:m===11?0:m+1,realY:m===11?y+1:y});
+  const prefix=`${y}-${String(m+1).padStart(2,'0')}`;
+  // Vencimentos do mês para mostrar no calendário
+  const dueTxs=txs.filter(function(t){return t.due&&t.due.startsWith(prefix)&&t.status!=='paid';});
   let html='';
   cells.forEach(c=>{
-    const key=`${c.realY}-${c.realM+1}-${c.d}`;const isToday=!c.om&&c.d===today.getDate()&&c.realM===today.getMonth()&&c.realY===today.getFullYear();
-    const es=evs[key]||[];const ds=`${c.realY}-${String(c.realM+1).padStart(2,'0')}-${String(c.d).padStart(2,'0')}`;
-    const eh=es.slice(0,3).map(e=>`<div class="calev-wrap" onclick="event.stopPropagation()"><div class="calev ${e.type}" onclick="openEditEvent('${key}',${e.id},event)" title="Clique para editar: ${e.title}${e.time?' · '+e.time:''}">${e.title}</div><button class="calev-del" onclick="deleteEvent('${key}',${e.id},event)" title="Excluir">x</button></div>`).join('');
-    const more=es.length>3?`<div class="calmore" onclick="event.stopPropagation()">+${es.length-3} mais</div>`:'';
-    html+=`<div class="calcel${c.om?' om':''}${isToday?' today':''}" onclick="openAddEvent('${ds}')"><div class="calnum">${c.d}</div><div class="calevs">${eh}${more}</div></div>`;
+    const key=`${c.realY}-${c.realM+1}-${c.d}`;
+    const isToday=!c.om&&c.d===today.getDate()&&c.realM===today.getMonth()&&c.realY===today.getFullYear();
+    const ds=`${c.realY}-${String(c.realM+1).padStart(2,'0')}-${String(c.d).padStart(2,'0')}`;
+    const es=evs[key]||[];
+    const dayDue=dueTxs.filter(function(t){return t.due===ds;});
+    const eh=es.slice(0,2).map(e=>`<div class="calev-wrap" onclick="event.stopPropagation()"><div class="calev ${e.type}" onclick="openEditEvent('${key}',${e.id},event)" title="${e.title}${e.time?' · '+e.time:''}">${e.title}</div><button class="calev-del" onclick="deleteEvent('${key}',${e.id},event)" title="Excluir">×</button></div>`).join('');
+    const dh=dayDue.length>0&&es.length<3?`<div class="calev pagamento" style="opacity:.8" title="${dayDue.length} vencimento(s)">💳 ${dayDue.length} venc.</div>`:'';
+    const more=(es.length+dayDue.length)>3?`<div class="calmore">+${es.length+dayDue.length-2} mais</div>`:'';
+    html+=`<div class="calcel${c.om?' om':''}${isToday?' today':''}" onclick="openAddEvent('${ds}')"><div class="calnum">${c.d}</div><div class="calevs">${eh}${dh}${more}</div></div>`;
   });
   document.getElementById('calGrid').innerHTML=html;
+  // Painel lateral — eventos do mês
+  const allEvs=[];
+  Object.keys(evs).forEach(function(k){const[ky,km,kd]=k.split('-').map(Number);if(ky===y&&km===m+1)evs[k].forEach(function(e){allEvs.push({...e,day:kd,key:k});});});
+  allEvs.sort(function(a,b){return a.day-b.day||(a.time||'').localeCompare(b.time||'');});
+  const typeNames={aula:'Aula',mentoria:'Mentoria',reuniao:'Reunião',pagamento:'Pagamento',evento:'Evento',alerta:'Alerta'};
+  const se=document.getElementById('calSideEvents');
+  if(se)se.innerHTML=allEvs.length?allEvs.map(function(e){return`<div class="nr" style="cursor:pointer" onclick="openEditEvent('${e.key}',${e.id},null)"><div class="nic" style="background:var(--mp);font-size:13px;font-weight:700;color:var(--m)">${e.day}</div><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--t1)">${e.title}</div><div style="font-size:11px;color:var(--t3)">${typeNames[e.type]||e.type}${e.time?' · '+e.time:''}</div></div></div>`;}).join(''):'<div style="padding:14px;font-size:12px;color:var(--t3)">Nenhum evento este mês</div>';
+  // Painel lateral — vencimentos do mês
+  const sd=document.getElementById('calSideDue');
+  const monthDue=txs.filter(function(t){return t.due&&t.due.startsWith(prefix)&&t.status!=='paid';}).sort(function(a,b){return a.due.localeCompare(b.due);});
+  if(sd)sd.innerHTML=monthDue.length?monthDue.map(function(t){const d=t.due.split('-')[2];const isRec=t.type==='receber';return`<div class="nr"><div class="nic" style="background:${isRec?'var(--grb)':'var(--orb)'};font-size:12px;font-weight:700;color:${isRec?'var(--gr)':'var(--or)'}">dia ${parseInt(d)}</div><div style="flex:1"><div style="font-size:12.5px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">${t.name}</div><div style="font-size:11px;color:var(--t3)">${isRec?'A receber':'A pagar'}</div></div><div style="font-size:12px;font-weight:700;color:${isRec?'var(--gr)':'var(--re)'}">${isRec?'+':'-'}R$ ${t.val.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>`;}).join(''):'<div style="padding:14px;font-size:12px;color:var(--t3)">Nenhum vencimento este mês</div>';
 }
 function navCal(d){calDate.setMonth(calDate.getMonth()+d);renderCal();}
+function goToday(){calDate=new Date(new Date().getFullYear(),new Date().getMonth(),1);renderCal();}
 
 function openAddEvent(ds){
   editingEv=null;
