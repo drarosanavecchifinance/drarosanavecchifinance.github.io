@@ -1650,7 +1650,13 @@ function viewCurso(id){
   const stus=students.filter(s=>s.courseId===id);
   const pct=c.maxStu?Math.round(stus.length/c.maxStu*100):0;
   const stuHtml=stus.length
-    ?`<div style="display:flex;flex-direction:column;gap:0">`+stus.map(s=>`<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--bdr)"><span class="acode">${s.code}</span><span style="font-size:14px;font-weight:600;color:var(--t1);flex:1">${s.name}</span><span style="font-size:12.5px;color:var(--t3)">${s.city||''}${s.state?' / '+s.state:''}</span><span class="bdg ${s.status}">${s.status==='ativo'?'✓ Ativa':'✕ Inativa'}</span></div>`).join('')+'</div>'
+    ?`<div style="display:flex;flex-direction:column;gap:0">`+stus.map(s=>{
+      const sTxs=txs.filter(t=>t.co==='rv'&&t.type==='receber'&&(t.stuId===s.id||t.id===s.txId||(()=>{const m=s.txId?txs.find(x=>x.id===s.txId):null;return m?.grupoId&&t.grupoId===m.grupoId;})()));
+      const pago=sTxs.filter(t=>t.status==='paid').reduce((a,t)=>a+t.val,0);
+      const pend=sTxs.filter(t=>t.status!=='paid'&&t.status!=='cancelado'&&t.status!=='estornado').reduce((a,t)=>a+t.val,0);
+      const badge=pend>0.01?`<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--orb);color:var(--or)">⚠ ${fmt(pend)}</span>`:pago>0?`<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--grb);color:var(--gr)">✓ Quitada</span>`:'';
+      return`<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--bdr)"><span class="acode">${s.code}</span><span style="font-size:14px;font-weight:600;color:var(--t1);flex:1">${s.name}</span>${badge}<span style="font-size:12.5px;color:var(--t3)">${s.city||''}${s.state?' / '+s.state:''}</span><span class="bdg ${s.status}">${s.status==='ativo'?'✓ Ativa':'✕ Inativa'}</span><button class="rb" onclick="closeM('cursoDetModal');viewAlunoFinanceiro(${s.id})" title="Ficha financeira" style="flex-shrink:0">👁</button></div>`;
+    }).join('')+'</div>'
     :`<div style="padding:14px 0;font-size:13.5px;color:var(--t3)">Nenhuma aluna vinculada a este curso.</div>`;
   document.getElementById('cursoDetContent').innerHTML=`
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
