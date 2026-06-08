@@ -1686,7 +1686,7 @@ function renderTx(){
     const parcelaBadge=t.parcelaNum?`<span style="font-family:var(--num);font-size:10px;font-weight:800;color:var(--gdd);background:var(--gdp);border:1px solid rgba(196,165,90,.25);border-radius:5px;padding:2px 6px;margin-left:5px">${t.parcelaNum}/${t.parcelaTotal}</span>`:'';
     const grupoBtn=t.grupoId?`<button class="grupo-tag" onclick="viewGrupo('${t.grupoId}')" title="Ver todas as parcelas deste grupo">🔗 grupo</button>`:'';
     const vend=t.vendId?vendedoras.find(function(v){return v.id===t.vendId;}):null;
-    const catCell=vend?vend.name.split(' ')[0]:(t.parcelaNum?`${t.parcelaNum}/${t.parcelaTotal}`:'—');
+    const catCell=vend?vend.name.split(' ')[0]:'—';
     html+=`<tr>
       <td class="nm" title="${t.name}">${t.name}${parcelaBadge}${grupoBtn}</td>
       <td style="font-size:12px;color:var(--t3)">${catCell}</td>
