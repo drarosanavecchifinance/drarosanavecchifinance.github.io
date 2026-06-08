@@ -1183,7 +1183,7 @@ let editProcedimentoId=null, procedureNid=1, procedureNcode=1;
 // ===== DATA =====
 const _sessionId=Math.random().toString(36).slice(2,10);
 // Versão das taxas — incrementar quando defaults NF mudarem para forçar migração
-const _TAXAS_VER=4;
+const _TAXAS_VER=5;
 let patients=[];
 let procedures=[];
 function _mkCred(t1,t2,t3,t4){
@@ -1242,8 +1242,26 @@ const _taxasMaqNF={
   hipercard_credito:_mkCred(2.31,2.88,2.88,3.24),hipercard_credito_prazo:31,
   outros_credito:_mkCred(2.31,2.88,2.88,3.24),outros_credito_prazo:31,
 };
-let taxas={nf:{..._taxasNFOnline},rv:{...taxasDef},ct:{...taxasDef}};
-let taxasMaq={nf:{..._taxasMaqNF},rv:{...taxasDef},ct:{...taxasDef}};
+// Taxas Rosana Academy — Cielo (maquininha aluguel)
+const _taxasRV={
+  pix:0.99,pix_fixo:0,pix_prazo:1,
+  dinheiro:0,dinheiro_prazo:1,
+  transferencia:0,transferencia_prazo:1,
+  boleto:0,boleto_prazo:2,
+  visa_debito:1.63,visa_debito_prazo:1,
+  master_debito:1.63,master_debito_prazo:1,
+  elo_debito:2.18,elo_debito_prazo:1,
+  outros_debito:1.63,outros_debito_prazo:1,
+  visa_credito:_mkCred(2.47,2.48,2.48,2.49),visa_credito_prazo:31,
+  master_credito:_mkCred(2.47,2.48,2.48,2.49),master_credito_prazo:31,
+  elo_credito:_mkCred(3.02,3.13,3.13,3.14),elo_credito_prazo:31,
+  amex_credito:_mkCred(2.97,3.08,3.08,3.09),amex_credito_prazo:31,
+  diners_credito:_mkCred(2.47,2.47,2.47,2.47),diners_credito_prazo:31,
+  hipercard_credito:_mkCred(3.02,3.13,3.13,3.14),hipercard_credito_prazo:31,
+  outros_credito:_mkCred(2.47,2.48,2.48,2.49),outros_credito_prazo:31,
+};
+let taxas={nf:{..._taxasNFOnline},rv:{..._taxasRV},ct:{...taxasDef}};
+let taxasMaq={nf:{..._taxasMaqNF},rv:{..._taxasRV},ct:{...taxasDef}};
 let courses=[
   {id:1,code:'RVC001',name:'Protocolos Faciais Avançados',cat:'Estética Clínica',color:'#955251',startDate:'2025-07-01',endDate:'2025-09-30',val:2400,maxStu:20,status:'ativo',desc:'Curso completo de protocolos faciais premium'},
   {id:2,code:'RVC002',name:'Mentoria Executiva Premium',cat:'Gestão e Liderança',color:'#C4807F',startDate:'2025-07-15',endDate:'2025-12-15',val:7500,maxStu:10,status:'ativo',desc:''},
@@ -2528,7 +2546,8 @@ function resetTaxaTabDefaults(){
   const coName={nf:'NatureFace',rv:'Rosana Academy',ct:'Consultório'}[co]||co;
   const canalName=canal==='maquininha'?'Maquininha':'Online';
   const isNFOnline=canal==='online'&&co==='nf';
-  const hint=isNFOnline?'PIX=1%+R$0,99 fixo, Débito=1.46%, Crédito 1x=2.54%, 2–6x=3.11%, 7–12x=3.47% (taxas Yampi)':'PIX=0%, Débito ~1.49%, Crédito ~2.99–3.5%';
+  const isRVCielo=co==='rv';
+  const hint=isNFOnline?'PIX=1%+R$0,99 fixo, Débito=1.46%, Crédito 1x=2.54%, 2–6x=3.11%, 7–12x=3.47% (taxas Yampi)':isRVCielo?'PIX=0,99% (Cielo), Débito Visa/Master=1.63%, Elo=2.18%, Crédito 1x=2.47%, 2–6x=2.48%, 7–12x=2.49%':'PIX=0%, Débito ~1.49%, Crédito ~2.99–3.5%';
   if(!confirm('Restaurar todos os valores padrão para '+coName+' ('+canalName+')?\n\n'+hint+'\n\nOs valores atuais serão substituídos.'))return;
   const store=canal==='maquininha'?taxasMaq:taxas;
   if(canal==='online')store[co]=co==='nf'?{..._taxasNFOnline}:{...taxasDef};
@@ -3120,7 +3139,9 @@ function applyData(d){
   // Migração de versão: força defaults NF online quando dados antigos estiverem salvos
   if(!d.taxas_version||d.taxas_version<_TAXAS_VER){
     Object.assign(taxas.nf,_taxasNFOnline);
-    console.log('Taxa migration v'+_TAXAS_VER+': taxas.nf atualizado com valores confirmados NF');
+    Object.assign(taxas.rv,_taxasRV);
+    Object.assign(taxasMaq.rv,_taxasRV);
+    console.log('Taxa migration v'+_TAXAS_VER+': taxas NF e Academy (Cielo) atualizadas');
   }
   if(d.ids){
     const ids=d.ids;
