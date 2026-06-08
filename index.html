@@ -1923,15 +1923,16 @@ function viewTxDetail(id){
     const grupo=txs.filter(x=>x.grupoId===t.grupoId).sort((a,b)=>a.parcelaNum-b.parcelaNum);
     const rows=grupo.map(p=>{
       const stMap={paid:'<span style="color:var(--gr);font-weight:700">✓ Pago</span>',pendente:'<span style="color:var(--t3)">⏳ Pendente</span>',vencido:'<span style="color:var(--re)">🔴 Vencido</span>'};
+      const liq=valLiq(p);const taxa=getTaxa(p);
       return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--bdr);font-size:13px">
         <span style="background:var(--gdp);color:var(--gdd);font-weight:800;font-size:11px;padding:2px 7px;border-radius:5px;min-width:32px;text-align:center">${p.parcelaNum}/${p.parcelaTotal}</span>
         <span style="flex:1;color:var(--t2)">${fmtDate(p.due)}</span>
-        <span style="font-weight:600">${fmt(p.val)}</span>
+        <span style="text-align:right"><div style="font-weight:600">${fmt(p.val)}</div>${taxa>0?`<div style="font-size:10px;color:var(--t3)">liq. ${fmt(liq)}</div>`:''}</span>
         <span>${stMap[p.status]||p.status}</span>
       </div>`;
     }).join('');
-    const totalPago=grupo.filter(p=>p.status==='paid').reduce((s,p)=>s+p.val,0);
-    const totalPend=grupo.filter(p=>p.status!=='paid'&&p.status!=='cancelado'&&p.status!=='estornado').reduce((s,p)=>s+p.val,0);
+    const totalPago=grupo.filter(p=>p.status==='paid').reduce((s,p)=>s+valLiq(p),0);
+    const totalPend=grupo.filter(p=>p.status!=='paid'&&p.status!=='cancelado'&&p.status!=='estornado').reduce((s,p)=>s+valLiq(p),0);
     carteiraHtml=`<div style="margin-top:18px">
       <div style="font-size:12px;font-weight:700;color:var(--t3);letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px">📋 Prévia da Carteira</div>
       ${rows}
@@ -1969,12 +1970,14 @@ function viewTxDetail(id){
         <div style="font-weight:600">${vend?vend.name:'—'}</div>
       </div>
       <div style="background:var(--mp);border-radius:10px;padding:12px 14px">
-        <div style="font-size:11px;color:var(--t3);font-weight:600;margin-bottom:3px">VALOR${t.parcelaNum?` (parcela ${t.parcelaNum}/${t.parcelaTotal||'?'})`:''}</div>
+        <div style="font-size:11px;color:var(--t3);font-weight:600;margin-bottom:3px">VALOR BRUTO${t.parcelaNum?` (parcela ${t.parcelaNum}/${t.parcelaTotal||'?'})`:''}</div>
         <div style="font-weight:800;font-size:16px;color:${typeColor}">${fmt(t.val)}</div>
+        ${getTaxa(t)>0?`<div style="font-size:11px;color:var(--t3);margin-top:3px">taxa ${(getTaxa(t)*100).toFixed(2)}% → líquido <strong style="color:${typeColor}">${fmt(valLiq(t))}</strong></div>`:''}
       </div>
       ${t.parcelaNum===1?`<div style="background:var(--mp);border-radius:10px;padding:12px 14px">
         <div style="font-size:11px;color:var(--t3);font-weight:600;margin-bottom:3px">FATURAMENTO TOTAL</div>
         <div style="font-weight:800;font-size:16px;color:${typeColor}">${fmt(t.val*t.parcelaTotal)}</div>
+        ${getTaxa(t)>0?`<div style="font-size:11px;color:var(--t3);margin-top:3px">líquido total <strong style="color:${typeColor}">${fmt(valLiq(t)*t.parcelaTotal)}</strong></div>`:''}
       </div>`:''}
       ${t.notes?`<div style="grid-column:1/-1;background:var(--mp);border-radius:10px;padding:12px 14px">
         <div style="font-size:11px;color:var(--t3);font-weight:600;margin-bottom:3px">OBSERVAÇÕES</div>
