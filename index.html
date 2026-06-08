@@ -3193,7 +3193,7 @@ async function autoImportYampiEvent(ev){
   // Se tem valor mas não é claramente cancelamento, importa mesmo assim
   if(!isPaid){console.log('Yampi evento ambíguo ('+evType+'/'+statusStr+') val='+val+' — importando');}
   const now=new Date().toISOString().slice(0,10);
-  const name=items+(nome&&nome!=='—'?' — '+nome:'')+(num?' #'+num:'');
+  const name=items+(nome&&nome!=='—'?' — '+nome:'');
   const realSaleDate=saleDate||now;
   const isCred=fpg==='credito'&&parcelas>1;
   let firstId=txNid;
