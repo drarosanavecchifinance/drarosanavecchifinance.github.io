@@ -1017,10 +1017,31 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
             <div id="fVlRestThumb" style="width:16px;height:16px;border-radius:8px;background:#fff;position:absolute;top:2px;left:2px;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.2)"></div>
           </div>
         </div>
-        <div id="fVlRestFields" style="display:none;margin-top:8px;display:none">
-          <label class="fl">Saldo Devedor (R$)</label>
-          <input class="fi" id="fVlRest" type="number" placeholder="Valor ainda a receber do aluno" min="0" step="0.01">
-          <div style="font-size:11px;color:var(--t3);margin-top:4px">Um lançamento pendente será criado automaticamente para este valor</div>
+        <div id="fVlRestFields" style="display:none;margin-top:10px;gap:10px;display:none">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <label class="fl">Saldo Devedor (R$)</label>
+              <input class="fi" id="fVlRest" type="number" placeholder="Ex: 3.500,00" min="0" step="0.01" oninput="updateSaldoPreview()">
+            </div>
+            <div>
+              <label class="fl">Parcelar em</label>
+              <select class="fse" id="fVlRestParc" onchange="updateSaldoPreview()">
+                <option value="1">À vista (1x)</option>
+                <option value="2">2x</option>
+                <option value="3">3x</option>
+                <option value="4">4x</option>
+                <option value="5">5x</option>
+                <option value="6">6x</option>
+                <option value="7">7x</option>
+                <option value="8">8x</option>
+                <option value="9">9x</option>
+                <option value="10">10x</option>
+                <option value="11">11x</option>
+                <option value="12" selected>12x</option>
+              </select>
+            </div>
+          </div>
+          <div id="fVlRestPreview" style="margin-top:8px;font-size:12px;color:var(--t3);background:var(--mp);border-radius:8px;padding:9px 12px;display:none"></div>
         </div>
       </div>
       <div class="fgp fc1"><label class="fl">Observações</label><textarea class="fta" id="fNo" placeholder="Detalhes adicionais..."></textarea></div>
@@ -1806,8 +1827,8 @@ function toggleSaldoDevedor(){
   const fields=document.getElementById('fVlRestFields');
   if(toggle)toggle.style.background=_saldoDevedorOn?'var(--m)':'var(--bdr)';
   if(thumb)thumb.style.left=_saldoDevedorOn?'18px':'2px';
-  if(fields)fields.style.display=_saldoDevedorOn?'block':'none';
-  if(!_saldoDevedorOn){const inp=document.getElementById('fVlRest');if(inp)inp.value='';}
+  if(fields)fields.style.display=_saldoDevedorOn?'grid':'none';
+  if(!_saldoDevedorOn){const inp=document.getElementById('fVlRest');if(inp)inp.value='';document.getElementById('fVlRestPreview').style.display='none';}
 }
 function resetSaldoDevedor(){
   _saldoDevedorOn=false;
@@ -1818,6 +1839,20 @@ function resetSaldoDevedor(){
   if(thumb)thumb.style.left='2px';
   if(fields)fields.style.display='none';
   const inp=document.getElementById('fVlRest');if(inp)inp.value='';
+  const prev=document.getElementById('fVlRestPreview');if(prev)prev.style.display='none';
+}
+function updateSaldoPreview(){
+  const val=parseFloat(document.getElementById('fVlRest')?.value)||0;
+  const parc=parseInt(document.getElementById('fVlRestParc')?.value)||1;
+  const prev=document.getElementById('fVlRestPreview');
+  if(!prev)return;
+  if(val<=0){prev.style.display='none';return;}
+  const parcVal=val/parc;
+  const fmt=v=>'R$\xa0'+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  prev.style.display='block';
+  prev.innerHTML=parc===1
+    ?`📋 Será criado <strong>1 lançamento pendente</strong> de <strong>${fmt(val)}</strong>`
+    :`📋 Serão criados <strong>${parc} lançamentos mensais</strong> de <strong>${fmt(parcVal)}</strong> cada · Total: <strong>${fmt(val)}</strong>`;
 }
 function toggleBandeiraField(){
   const fpg=document.getElementById('fFpg')?.value;
@@ -2149,8 +2184,19 @@ function saveTx(){
   // Criar 2º lançamento para valor restante (saldo devedor — só Academy)
   const vlRest=parseFloat(document.getElementById('fVlRest')?.value)||0;
   if(vlRest>0&&!editTxId&&tx.co==='rv'){
-    const txRest={id:txNid++,name:tx.name+' — Saldo Devedor',type:tx.type,cat:tx.cat,co:tx.co,courseId:tx.courseId,status:'pend',due:tx.due,val:vlRest,notes:'Saldo devedor gerado automaticamente'};
-    txs.push(txRest);
+    const parcRest=parseInt(document.getElementById('fVlRestParc')?.value)||1;
+    const parcVal=Math.round(vlRest/parcRest*100)/100;
+    const baseDue=tx.due||new Date().toISOString().slice(0,10);
+    if(parcRest<=1){
+      txs.push({id:txNid++,name:tx.name+' — Saldo Devedor',type:tx.type,cat:tx.cat,co:tx.co,fpg:tx.fpg,bandeira:tx.bandeira,courseId:tx.courseId,status:'pendente',due:baseDue,saleDate:tx.saleDate||baseDue,val:vlRest,notes:'Saldo devedor gerado automaticamente'});
+    }else{
+      const gid='G'+String(grupoNid++).padStart(5,'0');
+      for(let i=0;i<parcRest;i++){
+        const d=new Date(baseDue+'T12:00:00');d.setMonth(d.getMonth()+i+1);
+        const due=d.toISOString().slice(0,10);
+        txs.push({id:txNid++,name:tx.name+' — Saldo '+String(i+1).padStart(2,'0')+'/'+String(parcRest).padStart(2,'0'),type:tx.type,cat:tx.cat,co:tx.co,fpg:tx.fpg,bandeira:tx.bandeira,courseId:tx.courseId,status:'pendente',due,saleDate:tx.saleDate||baseDue,val:parcVal,grupoId:gid,parcelaNum:i+1,parcelaTotal:parcRest,notes:'Saldo devedor parcelado'});
+      }
+    }
   }
   closeM('txModal');renderTx();saveData();if(document.getElementById('page-cursos').classList.contains('a'))renderCursos();
 }
