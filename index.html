@@ -1129,7 +1129,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
     <button class="mcl" onclick="closeM('alunoFinModal')">×</button>
     <div class="mttl">💳 Ficha Financeira</div>
     <div id="alunoFinContent" style="margin-top:18px"></div>
-    <div class="mft" style="margin-top:18px"><button class="bs" onclick="closeM('alunoFinModal')">Fechar</button></div>
+    <div class="mft" style="margin-top:18px"><button class="bs" onclick="closeM('alunoFinModal')">Fechar</button><button class="bp" id="alunoFinPagarBtn" onclick="registrarPagamentoAluna()">+ Registrar Pagamento</button></div>
   </div>
 </div>
 
@@ -2374,6 +2374,41 @@ function renderAlunos(){
   // populate curso filter
   const cf2=document.getElementById('aFiltCurso');if(cf2){const cur=cf2.value;cf2.innerHTML='<option value="">Todos os cursos</option>';courses.forEach(c=>{cf2.innerHTML+=`<option value="${c.id}">${c.name}</option>`;});cf2.value=cur;}
 }
+let _alunoFinId=null;
+function registrarPagamentoAluna(){
+  const s=students.find(x=>x.id===_alunoFinId);if(!s)return;
+  closeM('alunoFinModal');
+  // Abre modal de novo lançamento pré-preenchido
+  editTxId=null;
+  document.getElementById('txMT').textContent='Registrar Pagamento';
+  document.getElementById('fNm').value=s.name+' — Pagamento';
+  document.getElementById('fTy').value='receber';
+  document.getElementById('fCo').value='rv';
+  document.getElementById('fSt').value='paid';
+  document.getElementById('fVl').value='';
+  document.getElementById('fDu').value=new Date().toISOString().slice(0,10);
+  resetSaldoDevedor();
+  // Pré-seleciona a aluna existente
+  checkStu();toggleCursoField();toggleVendField();toggleProcField();
+  setTimeout(()=>{
+    const stuSec=document.getElementById('stuSec');
+    if(stuSec){
+      stuSec.classList.add('s');
+      // Muda para modo aluna existente
+      const existBtn=stuSec.querySelector('[onclick*="switchStu(\'exist\')"]');
+      if(existBtn)existBtn.click();
+      setTimeout(()=>{
+        const sel=document.getElementById('sExSel');
+        if(sel){sel.value=s.id;
+          // Preenche curso
+          const crsEl=document.getElementById('sExCrs');
+          if(crsEl&&s.courseId)crsEl.value=s.courseId;
+        }
+      },100);
+    }
+  },100);
+  document.getElementById('txModal').classList.add('o');
+}
 function viewAlunoFinanceiro(id){
   const s=students.find(x=>x.id===id);if(!s)return;
   const curso=s.courseId?courses.find(c=>c.id===s.courseId):null;
@@ -2446,6 +2481,10 @@ function viewAlunoFinanceiro(id){
     ${rowsPagas?`<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px">Recebidos (${pagas.length})</div>${rowsPagas}`:''}
     ${!aTxs.length?'<div style="color:var(--t3);font-size:13px;text-align:center;padding:20px">Nenhum lançamento vinculado a esta aluna.</div>':''}
   `;
+  _alunoFinId=id;
+  // Mostra botão só se tem saldo pendente
+  const btn=document.getElementById('alunoFinPagarBtn');
+  if(btn)btn.style.display=totalPendente>0.01?'':'none';
   document.getElementById('alunoFinModal').classList.add('o');
 }
 function openAddAluno(){
