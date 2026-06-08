@@ -352,101 +352,129 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
 <body>
 <!-- ===== TELA DE LOGIN ===== -->
 <style>
-@keyframes authBgPulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:.8;transform:scale(1.08)}}
-@keyframes authCardIn{from{opacity:0;transform:translateY(32px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
-@keyframes authLogoIn{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
-@keyframes authLogoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
-@keyframes authParticle{0%{transform:translateY(0) scale(1);opacity:.7}100%{transform:translateY(-120vh) scale(.3);opacity:0}}
-@keyframes authGlow{0%,100%{box-shadow:0 0 24px rgba(149,82,81,.15)}50%{box-shadow:0 0 44px rgba(149,82,81,.35)}}
-@keyframes authInputFocus{from{box-shadow:0 0 0 0 rgba(149,82,81,0)}to{box-shadow:0 0 0 3px rgba(149,82,81,.22)}}
-@keyframes authBtnShine{0%{background-position:-200% center}100%{background-position:200% center}}
-.auth-particle{position:absolute;border-radius:50%;background:rgba(196,128,127,.5);animation:authParticle linear infinite;pointer-events:none}
-.auth-input{width:100%;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;padding:13px 16px;font-family:'DM Sans',sans-serif;font-size:14px;color:#FAF5F5;outline:none;box-sizing:border-box;transition:border-color .25s,box-shadow .25s}
+@keyframes authFadeUp  {from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@keyframes authShimmer {0%{background-position:-200% center}100%{background-position:200% center}}
+@keyframes authBgPulse {0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes authLogoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes authCardIn  {from{opacity:0;transform:translateY(30px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes authGlow    {0%,100%{box-shadow:0 0 40px rgba(149,82,81,.1),0 28px 80px rgba(0,0,0,.6)}50%{box-shadow:0 0 60px rgba(149,82,81,.22),0 28px 80px rgba(0,0,0,.6)}}
+@keyframes authSplashIn{0%{opacity:0;transform:scale(.3);filter:brightness(0)}40%{opacity:1;filter:brightness(1.4) drop-shadow(0 0 60px rgba(196,128,127,.9))}70%{transform:scale(1.06)}100%{transform:scale(1);filter:brightness(1) drop-shadow(0 0 30px rgba(196,128,127,.5))}}
+@keyframes authRingOut {0%{transform:scale(.8);opacity:0}40%{opacity:.5}100%{transform:scale(1.6);opacity:0}}
+.auth-input{width:100%;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.09);border-radius:10px;padding:13px 16px;font-family:'DM Sans',sans-serif;font-size:14px;color:#FAF5F5;outline:none;box-sizing:border-box;transition:border-color .25s,box-shadow .25s}
 .auth-input:focus{border-color:#955251;box-shadow:0 0 0 3px rgba(149,82,81,.2)}
+.auth-input::placeholder{color:rgba(255,255,255,.16)}
 .auth-btn{width:100%;background:linear-gradient(135deg,#955251 0%,#7a3e3d 50%,#955251 100%);background-size:200% auto;color:#fff;border:none;border-radius:10px;padding:14px;font-family:'DM Sans',sans-serif;font-size:14.5px;font-weight:700;cursor:pointer;letter-spacing:.04em;transition:transform .2s,box-shadow .2s,background-position .4s;box-shadow:0 4px 20px rgba(149,82,81,.35)}
 .auth-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(149,82,81,.5);background-position:right center}
-.auth-btn:active{transform:translateY(0)}
-.auth-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.45);letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:7px}
+.auth-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.32);letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:7px}
 </style>
 
-<div id="auth-screen" style="display:none;position:fixed;inset:0;z-index:500;align-items:center;justify-content:center;overflow:hidden;background:#0D0305">
+<!-- HERO SCREEN -->
+<div id="auth-screen" style="display:none;position:fixed;inset:0;z-index:500;overflow:hidden;background:#0e0406;transition:opacity .6s ease">
 
-  <!-- Fundo animado -->
-  <div style="position:absolute;inset:0;background:linear-gradient(135deg,#0D0305 0%,#1A0608 50%,#0D0305 100%);z-index:1"></div>
-  <div style="position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 30% 40%,rgba(149,82,81,.12) 0%,transparent 70%),radial-gradient(ellipse 40% 60% at 75% 65%,rgba(196,128,127,.08) 0%,transparent 70%);z-index:2;animation:authBgPulse 8s ease-in-out infinite"></div>
+  <!-- Orbs de fundo -->
+  <div style="position:absolute;width:900px;height:700px;top:-180px;right:-80px;border-radius:50%;filter:blur(120px);background:radial-gradient(circle at 40% 40%,rgba(196,128,127,.55) 0%,rgba(149,82,81,.3) 40%,transparent 70%);pointer-events:none"></div>
+  <div style="position:absolute;width:600px;height:600px;top:60px;right:200px;border-radius:50%;filter:blur(120px);background:radial-gradient(circle,rgba(90,40,40,.7) 0%,transparent 65%);pointer-events:none"></div>
+  <div style="position:absolute;width:500px;height:400px;bottom:-100px;left:10%;border-radius:50%;filter:blur(120px);background:radial-gradient(circle,rgba(149,82,81,.2) 0%,transparent 70%);pointer-events:none"></div>
+  <div style="position:absolute;width:200%;height:2px;background:linear-gradient(90deg,transparent 0%,rgba(196,128,127,.18) 30%,rgba(220,170,130,.35) 50%,rgba(196,128,127,.18) 70%,transparent 100%);top:52%;left:-50%;transform:rotate(-8deg);pointer-events:none"></div>
 
-  <!-- Partículas flotantes -->
-  <div id="authParticles" style="position:absolute;inset:0;z-index:2;pointer-events:none"></div>
-
-  <!-- NF logo de fundo -->
-  <img src="nf-logo.png" style="position:absolute;z-index:2;width:55vmin;opacity:.04;left:50%;top:50%;transform:translate(-50%,-50%);filter:blur(2px);animation:authBgPulse 10s ease-in-out infinite;pointer-events:none">
-
-  <!-- Card -->
-  <div id="authCard" style="position:relative;z-index:3;width:100%;max-width:420px;padding:24px;animation:authCardIn .6s cubic-bezier(.22,1,.36,1) both">
-
-    <!-- Logo -->
-    <div style="text-align:center;margin-bottom:32px">
-      <div style="display:inline-block;animation:authLogoIn .7s cubic-bezier(.22,1,.36,1) .1s both">
-        <div style="position:relative;display:inline-block">
-          <div style="position:absolute;inset:-12px;border-radius:50%;background:radial-gradient(circle,rgba(149,82,81,.25) 0%,transparent 70%);animation:authBgPulse 3s ease-in-out infinite"></div>
-          <img src="nf-logo.png" style="width:72px;height:auto;display:block;position:relative;filter:drop-shadow(0 6px 24px rgba(196,128,127,.5));animation:authLogoFloat 4s ease-in-out 1s infinite">
-        </div>
-      </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.28);margin-top:14px;letter-spacing:.15em;text-transform:uppercase;animation:authCardIn .6s ease .3s both">Sistema de Gestão Interno</div>
+  <!-- Nav pill -->
+  <nav style="position:absolute;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:26px 48px">
+    <div style="display:flex;align-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:40px;backdrop-filter:blur(16px);padding:5px">
+      <a href="#" style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.45);text-decoration:none;padding:10px 28px;border-radius:32px;transition:all .22s;font-family:'DM Sans',sans-serif" onmouseover="this.style.color='rgba(255,255,255,.85)';this.style.background='rgba(255,255,255,.07)'" onmouseout="this.style.color='rgba(255,255,255,.45)';this.style.background='transparent'">About</a>
+      <div style="width:1px;height:16px;background:rgba(255,255,255,.12)"></div>
+      <a href="#" style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.45);text-decoration:none;padding:10px 28px;border-radius:32px;transition:all .22s;font-family:'DM Sans',sans-serif" onmouseover="this.style.color='rgba(255,255,255,.85)';this.style.background='rgba(255,255,255,.07)'" onmouseout="this.style.color='rgba(255,255,255,.45)';this.style.background='transparent'">Services</a>
+      <div style="width:1px;height:16px;background:rgba(255,255,255,.12)"></div>
+      <a href="#" style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.45);text-decoration:none;padding:10px 28px;border-radius:32px;transition:all .22s;font-family:'DM Sans',sans-serif" onmouseover="this.style.color='rgba(255,255,255,.85)';this.style.background='rgba(255,255,255,.07)'" onmouseout="this.style.color='rgba(255,255,255,.45)';this.style.background='transparent'">Contact</a>
     </div>
+    <button onclick="authStartLogin()" style="position:absolute;right:48px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.8);border-radius:22px;padding:10px 26px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;backdrop-filter:blur(8px)" onmouseover="this.style.background='rgba(255,255,255,.14)';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,.08)';this.style.color='rgba(255,255,255,.8)'">Entrar</button>
+  </nav>
 
-    <!-- Tabs -->
-    <div style="display:flex;background:rgba(255,255,255,.05);border-radius:12px;padding:4px;margin-bottom:20px;border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(8px);animation:authCardIn .6s ease .2s both">
-      <button onclick="showAuthTab('login')" id="tabLogin" style="flex:1;padding:10px;border-radius:9px;border:none;background:linear-gradient(135deg,#955251,#7a3e3d);color:#fff;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;transition:all .25s;box-shadow:0 2px 12px rgba(149,82,81,.4)">Entrar</button>
-      <button onclick="showAuthTab('signup')" id="tabSignup" style="flex:1;padding:10px;border-radius:9px;border:none;background:transparent;color:rgba(255,255,255,.4);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer;transition:all .25s">Criar conta</button>
+  <!-- Centro: logo -->
+  <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:5;pointer-events:none">
+    <div style="position:relative;animation:authFadeUp .8s ease .1s both">
+      <div style="position:absolute;inset:-40px;border-radius:50%;background:radial-gradient(circle,rgba(149,82,81,.2) 0%,transparent 70%);animation:authBgPulse 3s ease-in-out infinite"></div>
+      <img src="nf-logo.png" style="width:160px;height:160px;object-fit:contain;display:block;position:relative;filter:drop-shadow(0 0 40px rgba(196,128,127,.7));animation:authLogoFloat 5s ease-in-out infinite">
     </div>
+  </div>
 
-    <!-- Formulário Login -->
-    <div id="formLogin" style="background:rgba(255,255,255,.04);border-radius:16px;padding:24px;border:1px solid rgba(255,255,255,.09);backdrop-filter:blur(16px);animation:authCardIn .6s ease .3s both;animation:authGlow 4s ease-in-out infinite">
-      <div style="margin-bottom:16px">
-        <label class="auth-label">E-mail</label>
-        <input id="authEmail" type="email" placeholder="seu@email.com" class="auth-input">
-      </div>
-      <div style="margin-bottom:18px">
-        <label class="auth-label">Senha</label>
-        <input id="authPass" type="password" placeholder="••••••••" class="auth-input" onkeydown="if(event.key==='Enter')doSignIn()">
-      </div>
-      <div id="authMsg" style="font-size:13px;color:#E07070;margin-bottom:14px;display:none;background:rgba(224,112,112,.08);border:1px solid rgba(224,112,112,.25);border-radius:8px;padding:10px 14px"></div>
-      <button id="loginBtn" onclick="doSignIn()" class="auth-btn">Entrar no Sistema</button>
-    </div>
+</div>
 
-    <!-- Formulário Cadastro -->
-    <div id="formSignup" style="display:none;background:rgba(255,255,255,.04);border-radius:16px;padding:24px;border:1px solid rgba(255,255,255,.09);backdrop-filter:blur(16px)">
-      <div style="margin-bottom:16px">
-        <label class="auth-label">Nome completo</label>
-        <input id="authName" type="text" placeholder="Seu nome" class="auth-input">
-      </div>
-      <div style="margin-bottom:16px">
-        <label class="auth-label">E-mail</label>
-        <input id="authEmail2" type="email" placeholder="seu@email.com" class="auth-input">
-      </div>
-      <div style="margin-bottom:18px">
-        <label class="auth-label">Senha (mín. 6 caracteres)</label>
-        <input id="authPass2" type="password" placeholder="••••••••" class="auth-input">
-      </div>
-      <div id="authMsg2" style="font-size:13px;margin-bottom:14px;display:none;border-radius:8px;padding:10px 14px;background:rgba(255,255,255,.05)"></div>
-      <button onclick="doSignUp()" class="auth-btn">Criar conta</button>
-    </div>
-
+<!-- SPLASH DA LOGO -->
+<div id="authSplash" style="position:fixed;inset:0;z-index:510;background:#060102;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;opacity:0;pointer-events:none;transition:opacity .4s ease">
+  <div style="position:relative">
+    <div style="position:absolute;inset:-30px;border-radius:30%;border:2px solid rgba(196,128,127,.4);animation:authRingOut 1.4s ease-out infinite"></div>
+    <div style="position:absolute;inset:-60px;border-radius:30%;border:1px solid rgba(196,128,127,.2);animation:authRingOut 1.4s ease-out .3s infinite"></div>
+    <img src="nf-logo.png" id="authSplashImg" style="width:180px;height:180px;object-fit:contain;display:block;filter:drop-shadow(0 0 40px rgba(196,128,127,.8));animation:authSplashIn .9s cubic-bezier(.22,1,.36,1) forwards">
   </div>
 </div>
-<script>
-(function initAuthParticles(){
-  const c=document.getElementById('authParticles');if(!c)return;
-  for(let i=0;i<18;i++){
-    const p=document.createElement('div');p.className='auth-particle';
-    const s=Math.random()*4+2;
-    p.style.cssText=`width:${s}px;height:${s}px;left:${Math.random()*100}%;top:${Math.random()*100+100}%;animation-duration:${Math.random()*15+10}s;animation-delay:${Math.random()*10}s;opacity:${Math.random()*.5+.2}`;
-    c.appendChild(p);
-  }
-})();
-</script>
+
+<!-- OVERLAY LOGIN -->
+<div id="authLoginOverlay" style="position:fixed;inset:0;z-index:520;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:opacity .4s ease" onclick="if(event.target===this)authCloseLogin()">
+  <div style="width:100%;max-width:400px;animation:authCardIn .55s cubic-bezier(.22,1,.36,1) both">
+    <div style="background:rgba(10,2,4,.88);border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:36px 32px;position:relative;backdrop-filter:blur(40px);animation:authGlow 4s ease-in-out infinite">
+
+      <button onclick="authCloseLogin()" style="position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s" onmouseover="this.style.background='rgba(255,255,255,.14)';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,.07)';this.style.color='rgba(255,255,255,.5)'">×</button>
+
+      <!-- Logo -->
+      <div style="text-align:center;margin-bottom:26px">
+        <div style="display:inline-block;animation:authLogoFloat 4s ease-in-out infinite">
+          <div style="position:relative;width:66px;height:66px;margin:0 auto">
+            <div style="position:absolute;inset:-14px;border-radius:50%;background:radial-gradient(circle,rgba(149,82,81,.3) 0%,transparent 70%);animation:authBgPulse 3s ease-in-out infinite"></div>
+            <img src="nf-logo.png" style="width:100%;height:100%;object-fit:contain;display:block;position:relative;filter:drop-shadow(0 4px 20px rgba(196,128,127,.6))">
+          </div>
+        </div>
+        <div style="font-family:'Syne',sans-serif;font-size:19px;font-weight:800;color:#fff;margin-top:12px;letter-spacing:-.01em">Dra Rosana Finance</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.28);margin-top:3px;letter-spacing:.12em;text-transform:uppercase">Sistema de Gestão Interno</div>
+      </div>
+
+      <!-- Tabs -->
+      <div style="display:flex;background:rgba(255,255,255,.05);border-radius:12px;padding:4px;margin-bottom:22px;border:1px solid rgba(255,255,255,.07)">
+        <button onclick="showAuthTab('login')" id="tabLogin" style="flex:1;padding:10px;border-radius:9px;border:none;background:linear-gradient(135deg,#955251,#7a3e3d);color:#fff;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;transition:all .25s;box-shadow:0 2px 12px rgba(149,82,81,.4)">Entrar</button>
+        <button onclick="showAuthTab('signup')" id="tabSignup" style="flex:1;padding:10px;border-radius:9px;border:none;background:transparent;color:rgba(255,255,255,.32);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer;transition:all .25s">Criar conta</button>
+      </div>
+
+      <!-- Form Login -->
+      <div id="formLogin">
+        <div style="margin-bottom:15px"><label class="auth-label">E-mail</label><input id="authEmail" type="email" placeholder="seu@email.com" class="auth-input"></div>
+        <div style="margin-bottom:18px"><label class="auth-label">Senha</label><input id="authPass" type="password" placeholder="••••••••" class="auth-input" onkeydown="if(event.key==='Enter')doSignIn()"></div>
+        <div id="authMsg" style="font-size:13px;color:#E07070;margin-bottom:14px;display:none;background:rgba(224,112,112,.08);border:1px solid rgba(224,112,112,.25);border-radius:8px;padding:10px 14px"></div>
+        <button id="loginBtn" onclick="doSignIn()" class="auth-btn">Entrar no Sistema</button>
+      </div>
+
+      <!-- Form Cadastro -->
+      <div id="formSignup" style="display:none">
+        <div style="margin-bottom:15px"><label class="auth-label">Nome completo</label><input id="authName" type="text" placeholder="Seu nome" class="auth-input"></div>
+        <div style="margin-bottom:15px"><label class="auth-label">E-mail</label><input id="authEmail2" type="email" placeholder="seu@email.com" class="auth-input"></div>
+        <div style="margin-bottom:18px"><label class="auth-label">Senha (mín. 6 caracteres)</label><input id="authPass2" type="password" placeholder="••••••••" class="auth-input"></div>
+        <div id="authMsg2" style="font-size:13px;margin-bottom:14px;display:none;border-radius:8px;padding:10px 14px;background:rgba(255,255,255,.05)"></div>
+        <button onclick="doSignUp()" class="auth-btn">Criar conta</button>
+      </div>
+
+      <div style="text-align:center;margin-top:18px;font-size:11.5px;color:rgba(255,255,255,.22)">Acesso restrito</div>
+    </div>
+  </div>
 </div>
+
+<script>
+function authStartLogin(){
+  const hero   = document.getElementById('auth-screen');
+  const splash = document.getElementById('authSplash');
+  const login  = document.getElementById('authLoginOverlay');
+  hero.style.opacity='0';hero.style.pointerEvents='none';
+  setTimeout(()=>{splash.style.opacity='1';splash.style.pointerEvents='all';},250);
+  setTimeout(()=>{
+    splash.style.opacity='0';splash.style.pointerEvents='none';
+    setTimeout(()=>{ login.style.opacity='1';login.style.pointerEvents='all'; },350);
+  },1100);
+}
+function authCloseLogin(){
+  const hero  = document.getElementById('auth-screen');
+  const login = document.getElementById('authLoginOverlay');
+  login.style.opacity='0';login.style.pointerEvents='none';
+  setTimeout(()=>{hero.style.opacity='1';hero.style.pointerEvents='all';},300);
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); });
+</script>
 
 <div id="app">
 
