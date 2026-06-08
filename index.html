@@ -1107,7 +1107,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
       <div class="fgp"><label class="fl">Categoria</label><select class="fse" id="cCat"><option>Estética Clínica</option><option>Estética Básica</option><option>Gestão e Liderança</option><option>Protocolos Avançados</option><option>Certificação</option><option>Mentoria</option><option>Outro</option></select></div>
       <div class="fgp"><label class="fl">Data de Início</label><input class="fi" id="cDtI" type="date"></div>
       <div class="fgp"><label class="fl">Data de Término</label><input class="fi" id="cDtF" type="date"></div>
-      <div class="fgp"><label class="fl">Valor por Aluno (R$)</label><input class="fi" id="cVal" type="number" placeholder="0,00" min="0" step="0.01"></div>
       <div class="fgp"><label class="fl">Máximo de Alunos</label><input class="fi" id="cMax" type="number" placeholder="Ex: 20" min="1"></div>
       <div class="fgp fc1"><label class="fl">Descrição / Ementa</label><textarea class="fta" id="cDs" placeholder="Descreva o conteúdo e objetivos do curso..."></textarea></div>
     </div>
@@ -1605,7 +1604,7 @@ function openAddCurso(){
   ['cNm','cDs'].forEach(id=>{document.getElementById(id).value='';});
   document.getElementById('cCat').value='Estética Clínica';document.getElementById('cStat').value='ativo';
   document.getElementById('cDtI').value='';
-  document.getElementById('cDtF').value='';document.getElementById('cVal').value='';document.getElementById('cMax').value='';
+  document.getElementById('cDtF').value='';document.getElementById('cMax').value='';
   document.getElementById('cursoModal').classList.add('o');
   setTimeout(()=>document.getElementById('cCode').select(),80);
 }
@@ -1616,7 +1615,7 @@ function editCurso(id){
   document.getElementById('cCode').value=c.code;document.getElementById('cNm').value=c.name;
   document.getElementById('cCat').value=c.cat;document.getElementById('cStat').value=c.status;
   document.getElementById('cDtI').value=c.startDate;
-  document.getElementById('cDtF').value=c.endDate;document.getElementById('cVal').value=c.val;
+  document.getElementById('cDtF').value=c.endDate;
   document.getElementById('cMax').value=c.maxStu;document.getElementById('cDs').value=c.desc||'';
   document.getElementById('cursoModal').classList.add('o');
 }
@@ -1627,7 +1626,7 @@ function saveCurso(){
   const c={id:editCursoId||cursoNid++,code,name:nm,cat:document.getElementById('cCat').value,
     status:document.getElementById('cStat').value,color:'#955251',
     startDate:document.getElementById('cDtI').value,endDate:document.getElementById('cDtF').value,
-    val:parseFloat(document.getElementById('cVal').value)||0,maxStu:parseInt(document.getElementById('cMax').value)||20,
+    maxStu:parseInt(document.getElementById('cMax').value)||20,
     desc:document.getElementById('cDs').value};
   if(editCursoId){const i=courses.findIndex(x=>x.id===editCursoId);if(i>=0)courses[i]=c;}
   else{
