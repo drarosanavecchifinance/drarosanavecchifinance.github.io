@@ -2392,20 +2392,16 @@ function registrarPagamentoAluna(){
   // Esconde saldo devedor
   const vlRestWrap=document.getElementById('fVlRestWrap');if(vlRestWrap)vlRestWrap.style.display='none';
   resetSaldoDevedor();
+  // Esconde "Parcelar em" e "Recorrência" — pagamento pontual
+  const parcWrap=document.getElementById('fParcWrap');if(parcWrap)parcWrap.style.display='none';
+  const recWrap=document.getElementById('fRecWrap');if(recWrap)recWrap.style.display='none';
+  const recQtdWrap=document.getElementById('fRecQtdWrap');if(recQtdWrap)recQtdWrap.style.display='none';
+  const parcPreview=document.getElementById('fParcPreview');if(parcPreview){parcPreview.style.display='none';parcPreview.innerHTML='';}
   // Inicializa campos
   checkStu();toggleCursoField();toggleVendField();toggleProcField();toggleRec();
-  // Pré-seleciona curso
-  const crsEl=document.getElementById('fCrs');
-  if(crsEl&&s.courseId){populateCursoSelects();setTimeout(()=>{crsEl.value=s.courseId;},50);}
   // Pega vendedora da transação original da aluna
   const origTx=s.txId?txs.find(t=>t.id===s.txId):null;
-  if(origTx?.vendId){
-    setTimeout(()=>{
-      const vendEl=document.getElementById('fVend');
-      if(vendEl){vendEl.value=origTx.vendId;}
-    },80);
-  }
-  // Pré-seleciona aluna existente
+  // Pré-seleciona aluna existente + curso + vendedora
   setTimeout(()=>{
     const stuSec=document.getElementById('stuSec');
     if(stuSec){
@@ -2415,8 +2411,14 @@ function registrarPagamentoAluna(){
       setTimeout(()=>{
         const sel=document.getElementById('sExSel');
         if(sel){sel.value=s.id;previewExistStu();}
+        // Pré-seleciona curso após empresa estar definida como rv
+        populateCursoSelects();
+        const crsEl=document.getElementById('fCrs');
+        if(crsEl&&s.courseId)crsEl.value=s.courseId;
         const crsEx=document.getElementById('sExCrs');
         if(crsEx&&s.courseId)crsEx.value=s.courseId;
+        // Vendedora da transação original
+        if(origTx?.vendId){const vendEl=document.getElementById('fVend');if(vendEl)vendEl.value=origTx.vendId;}
       },80);
     }
   },80);
@@ -2645,6 +2647,9 @@ function closeM(id){
   if(id==='txModal'){
     const w=document.getElementById('fVlRestWrap');if(w)w.style.display='';
     const ty=document.getElementById('fTyWrap');if(ty)ty.style.display='';
+    const pw=document.getElementById('fParcWrap');if(pw)pw.style.display='';
+    const rw=document.getElementById('fRecWrap');if(rw)rw.style.display='';
+    const rqw=document.getElementById('fRecQtdWrap');if(rqw)rqw.style.display='';
   }
 }
 document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('o');}));
