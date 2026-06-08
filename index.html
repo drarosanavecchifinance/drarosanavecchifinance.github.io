@@ -1443,7 +1443,7 @@ function updateInsights(){
   // Movimentações recentes
   var rt=document.getElementById('dashRecentTxs');
   if(rt){
-    var recent=txs.filter(function(t){return t.status==='paid';}).sort(function(a,b){return(b.paidAt||b.due||'').localeCompare(a.paidAt||a.due||'');}).slice(0,6);
+    var recent=txs.filter(function(t){return t.status==='paid';}).sort(function(a,b){var da=a.saleDate||a.paidAt||a.due||'';var db=b.saleDate||b.paidAt||b.due||'';return db.localeCompare(da);}).slice(0,6);
     if(!recent.length){rt.innerHTML='<div style="padding:16px;font-size:12px;color:var(--t3)">Nenhuma movimentação</div>';}
     else{rt.innerHTML=recent.map(function(t,i){var isRec=t.type==='receber';var coNames={nf:'NatureFace',rv:'Rosana Academy',ct:'Consultório'};var bg=isRec?'var(--grb)':'var(--orb)';var icon=isRec?'↑':'↓';var iconColor=isRec?'var(--gr)':'var(--or)';var borderTop=i>0?'border-top:1.5px solid var(--bdr);':'';return'<div class="tr" style="'+borderTop+'"><div class="tic" style="background:'+bg+';color:'+iconColor+';font-weight:700;font-size:14px">'+icon+'</div><div style="flex:1"><div class="tnm">'+t.name+'</div><div class="tmt">'+(coNames[t.co]||t.co)+' · '+(t.paidAt||t.due||'')+'</div></div><div class="tam '+(isRec?'cr':'db')+'">'+(isRec?'+':'-')+'R$ '+t.val.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div></div>';}).join('');}
   }
@@ -2593,7 +2593,7 @@ function renderCarteira(){
     var v=vendedoras.find(function(x){return x.id===t.vendId;});
     var vName=v?'<span style="font-size:11px;color:var(--t3)">'+v.name.split(' ')[0]+'</span>':'';
     var fpg=t.fpg?'<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:var(--blb);color:var(--bl);font-weight:600">'+fpgLabel[t.fpg]+'</span>':'';
-    var parc=t.parcelaNum?'<span style="font-size:10px;font-weight:700;color:var(--t3);padding:2px 6px;border-radius:4px;background:var(--bdr)">'+t.parcelaNum+'/'+t.parcelaTotal+'</span>':'';
+    var parc=t.parcelaNum?'<span style="font-size:10px;font-weight:700;color:var(--t3);padding:2px 6px;border-radius:4px;background:var(--bdr)">'+t.parcelaNum+'/'+(t.parcelaTotal||'?')+'</span>':'';
     var stBadge='<span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:'+statusBg[sr]+';color:'+statusColor[sr]+'">'+statusLabel[sr]+'</span>';
     var liq=valLiq(t);var hasTaxa=t.val-liq>0.01;
     var taxaStr=hasTaxa?'<div style="font-size:11px;color:var(--t3)">liq. '+fmt(liq)+'</div>':'';
