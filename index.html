@@ -2172,13 +2172,20 @@ function saveTx(){
         const code=typedCode||genStuCode();if(!typedCode)stuNcode++;
         const stuCrsId=parseInt(document.getElementById('sStuCrs')?.value)||tx.courseId||null;
         const stuCrs=stuCrsId?courses.find(x=>x.id===stuCrsId):null;
-        students.push({id:stuNid++,code,name:sname,email:document.getElementById('sEm')?.value||'',phone:document.getElementById('sPh')?.value||'',cpf:document.getElementById('sCp')?.value||'',course:stuCrs?stuCrs.name:'',courseId:stuCrsId,status:'ativo',enrolledAt:new Date().toISOString().slice(0,10),street:document.getElementById('sSt')?.value||'',bairro:document.getElementById('sBa')?.value||'',city:document.getElementById('sCi')?.value||'',state:document.getElementById('sSe')?.value||'SP',cep:document.getElementById('sCe')?.value||'',notes:'',txId:tx.id});}
+        const newStu={id:stuNid++,code,name:sname,email:document.getElementById('sEm')?.value||'',phone:document.getElementById('sPh')?.value||'',cpf:document.getElementById('sCp')?.value||'',course:stuCrs?stuCrs.name:'',courseId:stuCrsId,status:'ativo',enrolledAt:new Date().toISOString().slice(0,10),street:document.getElementById('sSt')?.value||'',bairro:document.getElementById('sBa')?.value||'',city:document.getElementById('sCi')?.value||'',state:document.getElementById('sSe')?.value||'SP',cep:document.getElementById('sCe')?.value||'',notes:'',txId:tx.id};
+        students.push(newStu);
+        tx.stuId=newStu.id;
+        const idx=txs.findIndex(x=>x.id===tx.id);if(idx>=0)txs[idx]=tx;}
     }else{
       const sid=parseInt(document.getElementById('sExSel')?.value);
       if(sid){
         const s=students.find(x=>x.id===sid);
         if(s){
-          s.txId=tx.id;
+          // Se ainda não tem txId (entrada), este é o lançamento principal
+          if(!s.txId)s.txId=tx.id;
+          // Sempre vincula o stuId na transação para rastrear pagamentos posteriores
+          tx.stuId=s.id;
+          const idx=txs.findIndex(x=>x.id===tx.id);if(idx>=0)txs[idx]=tx;
           const newCrs=parseInt(document.getElementById('sExCrs')?.value);
           if(newCrs){s.courseId=newCrs;const c=courses.find(x=>x.id===newCrs);if(c)s.course=c.name;}
         }
@@ -2350,11 +2357,12 @@ function viewAlunoFinanceiro(id){
   const pagas=aTxs.filter(t=>t.status==='paid');
   const pendentes=aTxs.filter(t=>t.status!=='paid'&&t.status!=='cancelado'&&t.status!=='estornado').sort((a,b)=>(a.due||'').localeCompare(b.due||''));
   const totalPago=pagas.reduce((a,t)=>a+t.val,0);
-  // Saldo devedor: usa o campo salvo na aluna menos o que já foi pago além da entrada
-  const saldoDevedorOriginal=s.saldoDevedor||0;
-  const saldoRestante=Math.max(0,saldoDevedorOriginal-Math.max(0,totalPago-(s.txId?txs.find(t=>t.id===s.txId)?.val||0:0)));
-  const totalPendente=saldoDevedorOriginal>0?saldoRestante:pendentes.reduce((a,t)=>a+t.val,0);
-  const totalGeral=totalPago+(saldoDevedorOriginal||pendentes.reduce((a,t)=>a+t.val,0));
+  // Saldo devedor: valor total do curso = entrada + saldoDevedor registrado
+  const entradaVal=s.txId?txs.find(t=>t.id===s.txId)?.val||0:0;
+  const saldoDevedorOrig=s.saldoDevedor||0;
+  const totalCurso=saldoDevedorOrig>0?(entradaVal+saldoDevedorOrig):totalPago+pendentes.reduce((a,t)=>a+t.val,0);
+  const totalPendente=saldoDevedorOrig>0?Math.max(0,totalCurso-totalPago):pendentes.reduce((a,t)=>a+t.val,0);
+  const totalGeral=totalCurso||totalPago;
   const pct=totalGeral>0?Math.round(totalPago/totalGeral*100):100;
   const statusColor=totalPendente>0.01?'var(--or)':'var(--gr)';
   const statusTxt=totalPendente>0.01?`⚠ Falta receber: ${fmt(totalPendente)}`:'✅ Totalmente quitada';
