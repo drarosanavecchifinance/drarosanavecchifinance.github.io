@@ -1125,6 +1125,15 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
 </div>
 
 <!-- MODAL ALUNO -->
+<div class="ov" id="alunoFinModal">
+  <div class="mo w" style="max-width:540px">
+    <button class="mcl" onclick="closeM('alunoFinModal')">×</button>
+    <div class="mttl">💳 Ficha Financeira</div>
+    <div id="alunoFinContent" style="margin-top:18px"></div>
+    <div class="mft" style="margin-top:18px"><button class="bs" onclick="closeM('alunoFinModal')">Fechar</button></div>
+  </div>
+</div>
+
 <div class="ov" id="alunoModal">
   <div class="mo w">
     <button class="mcl" onclick="closeM('alunoModal')">×</button>
@@ -2298,7 +2307,17 @@ function renderAlunos(){
   const list=students.filter(s=>(!q||s.name.toLowerCase().includes(q)||s.code.toLowerCase().includes(q)||s.course.toLowerCase().includes(q))&&(!cf||String(s.courseId)===cf));
   let html='';
   if(!list.length)html='<div class="empty">Nenhum aluno encontrado.</div>';
-  list.forEach(s=>{html+=`<div class="atrow"><div class="td"><span class="acode">${s.code}</span></div><div class="td p">${s.name}</div><div class="td">${s.course||'—'}</div><div class="td">${s.city||'—'} / ${s.state||'—'}</div><div class="td">${fmtDate(s.enrolledAt)}</div><div class="td"><span class="bdg ${s.status}">${s.status==='ativo'?'✓ Ativo':'✕ Inativo'}</span></div><div class="td"><div class="ract"><button class="rb e" onclick="editAluno(${s.id})" title="Editar">✏️</button><button class="rb d" onclick="delAluno(${s.id})" title="Excluir">🗑</button></div></div></div>`;});
+  list.forEach(s=>{
+    // Calcula saldo financeiro da aluna
+    const sTxs=txs.filter(t=>t.co==='rv'&&t.type==='receber'&&(t.stuId===s.id||(s.txId&&(t.id===s.txId||t.grupoId&&txs.find(x=>x.id===s.txId)?.grupoId===t.grupoId))));
+    const pago=sTxs.filter(t=>t.status==='paid').reduce((a,t)=>a+t.val,0);
+    const pendente=sTxs.filter(t=>t.status!=='paid'&&t.status!=='cancelado'&&t.status!=='estornado').reduce((a,t)=>a+t.val,0);
+    const temSaldo=pendente>0.01;
+    const saldoBadge=temSaldo
+      ?`<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;background:var(--orb);color:var(--or)">⚠ R$\xa0${pendente.toLocaleString('pt-BR',{minimumFractionDigits:2})} a receber</span>`
+      :pago>0?`<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;background:var(--grb);color:var(--gr)">✓ Quitado</span>`:'';
+    html+=`<div class="atrow"><div class="td"><span class="acode">${s.code}</span></div><div class="td p">${s.name}${saldoBadge?'<br>'+saldoBadge:''}</div><div class="td">${s.course||'—'}</div><div class="td">${s.city||'—'} / ${s.state||'—'}</div><div class="td">${fmtDate(s.enrolledAt)}</div><div class="td"><span class="bdg ${s.status}">${s.status==='ativo'?'✓ Ativo':'✕ Inativo'}</span></div><div class="td"><div class="ract"><button class="rb" onclick="viewAlunoFinanceiro(${s.id})" title="Ficha financeira">👁</button><button class="rb e" onclick="editAluno(${s.id})" title="Editar">✏️</button><button class="rb d" onclick="delAluno(${s.id})" title="Excluir">🗑</button></div></div></div>`;
+  });
   body.innerHTML=html;
   const s1=document.getElementById('aT'),s2=document.getElementById('aA'),s3=document.getElementById('aN');
   if(s1)s1.textContent=students.length;if(s2)s2.textContent=students.filter(s=>s.status==='ativo').length;
@@ -2306,6 +2325,77 @@ function renderAlunos(){
   document.getElementById('nbAlunos').textContent=students.length;
   // populate curso filter
   const cf2=document.getElementById('aFiltCurso');if(cf2){const cur=cf2.value;cf2.innerHTML='<option value="">Todos os cursos</option>';courses.forEach(c=>{cf2.innerHTML+=`<option value="${c.id}">${c.name}</option>`;});cf2.value=cur;}
+}
+function viewAlunoFinanceiro(id){
+  const s=students.find(x=>x.id===id);if(!s)return;
+  const curso=s.courseId?courses.find(c=>c.id===s.courseId):null;
+  const fmt=v=>'R$\xa0'+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fmtD=d=>d?d.split('-').reverse().join('/'):'—';
+  // Busca todas as txs da aluna — pelo txId principal e pelo grupoId das parcelas do saldo
+  const mainTx=s.txId?txs.find(t=>t.id===s.txId):null;
+  const grupoIds=new Set();
+  if(mainTx?.grupoId)grupoIds.add(mainTx.grupoId);
+  // Busca também txs com stuId ou vinculadas pelo nome + co rv
+  const aTxs=txs.filter(t=>t.co==='rv'&&t.type==='receber'&&(
+    t.stuId===s.id||t.id===s.txId||(t.grupoId&&grupoIds.has(t.grupoId))||
+    (t.name&&s.name&&t.name.toLowerCase().includes(s.name.split(' ')[0].toLowerCase())&&!t.yampiEventId)
+  ));
+  const pagas=aTxs.filter(t=>t.status==='paid');
+  const pendentes=aTxs.filter(t=>t.status!=='paid'&&t.status!=='cancelado'&&t.status!=='estornado').sort((a,b)=>(a.due||'').localeCompare(b.due||''));
+  const canceladas=aTxs.filter(t=>t.status==='cancelado'||t.status==='estornado');
+  const totalPago=pagas.reduce((a,t)=>a+t.val,0);
+  const totalPendente=pendentes.reduce((a,t)=>a+t.val,0);
+  const totalGeral=totalPago+totalPendente;
+  const pct=totalGeral>0?Math.round(totalPago/totalGeral*100):0;
+  const statusColor=totalPendente>0.01?'var(--or)':'var(--gr)';
+  const statusTxt=totalPendente>0.01?`⚠ Saldo devedor: ${fmt(totalPendente)}`:'✅ Totalmente quitada';
+
+  // Próxima parcela
+  const proxima=pendentes[0];
+  const hoje=new Date().toISOString().slice(0,10);
+  const vencidas=pendentes.filter(t=>t.due&&t.due<hoje);
+
+  let rowsPagas=pagas.map(t=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bdr);font-size:12px">
+    <span style="color:var(--gr);font-weight:700;font-size:11px;min-width:16px">✓</span>
+    <span style="flex:1;color:var(--t2)">${t.name}${t.parcelaNum?` <span style="font-size:10px;color:var(--t3)">${t.parcelaNum}/${t.parcelaTotal}</span>`:''}</span>
+    <span style="color:var(--t3);font-size:11px">${fmtD(t.paidAt||t.due)}</span>
+    <span style="font-weight:700;color:var(--gr)">${fmt(t.val)}</span>
+  </div>`).join('');
+
+  let rowsPend=pendentes.map(t=>{
+    const atrasado=t.due&&t.due<hoje;
+    return`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bdr);font-size:12px">
+    <span style="color:${atrasado?'var(--re)':'var(--or)'};font-weight:700;font-size:11px;min-width:16px">${atrasado?'!':'○'}</span>
+    <span style="flex:1;color:var(--t2)">${t.name}${t.parcelaNum?` <span style="font-size:10px;color:var(--t3)">${t.parcelaNum}/${t.parcelaTotal}</span>`:''}</span>
+    <span style="color:${atrasado?'var(--re)':'var(--t3)'};font-size:11px">${fmtD(t.due)}${atrasado?' 🔴':''}</span>
+    <span style="font-weight:700;color:${atrasado?'var(--re)':'var(--or)'}">${fmt(t.val)}</span>
+  </div>`;}).join('');
+
+  document.getElementById('alunoFinContent').innerHTML=`
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+      <div style="width:44px;height:44px;border-radius:12px;background:var(--m);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;flex-shrink:0">${s.name.charAt(0)}</div>
+      <div><div style="font-weight:700;font-size:15px">${s.name}</div><div style="font-size:12px;color:var(--t3)">${s.code} · ${curso?curso.name:'—'} · Matrícula ${fmtD(s.enrolledAt)}</div></div>
+    </div>
+    <div style="background:var(--mp);border-radius:10px;padding:14px 16px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:${statusColor};margin-bottom:10px">${statusTxt}</div>
+      <div style="display:flex;gap:10px;margin-bottom:10px">
+        <div style="flex:1;text-align:center"><div style="font-size:11px;color:var(--t3);font-weight:600">PAGO</div><div style="font-size:17px;font-weight:800;color:var(--gr)">${fmt(totalPago)}</div></div>
+        <div style="flex:1;text-align:center"><div style="font-size:11px;color:var(--t3);font-weight:600">A RECEBER</div><div style="font-size:17px;font-weight:800;color:${totalPendente>0.01?'var(--or)':'var(--t3)'}">
+          ${totalPendente>0.01?fmt(totalPendente):'R$ 0,00'}</div></div>
+        <div style="flex:1;text-align:center"><div style="font-size:11px;color:var(--t3);font-weight:600">TOTAL</div><div style="font-size:17px;font-weight:800;color:var(--t1)">${fmt(totalGeral)}</div></div>
+      </div>
+      <div style="background:var(--bdr);border-radius:4px;height:8px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:var(--gr);border-radius:4px;transition:width .4s"></div>
+      </div>
+      <div style="font-size:11px;color:var(--t3);margin-top:4px;text-align:right">${pct}% quitado</div>
+    </div>
+    ${vencidas.length?`<div style="background:rgba(184,48,48,.08);border:1px solid rgba(184,48,48,.2);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--re);font-weight:600">⚠ ${vencidas.length} parcela(s) vencida(s) · ${fmt(vencidas.reduce((a,t)=>a+t.val,0))} em atraso</div>`:''}
+    ${proxima&&!vencidas.includes(proxima)?`<div style="background:var(--orb);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--or);font-weight:600">📅 Próximo vencimento: ${fmtD(proxima.due)} · ${fmt(proxima.val)}</div>`:''}
+    ${rowsPend?`<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Pendentes (${pendentes.length})</div>${rowsPend}`:''}
+    ${rowsPagas?`<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px">Recebidos (${pagas.length})</div>${rowsPagas}`:''}
+    ${!aTxs.length?'<div style="color:var(--t3);font-size:13px;text-align:center;padding:20px">Nenhum lançamento vinculado a esta aluna.</div>':''}
+  `;
+  document.getElementById('alunoFinModal').classList.add('o');
 }
 function openAddAluno(){
   editStuId=null;document.getElementById('aMT').textContent='Nova Aluna';
