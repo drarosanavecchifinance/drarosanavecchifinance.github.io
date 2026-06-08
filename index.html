@@ -990,7 +990,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
     <div class="msub">Preencha os dados do lançamento financeiro</div>
     <div class="fg">
       <div class="fgp fc1"><label class="fl">Descrição</label><input class="fi" id="fNm" placeholder="Ex: Aluguel — Clínica Faria Lima"></div>
-      <div class="fgp"><label class="fl">Tipo</label><select class="fse" id="fTy" onchange="checkStu();toggleRec();toggleVendField()"><option value="pagar">A Pagar</option><option value="receber">A Receber</option></select></div>
+      <div class="fgp" id="fTyWrap"><label class="fl">Tipo</label><select class="fse" id="fTy" onchange="checkStu();toggleRec();toggleVendField()"><option value="pagar">A Pagar</option><option value="receber">A Receber</option></select></div>
       <div class="fgp"><label class="fl">Empresa</label><select class="fse" id="fCo" onchange="checkStu();toggleCursoField();toggleVendField();toggleProcField()"><option value="nf">NatureFace</option><option value="rv">Rosana Academy</option><option value="ct">Consultório</option></select></div>
       <div class="fgp" id="fVendWrap" style="display:none"><label class="fl">Vendedora</label><select class="fse" id="fVend"><option value="">— Nenhuma —</option></select></div>
       <div class="fgp" id="fFpgWrap" style="display:none"><label class="fl">Forma de Pagamento</label><select class="fse" id="fFpg" onchange="toggleBandeiraField()"><option value="">— Selecione —</option><option value="pix">PIX</option><option value="debito">Débito</option><option value="credito">Crédito</option><option value="boleto">Boleto</option><option value="transferencia">Transferência</option><option value="dinheiro">Dinheiro</option></select></div>
@@ -2379,24 +2379,32 @@ function registrarPagamentoAluna(){
   const s=students.find(x=>x.id===_alunoFinId);if(!s)return;
   closeM('alunoFinModal');
   editTxId=null;
-  // Preenche campos básicos
+  // Campos básicos
   document.getElementById('txMT').textContent='Registrar Pagamento';
-  document.getElementById('msub')&&(document.getElementById('msub').textContent='');
   document.getElementById('fNm').value=s.name+' — Pagamento';
   document.getElementById('fTy').value='receber';
   document.getElementById('fCo').value='rv';
   document.getElementById('fSt').value='paid';
   document.getElementById('fVl').value='';
   document.getElementById('fDu').value=new Date().toISOString().slice(0,10);
-  // Pré-seleciona curso
-  const crsEl=document.getElementById('fCrs');
-  if(crsEl&&s.courseId){populateCursoSelects();crsEl.value=s.courseId;}
-  // Esconde saldo devedor (não faz sentido aqui)
-  const vlRestWrap=document.getElementById('fVlRestWrap');
-  if(vlRestWrap)vlRestWrap.style.display='none';
+  // Esconde campo Tipo (sempre receber)
+  const tyWrap=document.getElementById('fTyWrap');if(tyWrap)tyWrap.style.display='none';
+  // Esconde saldo devedor
+  const vlRestWrap=document.getElementById('fVlRestWrap');if(vlRestWrap)vlRestWrap.style.display='none';
   resetSaldoDevedor();
   // Inicializa campos
   checkStu();toggleCursoField();toggleVendField();toggleProcField();toggleRec();
+  // Pré-seleciona curso
+  const crsEl=document.getElementById('fCrs');
+  if(crsEl&&s.courseId){populateCursoSelects();setTimeout(()=>{crsEl.value=s.courseId;},50);}
+  // Pega vendedora da transação original da aluna
+  const origTx=s.txId?txs.find(t=>t.id===s.txId):null;
+  if(origTx?.vendId){
+    setTimeout(()=>{
+      const vendEl=document.getElementById('fVend');
+      if(vendEl){vendEl.value=origTx.vendId;}
+    },80);
+  }
   // Pré-seleciona aluna existente
   setTimeout(()=>{
     const stuSec=document.getElementById('stuSec');
@@ -2633,8 +2641,11 @@ function saveEvent(){
 // ===== MODALS =====
 function closeM(id){
   document.getElementById(id).classList.remove('o');
-  // Restaura saldo devedor quando fechar modal de tx
-  if(id==='txModal'){const w=document.getElementById('fVlRestWrap');if(w)w.style.display='';}
+  // Restaura campos ocultos quando fechar modal de tx
+  if(id==='txModal'){
+    const w=document.getElementById('fVlRestWrap');if(w)w.style.display='';
+    const ty=document.getElementById('fTyWrap');if(ty)ty.style.display='';
+  }
 }
 document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('o');}));
 // taxasModal agora tem classe .ov mas pode ter sido inserido após o forEach acima
