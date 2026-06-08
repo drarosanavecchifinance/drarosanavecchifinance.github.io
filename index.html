@@ -2379,13 +2379,20 @@ function registrarPagamentoAluna(){
   const s=students.find(x=>x.id===_alunoFinId);if(!s)return;
   closeM('alunoFinModal');
   editTxId=null;
+  // Calcula valor pendente da aluna
+  const sTxs=txs.filter(t=>t.stuId===s.id||(s.txId&&t.id===s.txId));
+  const pagas=sTxs.filter(t=>t.status==='paid');
+  const totalPago=pagas.reduce((a,t)=>a+t.val,0);
+  const entradaVal=s.txId?txs.find(t=>t.id===s.txId)?.val||0:0;
+  const saldoOrig=s.saldoDevedor||0;
+  const valorPendente=saldoOrig>0?Math.max(0,saldoOrig-Math.max(0,totalPago-entradaVal)):sTxs.filter(t=>t.status!=='paid'&&t.status!=='cancelado'&&t.status!=='estornado').reduce((a,t)=>a+t.val,0);
   // Campos básicos
   document.getElementById('txMT').textContent='Registrar Pagamento';
   document.getElementById('fNm').value=s.name+' — Pagamento';
   document.getElementById('fTy').value='receber';
   document.getElementById('fCo').value='rv';
   document.getElementById('fSt').value='paid';
-  document.getElementById('fVl').value='';
+  document.getElementById('fVl').value=valorPendente>0?valorPendente.toFixed(2):'';
   document.getElementById('fDu').value=new Date().toISOString().slice(0,10);
   // Esconde campo Tipo (sempre receber)
   const tyWrap=document.getElementById('fTyWrap');if(tyWrap)tyWrap.style.display='none';
