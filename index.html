@@ -520,7 +520,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
 
 <main class="main">
   <div class="topbar">
-    <div><div class="tb-title" id="tbT">Dashboard Executivo</div><div class="tb-sub" id="tbS">Visão geral estratégica · NatureFace</div></div>
+    <div><div class="tb-title" id="tbT">Dashboard Executivo</div><div class="tb-sub" id="tbS">Visão geral estratégica · Todas as empresas</div></div>
     <div class="tbr">
       <button class="bs" id="yampiSyncBtn" onclick="syncYampiManual()" title="Verificar pedidos Yampi pendentes" style="padding:5px 11px;font-size:12px;gap:5px;display:none">↺ Yampi</button>
       <button class="bs" id="yampiResyncBtn" onclick="resyncYampiTxs()" title="Re-sincronizar todos os pedidos Yampi com valores corretos" style="padding:5px 11px;font-size:12px;gap:5px;color:var(--or);border-color:var(--or);display:none">⟳ Re-sync</button>
@@ -643,7 +643,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
     <div class="dtbl">
       <table>
         <colgroup><col class="c-desc"><col class="c-cat"><col class="c-emp"><col class="c-dt"><col class="c-val"><col class="c-st"><col class="c-ac"></colgroup>
-        <thead><tr><th>Descrição</th><th>Vendedora</th><th>Empresa / Curso</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
+        <thead><tr><th>Descrição</th><th>Vendedora</th><th>Empresa / Curso</th><th>Data de Lançamento</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
         <tbody id="txBody"></tbody>
       </table>
     </div>
@@ -974,6 +974,15 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
 </div>
 
 <!-- MODAL FINANCEIRO -->
+<div class="ov" id="txDetailModal">
+  <div class="mo w" style="max-width:520px">
+    <button class="mcl" onclick="closeM('txDetailModal')">×</button>
+    <div class="mttl">Detalhes do Lançamento</div>
+    <div id="txDetailContent" style="margin-top:18px"></div>
+    <div class="mft" style="margin-top:18px"><button class="bs" onclick="closeM('txDetailModal')">Fechar</button></div>
+  </div>
+</div>
+
 <div class="ov" id="txModal">
   <div class="mo w">
     <button class="mcl" onclick="closeM('txModal')">×</button>
@@ -1284,7 +1293,7 @@ function sv(v,el){
   if(el){document.querySelectorAll('.ni').forEach(n=>n.classList.remove('a'));el.classList.add('a');}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('a'));
   const pg=document.getElementById('page-'+v);if(pg)pg.classList.add('a');
-  if(pgMap[v]){document.getElementById('tbT').textContent=pgMap[v][0];document.getElementById('tbS').textContent=pgMap[v][1]+' · '+cod[co].name;}
+  if(pgMap[v]){document.getElementById('tbT').textContent=pgMap[v][0];document.getElementById('tbS').textContent=pgMap[v][1]+' · '+(v==='dashboard'?'Todas as empresas':cod[co].name);}
   if(v==='financeiro')renderTx();
   if(v==='carteira')renderCarteira();
   updateYampiButtons();
@@ -1708,7 +1717,7 @@ function renderTx(){
       <td>${dueCell}</td>
       <td class="mo">${typeIco}${t.parcelaNum&&t.parcelaNum===1?`<span style="font-weight:800">${fmt(t.val*t.parcelaTotal)}</span><div style="font-size:10px;color:var(--t3);font-weight:500">${t.parcelaTotal}x de ${fmt(t.val)}</div>`:(t.parcelaNum?`<span style="color:var(--t3)">${fmt(t.val)}</span>`:`${fmt(t.val)}`)}</td>
       <td>${bmap[t.status]||''}</td>
-      <td><div class="ract"><button class="rb e" onclick="editTx(${t.id})" title="Editar">✏️</button><button class="rb d" onclick="delTx(${t.id})" title="Excluir">🗑</button></div></td>
+      <td><div class="ract"><button class="rb" onclick="viewTxDetail(${t.id})" title="Ver detalhes">👁</button><button class="rb e" onclick="editTx(${t.id})" title="Editar">✏️</button><button class="rb d" onclick="delTx(${t.id})" title="Excluir">🗑</button></div></td>
     </tr>`;
   });
   body.innerHTML=html;
@@ -1899,6 +1908,86 @@ function openAddTx(){
   const ep=document.getElementById('existStuPreview');if(ep)ep.style.display='none';
   document.getElementById('txModal').classList.add('o');
 }
+function viewTxDetail(id){
+  const t=txs.find(x=>x.id===id);if(!t)return;
+  const vend=t.vendId?vendedoras.find(v=>v.id===t.vendId):null;
+  const coNames={nf:'NatureFace',rv:'Rosana Academy',ct:'Consultório'};
+  const statusMap={paid:'✅ Pago',pendente:'⏳ Pendente',vencido:'🔴 Vencido',cancelado:'❌ Cancelado',estornado:'↩️ Estornado'};
+  const isRec=t.type==='receber';
+  const typeStr=isRec?'Receita':'Despesa';
+  const typeColor=isRec?'var(--gr)':'var(--or)';
+
+  // Prévia da carteira: busca todas as parcelas do grupo
+  let carteiraHtml='';
+  if(t.grupoId){
+    const grupo=txs.filter(x=>x.grupoId===t.grupoId).sort((a,b)=>a.parcelaNum-b.parcelaNum);
+    const rows=grupo.map(p=>{
+      const stMap={paid:'<span style="color:var(--gr);font-weight:700">✓ Pago</span>',pendente:'<span style="color:var(--t3)">⏳ Pendente</span>',vencido:'<span style="color:var(--re)">🔴 Vencido</span>'};
+      return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--bdr);font-size:13px">
+        <span style="background:var(--gdp);color:var(--gdd);font-weight:800;font-size:11px;padding:2px 7px;border-radius:5px;min-width:32px;text-align:center">${p.parcelaNum}/${p.parcelaTotal}</span>
+        <span style="flex:1;color:var(--t2)">${fmtDate(p.due)}</span>
+        <span style="font-weight:600">${fmt(p.val)}</span>
+        <span>${stMap[p.status]||p.status}</span>
+      </div>`;
+    }).join('');
+    const totalPago=grupo.filter(p=>p.status==='paid').reduce((s,p)=>s+p.val,0);
+    const totalPend=grupo.filter(p=>p.status!=='paid'&&p.status!=='cancelado'&&p.status!=='estornado').reduce((s,p)=>s+p.val,0);
+    carteiraHtml=`<div style="margin-top:18px">
+      <div style="font-size:12px;font-weight:700;color:var(--t3);letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px">📋 Prévia da Carteira</div>
+      ${rows}
+      <div style="display:flex;gap:16px;margin-top:10px;font-size:12px">
+        <div style="flex:1;background:var(--grb);border-radius:8px;padding:8px 12px"><div style="color:var(--gr);font-weight:700">Recebido</div><div style="font-weight:800;font-size:14px;color:var(--gr)">${fmt(totalPago)}</div></div>
+        <div style="flex:1;background:var(--orb);border-radius:8px;padding:8px 12px"><div style="color:var(--or);font-weight:700">A receber</div><div style="font-weight:800;font-size:14px;color:var(--or)">${fmt(totalPend)}</div></div>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('txDetailContent').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px">
+      <div style="grid-column:1/-1;background:var(--mp);border-radius:10px;padding:14px 16px">
+        <div style="font-size:12px;color:var(--t3);font-weight:600;margin-bottom:4px">DESCRIÇÃO</div>
+        <div style="font-size:15px;font-weight:700;color:var(--t1)">${t.name}</div>
+      </div>
+      <div style="background:var(--mp);border-radius:10px;padding:12px 14px">
+        <div style="font-size:11px;color:var(--t3);font-weight:600;margin-bottom:3px">TIPO</div>
+        <div style="font-weight:700;color:${typeColor}">${typeStr}</div>
+      </div>
+      <div style="background:var(--mp);border-radius:10px;padding:12px 14px">
+        <div style="font-size:11px;color:var(--t3);font-weight:600;margin-bottom:3px">EMPRESA</div>
+        <div style="font-weight:600">${coNames[t.co]||t.co||'—'}</div>
+      </div>
+      <div style="background:var(--mp);border-radius:10px;padding:12px 14px">
+        <div style="font-size:11px;color:var(--t3);font-weight:600;margin-bottom:3px">DATA DE LANÇAMENTO</div>
+        <div style="font-weight:600">${fmtDate(t.saleDate||t.due)}</div>
+      </div>
+      <div style="background:var(--mp);border-radius:10px;padding:12px 14px">
+        <div style="font-size:11px;color:var(--t3);font-weight:600;margin-bottom:3px">STATUS</div>
+        <div style="font-weight:600">${statusMap[t.status]||t.status}</div>
+      </div>
+      <div style="background:var(--mp);border-radius:10px;padding:12px 14px">
+        <div style="font-size:11px;color:var(--t3);font-weight:600;margin-bottom:3px">VENDEDORA</div>
+        <div style="font-weight:600">${vend?vend.name:'—'}</div>
+      </div>
+      <div style="background:var(--mp);border-radius:10px;padding:12px 14px">
+        <div style="font-size:11px;color:var(--t3);font-weight:600;margin-bottom:3px">VALOR${t.parcelaNum?` (parcela ${t.parcelaNum}/${t.parcelaTotal||'?'})`:''}</div>
+        <div style="font-weight:800;font-size:16px;color:${typeColor}">${fmt(t.val)}</div>
+      </div>
+      ${t.parcelaNum===1?`<div style="background:var(--mp);border-radius:10px;padding:12px 14px">
+        <div style="font-size:11px;color:var(--t3);font-weight:600;margin-bottom:3px">FATURAMENTO TOTAL</div>
+        <div style="font-weight:800;font-size:16px;color:${typeColor}">${fmt(t.val*t.parcelaTotal)}</div>
+      </div>`:''}
+      ${t.notes?`<div style="grid-column:1/-1;background:var(--mp);border-radius:10px;padding:12px 14px">
+        <div style="font-size:11px;color:var(--t3);font-weight:600;margin-bottom:3px">OBSERVAÇÕES</div>
+        <div style="font-size:13px;color:var(--t2)">${t.notes}</div>
+      </div>`:''}
+    </div>
+    ${carteiraHtml}
+    <div style="margin-top:14px;text-align:right">
+      <button class="bp" onclick="closeM('txDetailModal');editTx(${t.id})" style="font-size:13px;padding:8px 16px">✏️ Editar</button>
+    </div>`;
+  document.getElementById('txDetailModal').classList.add('a');
+}
+
 function editTx(id){
   const t=txs.find(x=>x.id===id);if(!t)return;
   editTxId=id;document.getElementById('txMT').textContent='Editar Lançamento';
