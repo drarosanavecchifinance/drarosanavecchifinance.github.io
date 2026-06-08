@@ -522,9 +522,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
   <div class="topbar">
     <div><div class="tb-title" id="tbT">Dashboard Executivo</div><div class="tb-sub" id="tbS">Visão geral estratégica · NatureFace</div></div>
     <div class="tbr">
-      <div class="tbbg"><span class="ldot"></span>Online</div>
-      <button class="bs" id="yampiSyncBtn" onclick="syncYampiManual()" title="Verificar pedidos Yampi pendentes" style="padding:5px 11px;font-size:12px;gap:5px">↺ Yampi</button>
-      <button class="bs" onclick="resyncYampiTxs()" title="Re-sincronizar todos os pedidos Yampi com valores corretos" style="padding:5px 11px;font-size:12px;gap:5px;color:var(--or);border-color:var(--or)">⟳ Re-sync</button>
+      <button class="bs" id="yampiSyncBtn" onclick="syncYampiManual()" title="Verificar pedidos Yampi pendentes" style="padding:5px 11px;font-size:12px;gap:5px;display:none">↺ Yampi</button>
+      <button class="bs" id="yampiResyncBtn" onclick="resyncYampiTxs()" title="Re-sincronizar todos os pedidos Yampi com valores corretos" style="padding:5px 11px;font-size:12px;gap:5px;color:var(--or);border-color:var(--or);display:none">⟳ Re-sync</button>
       <div class="tbico"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 2a6 6 0 0 1 6 6v2l1.3 2.6A1 1 0 0 1 16.4 14H3.6a1 1 0 0 1-.9-1.4L4 10V8a6 6 0 0 1 6-6z"/><path d="M8 14a2 2 0 0 0 4 0"/></svg><span class="ndot"></span></div>
     </div>
   </div>
@@ -644,7 +643,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
     <div class="dtbl">
       <table>
         <colgroup><col class="c-desc"><col class="c-cat"><col class="c-emp"><col class="c-dt"><col class="c-val"><col class="c-st"><col class="c-ac"></colgroup>
-        <thead><tr><th>Descrição</th><th>Cat.</th><th>Empresa / Curso</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
+        <thead><tr><th>Descrição</th><th>Vendedora</th><th>Empresa / Curso</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
         <tbody id="txBody"></tbody>
       </table>
     </div>
@@ -1251,6 +1250,7 @@ function setCo(c,btn){
   const nfSecEl=document.getElementById('navSecNF');if(nfSecEl)nfSecEl.style.display=isNF?'':'none';
   const nvEl=document.getElementById('navVendedoras');if(nvEl)nvEl.style.display='';
   ['navSecConsultorio','navPacientes','navProced','navCEImport'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=isCT?'':'none';});
+  updateYampiButtons();
   const curPage=document.querySelector('.page.a');
   if(!isRV&&curPage&&(curPage.id==='page-cursos'||curPage.id==='page-alunos'))sv('dashboard',document.querySelector('.ni'));
   if(!isCT&&curPage&&(curPage.id==='page-pacientes'||curPage.id==='page-procedimentos'||curPage.id==='page-ceimport'))sv('dashboard',document.querySelector('.ni'));
@@ -1260,6 +1260,12 @@ function setCo(c,btn){
 
 // ===== NAV =====
 const pgMap={dashboard:['Dashboard Executivo','Visão geral estratégica'],financeiro:['Fluxo de Caixa','Lançamentos · Contas · Fluxo de Caixa'],carteira:['Carteira','Faturamento · Recebimentos · Agenda de entradas'],cursos:['Cursos — Rosana Academy','Controle financeiro por curso'],alunos:['Base de Alunos','Rosana Vecchi Academy'],vendedoras:['Vendedoras','Equipe de vendas — NatureFace & Academy'],pacientes:['Pacientes — Consultório','Base de pacientes'],procedimentos:['Procedimentos — Consultório','Serviços e tratamentos'],ceimport:['Clínica Experts','Integração e importação automática'],calendario:['Calendário','Agenda e eventos'],vai:['V.A.I — Assistente','Inteligência artificial executiva']};
+function updateYampiButtons(){
+  const show=co==='nf'&&document.getElementById('page-financeiro')?.classList.contains('a');
+  const b1=document.getElementById('yampiSyncBtn');const b2=document.getElementById('yampiResyncBtn');
+  if(b1)b1.style.display=show?'':'none';
+  if(b2)b2.style.display=show?'':'none';
+}
 function sv(v,el){
   if(el){document.querySelectorAll('.ni').forEach(n=>n.classList.remove('a'));el.classList.add('a');}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('a'));
@@ -1267,6 +1273,7 @@ function sv(v,el){
   if(pgMap[v]){document.getElementById('tbT').textContent=pgMap[v][0];document.getElementById('tbS').textContent=pgMap[v][1]+' · '+cod[co].name;}
   if(v==='financeiro')renderTx();
   if(v==='carteira')renderCarteira();
+  updateYampiButtons();
   if(v==='cursos')renderCursos();
   if(v==='alunos')renderAlunos();
   if(v==='calendario')renderCal();
@@ -1678,7 +1685,8 @@ function renderTx(){
     }
     const parcelaBadge=t.parcelaNum?`<span style="font-family:var(--num);font-size:10px;font-weight:800;color:var(--gdd);background:var(--gdp);border:1px solid rgba(196,165,90,.25);border-radius:5px;padding:2px 6px;margin-left:5px">${t.parcelaNum}/${t.parcelaTotal}</span>`:'';
     const grupoBtn=t.grupoId?`<button class="grupo-tag" onclick="viewGrupo('${t.grupoId}')" title="Ver todas as parcelas deste grupo">🔗 grupo</button>`:'';
-    const catCell=t.parcelaNum?`${t.parcelaNum}/${t.parcelaTotal}`:(t.cat||'—');
+    const vend=t.vendId?vendedoras.find(function(v){return v.id===t.vendId;}):null;
+    const catCell=vend?vend.name.split(' ')[0]:(t.parcelaNum?`${t.parcelaNum}/${t.parcelaTotal}`:'—');
     html+=`<tr>
       <td class="nm" title="${t.name}">${t.name}${parcelaBadge}${grupoBtn}</td>
       <td style="font-size:12px;color:var(--t3)">${catCell}</td>
