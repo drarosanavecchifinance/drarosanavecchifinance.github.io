@@ -1807,7 +1807,8 @@ function renderTx(){
   if(!list.length)html=`<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--t3);font-size:13.5px">Nenhum lançamento encontrado${mesSel?' para '+mesSel:''}.</td></tr>`;
   list.forEach(t=>{
     const crs=t.courseId?courses.find(x=>x.id===t.courseId):null;
-    const empCell=`<span style="color:${cc[t.co]};font-weight:600">${cnm[t.co]}</span>${crs?`<br><span style="font-size:11px;color:var(--m);font-weight:500">${crs.code}</span>`:''}`;
+    const empBg={nf:'rgba(196,128,127,.13)',rv:'rgba(149,82,81,.13)',ct:'rgba(123,158,135,.13)',all:'rgba(92,53,53,.1)'};
+    const empCell=`<span style="display:inline-block;background:${empBg[t.co]};color:${cc[t.co]};font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;border:1px solid ${cc[t.co]}33;letter-spacing:.2px">${cnm[t.co]}</span>${crs?`<br><span style="font-size:11px;color:var(--m);font-weight:500">${crs.code}</span>`:''}`;
     const typeIco=t.type==='receber'?'<span style="color:var(--gr);font-size:11px;font-weight:700;margin-right:4px">↓</span>':'<span style="color:var(--re);font-size:11px;font-weight:700;margin-right:4px">↑</span>';
     let dueCell=fmtDate(t.due);
     if(ftab==='pagar'&&subftab==='avencer'){
@@ -2261,7 +2262,19 @@ function saveTx(){
       stuRef.saldoDevedor=(stuRef.saldoDevedor||0)+vlRest;
     }
   }
+  // Fix 1: Atualiza saldoDevedor da aluna ao registrar pagamento
+  if(!editTxId&&tx.stuId&&tx.type==='receber'&&tx.status==='paid'){
+    const stuPag=students.find(x=>x.id===tx.stuId);
+    if(stuPag&&stuPag.saldoDevedor>0&&stuPag.txId!==tx.id){
+      stuPag.saldoDevedor=Math.max(0,stuPag.saldoDevedor-tx.val);
+    }
+  }
+  // Fix 5: Reabre ficha da aluna após registrar pagamento pendente
+  const _reopenAlunoId=_alunoFinId;
   closeM('txModal');renderTx();saveData();if(document.getElementById('page-cursos').classList.contains('a'))renderCursos();
+  if(_reopenAlunoId&&!editTxId&&tx.stuId===_reopenAlunoId){
+    setTimeout(()=>viewAlunoFinanceiro(_reopenAlunoId),150);
+  }
 }
 function delTx(id){
   const t=txs.find(x=>x.id===id);if(!t)return;
