@@ -2378,35 +2378,40 @@ let _alunoFinId=null;
 function registrarPagamentoAluna(){
   const s=students.find(x=>x.id===_alunoFinId);if(!s)return;
   closeM('alunoFinModal');
-  // Abre modal de novo lançamento pré-preenchido
   editTxId=null;
+  // Preenche campos básicos
   document.getElementById('txMT').textContent='Registrar Pagamento';
+  document.getElementById('msub')&&(document.getElementById('msub').textContent='');
   document.getElementById('fNm').value=s.name+' — Pagamento';
   document.getElementById('fTy').value='receber';
   document.getElementById('fCo').value='rv';
   document.getElementById('fSt').value='paid';
   document.getElementById('fVl').value='';
   document.getElementById('fDu').value=new Date().toISOString().slice(0,10);
+  // Pré-seleciona curso
+  const crsEl=document.getElementById('fCrs');
+  if(crsEl&&s.courseId){populateCursoSelects();crsEl.value=s.courseId;}
+  // Esconde saldo devedor (não faz sentido aqui)
+  const vlRestWrap=document.getElementById('fVlRestWrap');
+  if(vlRestWrap)vlRestWrap.style.display='none';
   resetSaldoDevedor();
-  // Pré-seleciona a aluna existente
-  checkStu();toggleCursoField();toggleVendField();toggleProcField();
+  // Inicializa campos
+  checkStu();toggleCursoField();toggleVendField();toggleProcField();toggleRec();
+  // Pré-seleciona aluna existente
   setTimeout(()=>{
     const stuSec=document.getElementById('stuSec');
     if(stuSec){
       stuSec.classList.add('s');
-      // Muda para modo aluna existente
-      const existBtn=stuSec.querySelector('[onclick*="switchStu(\'exist\')"]');
-      if(existBtn)existBtn.click();
+      tgStu('exist');
+      populateExistSel();
       setTimeout(()=>{
         const sel=document.getElementById('sExSel');
-        if(sel){sel.value=s.id;
-          // Preenche curso
-          const crsEl=document.getElementById('sExCrs');
-          if(crsEl&&s.courseId)crsEl.value=s.courseId;
-        }
-      },100);
+        if(sel){sel.value=s.id;previewExistStu();}
+        const crsEx=document.getElementById('sExCrs');
+        if(crsEx&&s.courseId)crsEx.value=s.courseId;
+      },80);
     }
-  },100);
+  },80);
   document.getElementById('txModal').classList.add('o');
 }
 function viewAlunoFinanceiro(id){
@@ -2626,7 +2631,11 @@ function saveEvent(){
 }
 
 // ===== MODALS =====
-function closeM(id){document.getElementById(id).classList.remove('o');}
+function closeM(id){
+  document.getElementById(id).classList.remove('o');
+  // Restaura saldo devedor quando fechar modal de tx
+  if(id==='txModal'){const w=document.getElementById('fVlRestWrap');if(w)w.style.display='';}
+}
 document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('o');}));
 // taxasModal agora tem classe .ov mas pode ter sido inserido após o forEach acima
 (function(){const tm=document.getElementById('taxasModal');if(tm&&!tm._ovBound){tm._ovBound=true;tm.addEventListener('click',function(e){if(e.target===tm)closeM('taxasModal');});}})();
