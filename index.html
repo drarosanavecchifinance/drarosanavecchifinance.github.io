@@ -643,7 +643,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
     <div class="dtbl">
       <table>
         <colgroup><col class="c-desc"><col class="c-cat"><col class="c-emp"><col class="c-dt"><col class="c-val"><col class="c-st"><col class="c-ac"></colgroup>
-        <thead><tr><th>Descrição</th><th>Vendedora</th><th>Empresa / Curso</th><th>Data de Lançamento</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
+        <thead><tr><th>Descrição</th><th>Vendedora</th><th>Empresa / Curso</th><th style="white-space:nowrap">Data de Lançamento</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
         <tbody id="txBody"></tbody>
       </table>
     </div>
@@ -1985,7 +1985,7 @@ function viewTxDetail(id){
     <div style="margin-top:14px;text-align:right">
       <button class="bp" onclick="closeM('txDetailModal');editTx(${t.id})" style="font-size:13px;padding:8px 16px">✏️ Editar</button>
     </div>`;
-  document.getElementById('txDetailModal').classList.add('a');
+  document.getElementById('txDetailModal').classList.add('o');
 }
 
 function editTx(id){
