@@ -2982,10 +2982,11 @@ function renderCarteira(){
       return sr!=='cancelado'&&sr!=='estornado'&&t.due&&t.due.startsWith(_pk);
     }).reduce(function(s,t){return s+valLiq(t);},0);
   }
-  // Previsão total — do dia atual para frente, mesmo critério do Prev. 3 Meses
+  // Previsão total — a partir do mês seguinte ao selecionado (ou hoje se sem filtro)
+  var _prevTotalFrom=selMes?(function(){var p=selMes.split('-');var d=new Date(parseInt(p[0]),parseInt(p[1]),1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01';})():todayStr;
   var _aRec=allRec.filter(function(t){
     var sr=getStatusReal(t);
-    return sr!=='cancelado'&&sr!=='estornado'&&sr!=='paid'&&t.due&&t.due>=todayStr;
+    return sr!=='cancelado'&&sr!=='estornado'&&sr!=='paid'&&t.due&&t.due>=_prevTotalFrom;
   });
   var totalAReceber=_aRec.reduce(function(s,t){return s+valLiq(t);},0);
   var totalAReceberCnt=_aRec.length;
