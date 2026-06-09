@@ -476,6 +476,10 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="3"/><path d="M1 17c0-3.3 2.7-6 6-6"/><circle cx="14" cy="7" r="3"/><path d="M11 17c0-3.3 1.3-5.4 3-6"/></svg>Vendedoras
       <span class="ni-badge" id="nbVend">3</span>
     </div>
+    <div class="ni" id="navEstoque" style="display:none" onclick="sv('estoque',this)">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="10" width="7" height="8" rx="1"/><rect x="11" y="6" width="7" height="12" rx="1"/><rect x="5" y="2" width="10" height="6" rx="1"/><path d="M5 5h10"/></svg>Estoque
+      <span class="ni-badge" id="nbEstoque">0</span>
+    </div>
     <div class="nsec" id="navSecAcademy" style="display:none">Rosana Academy</div>
     <div class="ni" id="navCursos" style="display:none" onclick="sv('cursos',this)">
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 5l8-3 8 3v6c0 4-8 7-8 7S2 15 2 11V5z"/></svg>Cursos
@@ -744,6 +748,102 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
     </div>
     <!-- Vencimentos oculto (mantido para compatibilidade) -->
     <div id="calSideDue" style="display:none"></div>
+  </div>
+
+  <!-- ESTOQUE -->
+  <div class="page" id="page-estoque">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+      <input class="finp" id="eSearch" placeholder="🔍 Buscar produto..." oninput="renderEstoque()" style="max-width:260px">
+      <select class="fsel" id="eCatFilter" onchange="renderEstoque()">
+        <option value="">Todas as categorias</option>
+      </select>
+      <button class="bp" onclick="openEstoqueModal()" style="margin-left:auto;padding:8px 18px;font-size:13px;border-radius:20px">+ Novo Produto</button>
+    </div>
+    <!-- KPIs -->
+    <div id="eKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px"></div>
+    <!-- Table -->
+    <div id="eTable"></div>
+
+    <!-- Modal Produto -->
+    <div class="ov" id="estoqueModal">
+      <div class="mo" style="width:560px;max-width:96vw">
+        <button class="mcl" onclick="closeM('estoqueModal')">✕</button>
+        <div class="mttl" id="eModalTitle">Novo Produto</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div style="grid-column:1/-1">
+            <label class="fl">Nome do Produto *</label>
+            <input class="finp" id="eNome" placeholder="Ex: Sérum Vitamina C 30ml">
+          </div>
+          <div>
+            <label class="fl">Código / SKU</label>
+            <input class="finp" id="eCod" placeholder="NF-001">
+          </div>
+          <div>
+            <label class="fl">Categoria</label>
+            <input class="finp" id="eCat" placeholder="Ex: Sérum, Creme, Peel...">
+          </div>
+          <div>
+            <label class="fl">Quantidade em Estoque *</label>
+            <input class="finp" id="eQtd" type="number" min="0" placeholder="0">
+          </div>
+          <div>
+            <label class="fl">Estoque Mínimo</label>
+            <input class="finp" id="eMin" type="number" min="0" placeholder="5">
+          </div>
+          <div>
+            <label class="fl">Preço de Custo (R$)</label>
+            <input class="finp" id="eCusto" type="number" step="0.01" min="0" placeholder="0,00">
+          </div>
+          <div>
+            <label class="fl">Preço de Venda (R$)</label>
+            <input class="finp" id="eVenda" type="number" step="0.01" min="0" placeholder="0,00">
+          </div>
+          <div style="grid-column:1/-1">
+            <label class="fl">Fornecedor</label>
+            <input class="finp" id="eForn" placeholder="Nome do fornecedor">
+          </div>
+          <div style="grid-column:1/-1">
+            <label class="fl">Observações</label>
+            <input class="finp" id="eObs" placeholder="Validade, instruções, etc.">
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end">
+          <button class="bs" onclick="closeM('estoqueModal')">Cancelar</button>
+          <button class="bp" onclick="salvarEstoque()">Salvar Produto</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Movimentação -->
+    <div class="ov" id="estoqueMovModal">
+      <div class="mo" style="width:420px;max-width:96vw">
+        <button class="mcl" onclick="closeM('estoqueMovModal')">✕</button>
+        <div class="mttl" id="eMovTitle">Movimentar Estoque</div>
+        <input type="hidden" id="eMovId">
+        <div style="display:grid;gap:12px">
+          <div>
+            <label class="fl">Tipo</label>
+            <select class="fsel" id="eMovTipo" style="width:100%">
+              <option value="entrada">➕ Entrada (compra/reposição)</option>
+              <option value="saida">➖ Saída (venda/uso)</option>
+              <option value="ajuste">🔧 Ajuste manual</option>
+            </select>
+          </div>
+          <div>
+            <label class="fl">Quantidade</label>
+            <input class="finp" id="eMovQtd" type="number" min="1" placeholder="1">
+          </div>
+          <div>
+            <label class="fl">Motivo / Observação</label>
+            <input class="finp" id="eMovObs" placeholder="Ex: Compra fornecedor, uso protocolo...">
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end">
+          <button class="bs" onclick="closeM('estoqueMovModal')">Cancelar</button>
+          <button class="bp" onclick="confirmarMovEstoque()">Confirmar</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- VAI -->
@@ -1327,6 +1427,7 @@ let students=[
 let txs=[];
 txNid=1;
 let editingEv=null, evNextId=20;
+let estoque=[]; let estoqueNid=1;
 let evs={
   '2025-7-5':[{id:1,title:'Pagamento Aluguel',type:'pagamento',co:'nf',time:'09:00',desc:''}],
   '2025-7-10':[{id:2,title:'Derma+ vencimento',type:'pagamento',co:'nf',time:'10:00',desc:''}],
@@ -1355,6 +1456,8 @@ function setCo(c,btn){
   const isNF=c==='nf';
   ['navSecAcademy','navCursos','navAlunos'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=isRV?'':'none';});
   const nfSecEl=document.getElementById('navSecNF');if(nfSecEl)nfSecEl.style.display=isNF?'':'none';
+  const estoqueEl=document.getElementById('navEstoque');if(estoqueEl)estoqueEl.style.display=isNF?'':'none';
+  if(!isNF){const curP=document.querySelector('.page.a');if(curP&&curP.id==='page-estoque')sv('dashboard',document.querySelector('.ni'));}
   const nvEl=document.getElementById('navVendedoras');if(nvEl)nvEl.style.display='';
   ['navSecConsultorio','navPacientes','navProced','navCEImport'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=isCT?'':'none';});
   updateYampiButtons();
@@ -1366,7 +1469,7 @@ function setCo(c,btn){
 }
 
 // ===== NAV =====
-const pgMap={dashboard:['Dashboard Executivo','Visão geral estratégica'],financeiro:['Fluxo de Caixa','Lançamentos · Contas · Fluxo de Caixa'],carteira:['Carteira','Faturamento · Recebimentos · Agenda de entradas'],cursos:['Cursos — Rosana Academy','Controle financeiro por curso'],alunos:['Base de Alunos','Rosana Vecchi Academy'],vendedoras:['Vendedoras','Equipe de vendas — NatureFace & Academy'],pacientes:['Pacientes — Consultório','Base de pacientes'],procedimentos:['Procedimentos — Consultório','Serviços e tratamentos'],ceimport:['Clínica Experts','Integração e importação automática'],calendario:['Calendário','Agenda e eventos']};
+const pgMap={dashboard:['Dashboard Executivo','Visão geral estratégica'],financeiro:['Fluxo de Caixa','Lançamentos · Contas · Fluxo de Caixa'],carteira:['Carteira','Faturamento · Recebimentos · Agenda de entradas'],cursos:['Cursos — Rosana Academy','Controle financeiro por curso'],alunos:['Base de Alunos','Rosana Vecchi Academy'],vendedoras:['Vendedoras','Equipe de vendas — NatureFace & Academy'],pacientes:['Pacientes — Consultório','Base de pacientes'],procedimentos:['Procedimentos — Consultório','Serviços e tratamentos'],ceimport:['Clínica Experts','Integração e importação automática'],calendario:['Calendário','Agenda e eventos'],estoque:['Estoque — NatureFace','Controle de produtos e inventário']};
 function updateYampiButtons(){
   const show=co==='nf'&&document.getElementById('page-financeiro')?.classList.contains('a');
   const b1=document.getElementById('yampiSyncBtn');const b2=document.getElementById('yampiResyncBtn');
@@ -2905,6 +3008,167 @@ function initCarteiraFilter(){
   // 12 meses anteriores
   for(let i=1;i<=12;i++){const d=new Date(now.getFullYear(),now.getMonth()-i,1);const val=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');const opt=document.createElement('option');opt.value=val;opt.textContent=mNames[d.getMonth()]+' '+d.getFullYear();sel.appendChild(opt);}
 }
+// ===== ESTOQUE =====
+function renderEstoque(){
+  const search=(document.getElementById('eSearch')||{value:''}).value.toLowerCase();
+  const catF=(document.getElementById('eCatFilter')||{value:''}).value;
+
+  // Populate category filter
+  const cats=[...new Set(estoque.map(p=>p.cat).filter(Boolean))].sort();
+  const catSel=document.getElementById('eCatFilter');
+  if(catSel){
+    const prev=catSel.value;
+    catSel.innerHTML='<option value="">Todas as categorias</option>'+cats.map(c=>`<option value="${c}"${c===prev?' selected':''}>${c}</option>`).join('');
+  }
+
+  const items=estoque.filter(p=>{
+    const matchS=!search||(p.nome||'').toLowerCase().includes(search)||(p.cod||'').toLowerCase().includes(search)||(p.forn||'').toLowerCase().includes(search);
+    const matchC=!catF||p.cat===catF;
+    return matchS&&matchC;
+  });
+
+  // KPIs
+  const totalProdutos=estoque.length;
+  const totalItens=estoque.reduce((s,p)=>s+(p.qtd||0),0);
+  const totalValorCusto=estoque.reduce((s,p)=>s+(p.qtd||0)*(p.custo||0),0);
+  const totalValorVenda=estoque.reduce((s,p)=>s+(p.qtd||0)*(p.venda||0),0);
+  const criticos=estoque.filter(p=>(p.qtd||0)<=(p.min||0)&&(p.min||0)>0).length;
+  const zerados=estoque.filter(p=>(p.qtd||0)===0).length;
+
+  const kpiEl=document.getElementById('eKpis');
+  if(kpiEl) kpiEl.innerHTML=`
+    <div class="kc"><div class="klbl">Produtos</div><div class="kval">${totalProdutos}</div><div class="kft"><span class="kpr">${totalItens} unidades</span></div></div>
+    <div class="kc"><div class="klbl">Valor em Custo</div><div class="kval" style="color:var(--or)">${fmt(totalValorCusto)}</div><div class="kft"><span class="kpr">estoque atual</span></div></div>
+    <div class="kc"><div class="klbl">Valor em Venda</div><div class="kval" style="color:var(--gr)">${fmt(totalValorVenda)}</div><div class="kft"><span class="kpr">potencial</span></div></div>
+    <div class="kc${criticos>0?' o':''}"><div class="klbl">Críticos</div><div class="kval" style="color:${criticos>0?'var(--re)':'var(--gr)'}">${criticos}</div><div class="kft"><span class="kpr">${zerados} zerados</span></div></div>
+  `;
+
+  // Update nav badge
+  const nb=document.getElementById('nbEstoque');
+  if(nb){nb.textContent=criticos;nb.style.display=criticos>0?'':'none';}
+
+  // Table
+  const tEl=document.getElementById('eTable');
+  if(!tEl)return;
+  if(!items.length){tEl.innerHTML='<div style="text-align:center;color:var(--t4);padding:48px 0;font-size:14px">Nenhum produto encontrado.<br><span style="font-size:12px">Clique em "+ Novo Produto" para começar.</span></div>';return;}
+
+  tEl.innerHTML=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead><tr style="border-bottom:2px solid var(--bd)">
+      <th style="text-align:left;padding:8px 12px;color:var(--t3);font-weight:600;font-size:11px;text-transform:uppercase">Produto</th>
+      <th style="text-align:center;padding:8px 12px;color:var(--t3);font-weight:600;font-size:11px;text-transform:uppercase">Qtd</th>
+      <th style="text-align:center;padding:8px 12px;color:var(--t3);font-weight:600;font-size:11px;text-transform:uppercase">Mín</th>
+      <th style="text-align:right;padding:8px 12px;color:var(--t3);font-weight:600;font-size:11px;text-transform:uppercase">Custo</th>
+      <th style="text-align:right;padding:8px 12px;color:var(--t3);font-weight:600;font-size:11px;text-transform:uppercase">Venda</th>
+      <th style="text-align:left;padding:8px 12px;color:var(--t3);font-weight:600;font-size:11px;text-transform:uppercase">Fornecedor</th>
+      <th style="text-align:center;padding:8px 12px;color:var(--t3);font-weight:600;font-size:11px;text-transform:uppercase">Ações</th>
+    </tr></thead>
+    <tbody>${items.map(p=>{
+      const qtd=p.qtd||0;const min=p.min||0;
+      const critico=min>0&&qtd<=min;const zerado=qtd===0;
+      const statusColor=zerado?'var(--re)':critico?'var(--or)':'var(--gr)';
+      const statusDot=zerado?'🔴':critico?'🟠':'🟢';
+      return `<tr style="border-bottom:1px solid var(--bd);transition:background .15s" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background=''">
+        <td style="padding:10px 12px">
+          <div style="font-weight:600;color:var(--t1)">${p.nome||'—'}</div>
+          <div style="font-size:11px;color:var(--t4)">${p.cod?p.cod+' · ':''}${p.cat||'Sem categoria'}${p.obs?' · '+p.obs:''}</div>
+        </td>
+        <td style="text-align:center;padding:10px 12px">
+          <span style="font-weight:700;color:${statusColor};font-size:15px">${qtd}</span>
+          <div style="font-size:10px;color:var(--t4)">${statusDot}</div>
+        </td>
+        <td style="text-align:center;padding:10px 12px;color:var(--t3)">${min||'—'}</td>
+        <td style="text-align:right;padding:10px 12px;color:var(--t2)">${p.custo?fmt(p.custo):'—'}</td>
+        <td style="text-align:right;padding:10px 12px;color:var(--gr);font-weight:600">${p.venda?fmt(p.venda):'—'}</td>
+        <td style="padding:10px 12px;color:var(--t3);font-size:12px">${p.forn||'—'}</td>
+        <td style="text-align:center;padding:10px 8px">
+          <div style="display:flex;gap:6px;justify-content:center">
+            <button onclick="openMovEstoque(${p.id})" title="Movimentar" style="background:none;border:1px solid var(--bd);color:var(--t3);border-radius:8px;padding:4px 8px;cursor:pointer;font-size:12px" onmouseover="this.style.color='var(--m)'" onmouseout="this.style.color='var(--t3)'">±</button>
+            <button onclick="editEstoque(${p.id})" title="Editar" style="background:none;border:1px solid var(--bd);color:var(--t3);border-radius:8px;padding:4px 8px;cursor:pointer;font-size:12px" onmouseover="this.style.color='var(--bl)'" onmouseout="this.style.color='var(--t3)'">✎</button>
+            <button onclick="delEstoque(${p.id})" title="Excluir" style="background:none;border:1px solid var(--bd);color:var(--t3);border-radius:8px;padding:4px 8px;cursor:pointer;font-size:12px" onmouseover="this.style.color='var(--re)'" onmouseout="this.style.color='var(--t3)'">✕</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+let _editingEstoque=null;
+function openEstoqueModal(id){
+  _editingEstoque=id?estoque.find(p=>p.id===id):null;
+  const p=_editingEstoque;
+  document.getElementById('eModalTitle').textContent=p?'Editar Produto':'Novo Produto';
+  document.getElementById('eNome').value=p?p.nome:'';
+  document.getElementById('eCod').value=p?p.cod:'';
+  document.getElementById('eCat').value=p?p.cat:'';
+  document.getElementById('eQtd').value=p?p.qtd:'';
+  document.getElementById('eMin').value=p?p.min:'';
+  document.getElementById('eCusto').value=p?p.custo:'';
+  document.getElementById('eVenda').value=p?p.venda:'';
+  document.getElementById('eForn').value=p?p.forn:'';
+  document.getElementById('eObs').value=p?p.obs:'';
+  document.getElementById('estoqueModal').classList.add('a');
+}
+function editEstoque(id){openEstoqueModal(id);}
+function salvarEstoque(){
+  const nome=document.getElementById('eNome').value.trim();
+  if(!nome){alert('Informe o nome do produto.');return;}
+  const qtd=parseFloat(document.getElementById('eQtd').value)||0;
+  if(_editingEstoque){
+    _editingEstoque.nome=nome;
+    _editingEstoque.cod=document.getElementById('eCod').value.trim();
+    _editingEstoque.cat=document.getElementById('eCat').value.trim();
+    _editingEstoque.qtd=qtd;
+    _editingEstoque.min=parseFloat(document.getElementById('eMin').value)||0;
+    _editingEstoque.custo=parseFloat(document.getElementById('eCusto').value)||0;
+    _editingEstoque.venda=parseFloat(document.getElementById('eVenda').value)||0;
+    _editingEstoque.forn=document.getElementById('eForn').value.trim();
+    _editingEstoque.obs=document.getElementById('eObs').value.trim();
+  } else {
+    estoque.push({
+      id:estoqueNid++,nome,
+      cod:document.getElementById('eCod').value.trim(),
+      cat:document.getElementById('eCat').value.trim(),
+      qtd,
+      min:parseFloat(document.getElementById('eMin').value)||0,
+      custo:parseFloat(document.getElementById('eCusto').value)||0,
+      venda:parseFloat(document.getElementById('eVenda').value)||0,
+      forn:document.getElementById('eForn').value.trim(),
+      obs:document.getElementById('eObs').value.trim(),
+      movs:[]
+    });
+  }
+  closeM('estoqueModal');renderEstoque();saveData();
+}
+function delEstoque(id){
+  if(!confirm('Excluir este produto do estoque?'))return;
+  estoque=estoque.filter(p=>p.id!==id);
+  renderEstoque();saveData();
+}
+function openMovEstoque(id){
+  const p=estoque.find(x=>x.id===id);if(!p)return;
+  document.getElementById('eMovTitle').textContent='Movimentar: '+p.nome;
+  document.getElementById('eMovId').value=id;
+  document.getElementById('eMovTipo').value='entrada';
+  document.getElementById('eMovQtd').value='';
+  document.getElementById('eMovObs').value='';
+  document.getElementById('estoqueMovModal').classList.add('a');
+}
+function confirmarMovEstoque(){
+  const id=parseInt(document.getElementById('eMovId').value);
+  const p=estoque.find(x=>x.id===id);if(!p)return;
+  const tipo=document.getElementById('eMovTipo').value;
+  const qtd=parseFloat(document.getElementById('eMovQtd').value)||0;
+  if(!qtd){alert('Informe a quantidade.');return;}
+  const obs=document.getElementById('eMovObs').value.trim();
+  const date=new Date().toISOString().slice(0,10);
+  if(!p.movs)p.movs=[];
+  if(tipo==='entrada') p.qtd=(p.qtd||0)+qtd;
+  else if(tipo==='saida') p.qtd=Math.max(0,(p.qtd||0)-qtd);
+  else if(tipo==='ajuste') p.qtd=qtd;
+  p.movs.push({tipo,qtd,obs,date});
+  closeM('estoqueMovModal');renderEstoque();saveData();
+}
+
 function renderCarteira(){
   initCarteiraFilter();
   var selMes=document.getElementById('carteiraFiltMes')?.value;
@@ -3362,9 +3626,9 @@ function undoLastDelete(){
 // ===== SALVAR =====
 async function saveData(){
   const payload={
-    txs,courses,students,vendedoras,evs,patients,procedures,taxas,taxasMaq,taxas_version:_TAXAS_VER,_yampiParserV:7,
+    txs,courses,students,vendedoras,evs,estoque,patients,procedures,taxas,taxasMaq,taxas_version:_TAXAS_VER,_yampiParserV:7,
     _sessionId,
-    ids:{txNid,cursoNid,cursoNcode,stuNid,stuNcode,vendNid,vendNcode,evNextId,grupoNid,patientNid,patientNcode,procedureNid,procedureNcode}
+    ids:{txNid,cursoNid,cursoNcode,stuNid,stuNcode,vendNid,vendNcode,evNextId,grupoNid,patientNid,patientNcode,procedureNid,procedureNcode,estoqueNid}
   };
   // Sempre salva no localStorage como backup
   try{localStorage.setItem('vai_backup',JSON.stringify(payload));}catch(e){}
@@ -3426,7 +3690,8 @@ function applyData(d){
   if(d.courses&&d.courses.length)courses=d.courses;
   if(d.students&&d.students.length)students=d.students;
   if(d.vendedoras&&d.vendedoras.length)vendedoras=d.vendedoras;
-  if(d.evs!==undefined&&d.evs!==null)evs=d.evs; // aceita {} para limpar todos os eventos
+  if(d.evs!==undefined&&d.evs!==null)evs=d.evs;
+  if(Array.isArray(d.estoque))estoque=d.estoque; // aceita {} para limpar todos os eventos
   if(d.patients)patients=d.patients;
   if(d.procedures)procedures=d.procedures;
   function _migrateTaxaStore(raw,isMaq){
@@ -3469,6 +3734,7 @@ function applyData(d){
     if(ids.grupoNid)grupoNid=ids.grupoNid;
     if(ids.patientNid)patientNid=ids.patientNid;if(ids.patientNcode)patientNcode=ids.patientNcode;
     if(ids.procedureNid)procedureNid=ids.procedureNid;if(ids.procedureNcode)procedureNcode=ids.procedureNcode;
+    if(ids.estoqueNid)estoqueNid=ids.estoqueNid;
   }
   // Migração v6: remove Yampi txs antigas E reseta eventos no Supabase para reimport
   if(!d._yampiParserV||d._yampiParserV<7){
@@ -3516,6 +3782,7 @@ function refreshCurrentPage(){
   if(id==='page-dashboard')updateDashCharts();
   else if(id==='page-financeiro')renderTx();
   else if(id==='page-carteira')renderCarteira();
+  else if(id==='page-estoque')renderEstoque();
   else if(id==='page-cursos')renderCursos();
   else if(id==='page-alunos')renderAlunos();
   else if(id==='page-vendedoras'){renderVendedoras();if(document.getElementById('vendSecDesemp')?.style.display!=='none')renderVendDesemp();}
@@ -3976,7 +4243,7 @@ window.addEventListener('load',async()=>{
   // Inicia no modo Consolidado (todas as empresas)
   ['navSecAcademy','navCursos','navAlunos'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   ['navSecConsultorio','navPacientes','navProced','navCEImport'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
-  ['navSecNF'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  ['navSecNF','navEstoque'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   const nvInit=document.getElementById('navVendedoras');if(nvInit)nvInit.style.display='';
   // Marca botão Consolidado como ativo
   document.querySelectorAll('.sw-b').forEach(b=>b.classList.remove('a'));
