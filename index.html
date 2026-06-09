@@ -868,10 +868,10 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
       <div class="fgp"><label class="fl">Código</label><input class="fi" id="vCode" placeholder="Ex: NFV004"></div>
       <div class="fgp"><label class="fl">Status</label><select class="fse" id="vSt"><option value="ativa">Ativa</option><option value="inativa">Inativa</option></select></div>
       <div class="fgp fc1"><label class="fl">Nome completo</label><input class="fi" id="vNm" placeholder="Nome da vendedora"></div>
-      <div class="fgp"><label class="fl">CPF</label><input class="fi" id="vCpf" placeholder="000.000.000-00"></div>
+      <div class="fgp"><label class="fl">CPF</label><input class="fi" id="vCpf" placeholder="000.000.000-00" oninput="maskCpf(this)"></div>
       <div class="fgp"><label class="fl">Data de Nascimento</label><input class="fi" id="vBirth" type="date"></div>
       <div class="fgp"><label class="fl">E-mail</label><input class="fi" id="vEm" type="email" placeholder="email@natureface.com"></div>
-      <div class="fgp"><label class="fl">Telefone / WhatsApp</label><input class="fi" id="vPh" placeholder="(00) 00000-0000"></div>
+      <div class="fgp"><label class="fl">Telefone / WhatsApp</label><input class="fi" id="vPh" placeholder="(00) 00000-0000" oninput="maskPhone(this)"></div>
       <div class="sec-div" style="font-size:12px;color:var(--m)">📍 Endereço</div>
       <div class="fgp"><label class="fl">CEP</label><input class="fi" id="vCep" placeholder="00000-000"></div>
       <div class="fgp"><label class="fl">Estado</label><select class="fse" id="vState">
@@ -896,10 +896,10 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
       <div class="fgp"><label class="fl">Código</label><input class="fi" id="pacCode" placeholder="Ex: CTp001"></div>
       <div class="fgp"><label class="fl">Status</label><select class="fse" id="pacSt"><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select></div>
       <div class="fgp fc1"><label class="fl">Nome completo</label><input class="fi" id="pacNm" placeholder="Nome completo do paciente"></div>
-      <div class="fgp"><label class="fl">CPF</label><input class="fi" id="pacCpf" placeholder="000.000.000-00"></div>
+      <div class="fgp"><label class="fl">CPF</label><input class="fi" id="pacCpf" placeholder="000.000.000-00" oninput="maskCpf(this)"></div>
       <div class="fgp"><label class="fl">Data de Nascimento</label><input class="fi" id="pacBirth" type="date"></div>
       <div class="fgp"><label class="fl">E-mail</label><input class="fi" id="pacEm" type="email" placeholder="email@exemplo.com"></div>
-      <div class="fgp"><label class="fl">Telefone / WhatsApp</label><input class="fi" id="pacPh" placeholder="(00) 00000-0000"></div>
+      <div class="fgp"><label class="fl">Telefone / WhatsApp</label><input class="fi" id="pacPh" placeholder="(00) 00000-0000" oninput="maskPhone(this)"></div>
       <div class="fgp fc1"><label class="fl">Observações / Anamnese</label><textarea class="fta" id="pacNo" placeholder="Observações, histórico, alergias..."></textarea></div>
     </div>
     <div class="mft"><button class="bs" onclick="closeM('pacienteModal')">Cancelar</button><button class="bp" onclick="savePaciente()">Salvar Paciente</button></div>
@@ -1019,8 +1019,8 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
             <div class="fgp"><label class="fl">Código do Aluno</label><input class="fi" id="sCode" placeholder="Ex: RVA005"></div>
             <div class="fgp"><label class="fl">Nome completo</label><input class="fi" id="sNm" placeholder="Nome do aluno"></div>
             <div class="fgp"><label class="fl">E-mail</label><input class="fi" id="sEm" type="email" placeholder="email@exemplo.com"></div>
-            <div class="fgp"><label class="fl">Telefone / WhatsApp</label><input class="fi" id="sPh" placeholder="(00) 00000-0000"></div>
-            <div class="fgp"><label class="fl">CPF</label><input class="fi" id="sCp" placeholder="000.000.000-00"></div>
+            <div class="fgp"><label class="fl">Telefone / WhatsApp</label><input class="fi" id="sPh" placeholder="(00) 00000-0000" oninput="maskPhone(this)"></div>
+            <div class="fgp"><label class="fl">CPF</label><input class="fi" id="sCp" placeholder="000.000.000-00" oninput="maskCpf(this)"></div>
             <div class="fgp"><label class="fl">Curso Matriculado</label><select class="fse" id="sStuCrs" onchange="syncCourseFromStu()"><option value="">— Selecione o curso —</option></select></div>
             <div class="sec-div">📍 Endereço</div>
             <div class="fgp fc1"><label class="fl">Logradouro e Número</label><input class="fi" id="sSt" placeholder="Ex: Rua das Flores, 123 — Apto 4B"></div>
@@ -1096,10 +1096,10 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
 
       <div class="sec-div" style="font-size:12px;color:var(--m)">👤 Dados Pessoais</div>
       <div class="fgp fc1"><label class="fl">Nome completo</label><input class="fi" id="aMNm" placeholder="Nome completo da aluna"></div>
-      <div class="fgp"><label class="fl">CPF</label><input class="fi" id="aMCpf" placeholder="000.000.000-00"></div>
+      <div class="fgp"><label class="fl">CPF</label><input class="fi" id="aMCpf" placeholder="000.000.000-00" oninput="maskCpf(this)"></div>
       <div class="fgp"><label class="fl">Data de Nascimento</label><input class="fi" id="aMBirth" type="date"></div>
       <div class="fgp"><label class="fl">E-mail</label><input class="fi" id="aMEm" type="email" placeholder="email@exemplo.com"></div>
-      <div class="fgp"><label class="fl">Telefone / WhatsApp</label><input class="fi" id="aMPh" placeholder="(00) 00000-0000"></div>
+      <div class="fgp"><label class="fl">Telefone / WhatsApp</label><input class="fi" id="aMPh" placeholder="(00) 00000-0000" oninput="maskPhone(this)"></div>
 
       <div class="sec-div" style="font-size:12px;color:var(--m)">🎓 Curso</div>
       <div class="fgp"><label class="fl">Curso / Turma</label><input class="fi" id="aMMCr" placeholder="Ex: Protocolos Avançados 2025"></div>
@@ -1157,6 +1157,23 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
 </div>
 
 <script>
+// ===== MASKS =====
+function maskPhone(el){
+  let v=el.value.replace(/\D/g,'').slice(0,11);
+  if(v.length<=2) v=v.replace(/^(\d{0,2})/,'($1');
+  else if(v.length<=7) v=v.replace(/^(\d{2})(\d{0,5})/,'($1) $2');
+  else if(v.length<=10) v=v.replace(/^(\d{2})(\d{4})(\d{0,4})/,'($1) $2-$3');
+  else v=v.replace(/^(\d{2})(\d{5})(\d{0,4})/,'($1) $2-$3');
+  el.value=v;
+}
+function maskCpf(el){
+  let v=el.value.replace(/\D/g,'').slice(0,11);
+  if(v.length<=3) v=v;
+  else if(v.length<=6) v=v.replace(/^(\d{3})(\d{0,3})/,'$1.$2');
+  else if(v.length<=9) v=v.replace(/^(\d{3})(\d{3})(\d{0,3})/,'$1.$2.$3');
+  else v=v.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2})/,'$1.$2.$3-$4');
+  el.value=v;
+}
 // ===== STATE =====
 let co='all', ftab='receber', subftab='pagas', editTxId=null, txNid=11;
 let grupoNid=1, filterGrupo=null;
