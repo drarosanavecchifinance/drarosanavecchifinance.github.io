@@ -141,7 +141,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
 .tic{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
 .tnm{font-size:13.5px;font-weight:600;color:var(--t1)}
 .tmt{font-size:12px;color:var(--t3);margin-top:2px}
-.tam{font-family:var(--num);font-size:14px;font-weight:700}
+.tam{font-family:var(--num);font-size:14px;font-weight:700;text-align:right}
 .tam.cr{color:var(--gr)} .tam.db{color:var(--t1)}
 .nr{display:flex;align-items:flex-start;gap:12px;padding:14px 22px;border-bottom:1.5px solid var(--bdr)}
 .nr:last-child{border-bottom:none}
@@ -1496,7 +1496,7 @@ function updateInsights(){
   if(rt){
     var recent=txs.filter(function(t){return t.status==='paid';}).sort(function(a,b){var da=a.saleDate||a.paidAt||a.due||'';var db=b.saleDate||b.paidAt||b.due||'';return db.localeCompare(da);}).slice(0,6);
     if(!recent.length){rt.innerHTML='<div style="padding:16px;font-size:12px;color:var(--t3)">Nenhuma movimentação</div>';}
-    else{rt.innerHTML=recent.map(function(t,i){var isRec=t.type==='receber';var coNames={nf:'NatureFace',rv:'Rosana Academy',ct:'Consultório'};var bg=isRec?'var(--grb)':'var(--orb)';var icon=isRec?'↑':'↓';var iconColor=isRec?'var(--gr)':'var(--or)';var borderTop=i>0?'border-top:1.5px solid var(--bdr);':'';return'<div class="tr" style="'+borderTop+'"><div class="tic" style="background:'+bg+';color:'+iconColor+';font-weight:700;font-size:14px">'+icon+'</div><div style="flex:1"><div class="tnm">'+t.name+'</div><div class="tmt">'+(coNames[t.co]||t.co)+' · '+(t.paidAt||t.due||'')+'</div></div><div class="tam '+(isRec?'cr':'db')+'">'+(isRec?'+':'-')+'R$ '+t.val.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div></div>';}).join('');}
+    else{rt.innerHTML=recent.map(function(t,i){var isRec=t.type==='receber';var coNames={nf:'NatureFace',rv:'Rosana Academy',ct:'Consultório'};var bg=isRec?'var(--grb)':'var(--orb)';var icon=isRec?'↑':'↓';var iconColor=isRec?'var(--gr)':'var(--or)';var borderTop=i>0?'border-top:1.5px solid var(--bdr);':'';return'<div class="tr" style="'+borderTop+'"><div class="tic" style="background:'+bg+';color:'+iconColor+';font-weight:700;font-size:14px">'+icon+'</div><div style="flex:1"><div class="tnm">'+t.name+'</div><div class="tmt">'+(coNames[t.co]||t.co)+' · '+(t.paidAt||t.due||'')+'</div></div><div class="tam '+(isRec?'cr':'db')+'">'+(isRec?'+':'-')+'R$ '+t.val.toLocaleString('pt-BR',{minimumFractionDigits:2})+'<div style="font-size:10px;opacity:.55;margin-top:1px;font-weight:400">liq. R$ '+(isRec&&typeof valLiq==='function'?valLiq(t).toLocaleString('pt-BR',{minimumFractionDigits:2}):t.val.toLocaleString('pt-BR',{minimumFractionDigits:2}))+'</div></div></div>';}).join('');}
   }
   // Contadores acesso rápido
   var dac=document.getElementById('dashAlunosCount');if(dac)dac.textContent=students.length+' aluno'+(students.length!==1?'s':'');
