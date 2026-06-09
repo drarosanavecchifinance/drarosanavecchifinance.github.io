@@ -2414,13 +2414,14 @@ function registrarPagamentoAluna(){
   // Esconde saldo devedor
   const vlRestWrap=document.getElementById('fVlRestWrap');if(vlRestWrap)vlRestWrap.style.display='none';
   resetSaldoDevedor();
-  // Esconde "Parcelar em" e "Recorrência" — pagamento pontual
+  // Inicializa campos
+  checkStu();toggleCursoField();toggleVendField();toggleProcField();toggleRec();
+  // Esconde "Parcelar em" e "Recorrência" — pagamento pontual (após toggleRec para não ser sobrescrito)
   const parcWrap=document.getElementById('fParcWrap');if(parcWrap)parcWrap.style.display='none';
   const recWrap=document.getElementById('fRecWrap');if(recWrap)recWrap.style.display='none';
   const recQtdWrap=document.getElementById('fRecQtdWrap');if(recQtdWrap)recQtdWrap.style.display='none';
   const parcPreview=document.getElementById('fParcPreview');if(parcPreview){parcPreview.style.display='none';parcPreview.innerHTML='';}
-  // Inicializa campos
-  checkStu();toggleCursoField();toggleVendField();toggleProcField();toggleRec();
+  const parcCustomWrap=document.getElementById('fParcCustomWrap');if(parcCustomWrap)parcCustomWrap.style.display='none';
   // Pega vendedora da transação original da aluna
   const origTx=s.txId?txs.find(t=>t.id===s.txId):null;
   // Pré-seleciona aluna existente + curso + vendedora
