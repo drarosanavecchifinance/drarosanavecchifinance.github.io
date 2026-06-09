@@ -1219,6 +1219,7 @@ let editProcedimentoId=null, procedureNid=1, procedureNcode=1;
 
 // ===== DATA =====
 const _sessionId=Math.random().toString(36).slice(2,10);
+let _lastSaveAt='';
 // Versão das taxas — incrementar quando defaults NF mudarem para forçar migração
 const _TAXAS_VER=5;
 let patients=[];
@@ -2632,19 +2633,21 @@ function openEditEvent(key,id,e){
   setTimeout(()=>document.getElementById('evTi').focus(),80);
 }
 
-function deleteEvent(key,id,e){
+async function deleteEvent(key,id,e){
   if(e)e.stopPropagation();
   if(!confirm('Excluir este evento?'))return;
   if(evs[key]){evs[key]=evs[key].filter(x=>x.id!==id);if(!evs[key].length)delete evs[key];}
-  renderCal();saveData();
+  renderCal();
+  try{await saveData();}catch(err){console.warn('Erro ao salvar exclusão:',err);}
 }
 
-function deleteEditingEvent(){
+async function deleteEditingEvent(){
   if(!editingEv)return;
   if(!confirm('Excluir este evento?'))return;
   const{key,id}=editingEv;
   if(evs[key]){evs[key]=evs[key].filter(x=>x.id!==id);if(!evs[key].length)delete evs[key];}
-  editingEv=null;closeM('evModal');renderCal();saveData();
+  editingEv=null;closeM('evModal');renderCal();
+  try{await saveData();}catch(err){console.warn('Erro ao salvar exclusão:',err);}
 }
 
 function saveEvent(){
@@ -3341,7 +3344,8 @@ async function saveData(){
   if(!supabaseReady)return;
   try{
     const db=sbAdmin||sbClient;
-    const{error}=await db.from('vai_data').upsert({key:'all_data',value:payload,updated_at:new Date().toISOString()});
+    const _ts=new Date().toISOString();_lastSaveAt=_ts;
+    const{error}=await db.from('vai_data').upsert({key:'all_data',value:payload,updated_at:_ts});
     if(error)console.warn('Erro ao salvar no Supabase:',error);
   }catch(e){console.warn('Supabase saveData error:',e);}
 }
@@ -3394,7 +3398,7 @@ function applyData(d){
   if(d.courses&&d.courses.length)courses=d.courses;
   if(d.students&&d.students.length)students=d.students;
   if(d.vendedoras&&d.vendedoras.length)vendedoras=d.vendedoras;
-  if(d.evs&&Object.keys(d.evs).length)evs=d.evs;
+  if(d.evs!==undefined&&d.evs!==null)evs=d.evs; // aceita {} para limpar todos os eventos
   if(d.patients)patients=d.patients;
   if(d.procedures)procedures=d.procedures;
   function _migrateTaxaStore(raw,isMaq){
@@ -3500,6 +3504,9 @@ function subscribeRealtime(){
       if(payload.new?.value){
         // Ignora evento gerado pelo próprio salvamento desta sessão
         if(payload.new.value._sessionId===_sessionId)return;
+        // Só aplica se dado for mais recente que o último save local
+        const incomingTs=payload.new.updated_at||payload.new.value._savedAt||'';
+        if(_lastSaveAt&&incomingTs&&incomingTs<_lastSaveAt)return;
         applyData(payload.new.value);showSyncToast();
       }
     })
