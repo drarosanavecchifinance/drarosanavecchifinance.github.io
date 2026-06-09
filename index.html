@@ -580,16 +580,10 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
         <canvas id="empresaChart" height="160"></canvas>
       </div>
     </div>
-    <!-- Movimentações Recentes + Vendedoras -->
-    <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px">
-      <div class="sc">
-        <div class="sh"><div class="st">Movimentações Recentes</div><button class="lnk" onclick="sv('financeiro',document.querySelector('[onclick*=financeiro]'))">Ver todas →</button></div>
-        <div id="dashRecentTxs"><div style="padding:16px;font-size:12px;color:var(--t3)">Carregando...</div></div>
-      </div>
-      <div class="cc" style="padding:0">
-        <div class="ch"><div><div class="ct">Vendedoras — Mês Atual</div><div class="cs">NatureFace</div></div></div>
-        <canvas id="vendChart" height="200"></canvas>
-      </div>
+    <!-- Vendedoras -->
+    <div class="cc" style="padding:0">
+      <div class="ch"><div><div class="ct">Vendedoras — Mês Atual</div><div class="cs">NatureFace</div></div></div>
+      <canvas id="vendChart" height="120"></canvas>
     </div>
   </div>
 
