@@ -2982,13 +2982,13 @@ function renderCarteira(){
       return sr!=='cancelado'&&sr!=='estornado'&&t.due&&t.due.startsWith(_pk);
     }).reduce(function(s,t){return s+valLiq(t);},0);
   }
-  // Previsão total da carteira — tudo que vai/já entrou no saldo (todos os meses, exceto cancelado/estornado)
+  // Previsão total — mesmo critério do Prev. 3 Meses, mas todos os períodos futuros
   var _aRec=allRec.filter(function(t){
     var sr=getStatusReal(t);
-    return sr!=='cancelado'&&sr!=='estornado';
+    return sr!=='cancelado'&&sr!=='estornado'&&sr!=='paid';
   });
   var totalAReceber=_aRec.reduce(function(s,t){return s+valLiq(t);},0);
-  var totalAReceberCnt=_aRec.filter(function(t){return getStatusReal(t)!=='paid';}).length;
+  var totalAReceberCnt=_aRec.length;
   // KPIs
   var kDiv=document.getElementById('carteiraKpis');
   if(kDiv){
@@ -2999,7 +2999,7 @@ function renderCarteira(){
       (totalCancelado>0?'<div class="kc"><div class="klbl">Cancelado</div><div class="kval" style="color:var(--t3)">'+fmt(totalCancelado)+'</div><div class="kft"><span class="kpr">'+cancelados.length+' cancel.</span></div></div>':'')+
       (totalEstornado>0?'<div class="kc"><div class="klbl">Estornado</div><div class="kval" style="color:var(--t3)">'+fmt(totalEstornado)+'</div><div class="kft"><span class="kpr">'+estornados.length+' estorno</span></div></div>':'')+
       '<div class="kc b"><div class="klbl">Prev. 3 Meses</div><div class="kval">'+fmt(prox3Total)+'</div><div class="kft"><span class="kpr">entradas previstas</span></div></div>'+
-      '<div class="kc o"><div class="klbl">Previsão Total</div><div class="kval" style="color:var(--or)">'+fmt(totalAReceber)+'</div><div class="kft"><span class="kpr">todos os meses · '+(totalAReceberCnt>0?totalAReceberCnt+' ainda pendente'+(totalAReceberCnt!==1?'s':''):'tudo recebido')+'</span></div></div>';
+      '<div class="kc o"><div class="klbl">Prev. Total</div><div class="kval" style="color:var(--or)">'+fmt(totalAReceber)+'</div><div class="kft"><span class="kpr">'+totalAReceberCnt+' entrada'+(totalAReceberCnt!==1?'s':'')+' prevista'+(totalAReceberCnt!==1?'s':'')+'</span></div></div>';
   }
   // ===== VENDAS POR MODALIDADE (regime de competência — saleDate) =====
   var modDiv=document.getElementById('carteiraModalidades');
