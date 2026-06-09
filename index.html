@@ -2982,14 +2982,15 @@ function renderCarteira(){
       return sr!=='cancelado'&&sr!=='estornado'&&t.due&&t.due.startsWith(_pk);
     }).reduce(function(s,t){return s+valLiq(t);},0);
   }
-  // Previsão total — mesmo critério do Prev. 3 Meses, mas a partir do próximo mês ao selecionado sem limite
-  var _nextMonthKey=(function(){var d=new Date(_baseY,_baseM+1,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');})();
-  var _aRec=allRec.filter(function(t){
-    var sr=getStatusReal(t);
-    return sr!=='cancelado'&&sr!=='estornado'&&t.due&&t.due.slice(0,7)>=_nextMonthKey;
-  });
-  var totalAReceber=_aRec.reduce(function(s,t){return s+valLiq(t);},0);
-  var totalAReceberCnt=_aRec.length;
+  // Previsão total — loop idêntico ao Prev. 3 Meses, mas 24 meses à frente
+  var totalAReceber=0,totalAReceberCnt=0;
+  for(var _ti=1;_ti<=24;_ti++){
+    var _td=new Date(_baseY,_baseM+_ti,1);
+    var _tk=_td.getFullYear()+'-'+String(_td.getMonth()+1).padStart(2,'0');
+    var _tMonth=allRec.filter(function(t){var sr=getStatusReal(t);return sr!=='cancelado'&&sr!=='estornado'&&t.due&&t.due.startsWith(_tk);});
+    totalAReceber+=_tMonth.reduce(function(s,t){return s+valLiq(t);},0);
+    totalAReceberCnt+=_tMonth.length;
+  }
   // KPIs
   var kDiv=document.getElementById('carteiraKpis');
   if(kDiv){
