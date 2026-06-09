@@ -2982,15 +2982,13 @@ function renderCarteira(){
       return sr!=='cancelado'&&sr!=='estornado'&&t.due&&t.due.startsWith(_pk);
     }).reduce(function(s,t){return s+valLiq(t);},0);
   }
-  // Total geral a receber (todos os pendentes/vencidos/em compensação, sem limite de data)
-  var totalAReceber=txs.filter(function(t){
+  // Total a receber — pendentes/vencidos/em compensação do período e empresa filtrados
+  var _aRec=fatTxs.filter(function(t){
     var sr=getStatusReal(t);
-    return t.type==='receber'&&(!selCo||t.co===selCo)&&sr!=='paid'&&sr!=='cancelado'&&sr!=='estornado';
-  }).reduce(function(s,t){return s+valLiq(t);},0);
-  var totalAReceberCnt=txs.filter(function(t){
-    var sr=getStatusReal(t);
-    return t.type==='receber'&&(!selCo||t.co===selCo)&&sr!=='paid'&&sr!=='cancelado'&&sr!=='estornado';
-  }).length;
+    return sr!=='paid'&&sr!=='cancelado'&&sr!=='estornado';
+  });
+  var totalAReceber=_aRec.reduce(function(s,t){return s+valLiq(t);},0);
+  var totalAReceberCnt=_aRec.length;
   // KPIs
   var kDiv=document.getElementById('carteiraKpis');
   if(kDiv){
