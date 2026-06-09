@@ -2982,10 +2982,10 @@ function renderCarteira(){
       return sr!=='cancelado'&&sr!=='estornado'&&t.due&&t.due.startsWith(_pk);
     }).reduce(function(s,t){return s+valLiq(t);},0);
   }
-  // Previsão total — mesmo critério do Prev. 3 Meses, mas todos os períodos futuros
+  // Previsão total — do dia atual para frente, mesmo critério do Prev. 3 Meses
   var _aRec=allRec.filter(function(t){
     var sr=getStatusReal(t);
-    return sr!=='cancelado'&&sr!=='estornado'&&sr!=='paid';
+    return sr!=='cancelado'&&sr!=='estornado'&&sr!=='paid'&&t.due&&t.due>=todayStr;
   });
   var totalAReceber=_aRec.reduce(function(s,t){return s+valLiq(t);},0);
   var totalAReceberCnt=_aRec.length;
