@@ -2982,8 +2982,8 @@ function renderCarteira(){
       return sr!=='cancelado'&&sr!=='estornado'&&t.due&&t.due.startsWith(_pk);
     }).reduce(function(s,t){return s+valLiq(t);},0);
   }
-  // Total a receber — pendentes/vencidos/em compensação do período e empresa filtrados
-  var _aRec=fatTxs.filter(function(t){
+  // Total a receber — todos os meses, filtrado só por empresa (previsão geral da carteira)
+  var _aRec=allRec.filter(function(t){
     var sr=getStatusReal(t);
     return sr!=='paid'&&sr!=='cancelado'&&sr!=='estornado';
   });
