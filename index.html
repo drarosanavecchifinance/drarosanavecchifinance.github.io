@@ -2982,7 +2982,16 @@ function renderCarteira(){
       return sr!=='cancelado'&&sr!=='estornado'&&t.due&&t.due.startsWith(_pk);
     }).reduce(function(s,t){return s+valLiq(t);},0);
   }
-  // KPIs - 7 indicadores financeiros
+  // Total geral a receber (todos os pendentes/vencidos/em compensação, sem limite de data)
+  var totalAReceber=txs.filter(function(t){
+    var sr=getStatusReal(t);
+    return t.type==='receber'&&(!selCo||t.co===selCo)&&sr!=='paid'&&sr!=='cancelado'&&sr!=='estornado';
+  }).reduce(function(s,t){return s+valLiq(t);},0);
+  var totalAReceberCnt=txs.filter(function(t){
+    var sr=getStatusReal(t);
+    return t.type==='receber'&&(!selCo||t.co===selCo)&&sr!=='paid'&&sr!=='cancelado'&&sr!=='estornado';
+  }).length;
+  // KPIs
   var kDiv=document.getElementById('carteiraKpis');
   if(kDiv){
     kDiv.innerHTML=
@@ -2991,7 +3000,8 @@ function renderCarteira(){
       (totalVencido>0?'<div class="kc r"><div class="klbl">Vencido</div><div class="kval" style="color:var(--re)">'+fmt(totalVencido)+'</div><div class="kft"><span class="kpr" style="color:var(--re)">'+atrasados.length+' em atraso</span></div></div>':'')+
       (totalCancelado>0?'<div class="kc"><div class="klbl">Cancelado</div><div class="kval" style="color:var(--t3)">'+fmt(totalCancelado)+'</div><div class="kft"><span class="kpr">'+cancelados.length+' cancel.</span></div></div>':'')+
       (totalEstornado>0?'<div class="kc"><div class="klbl">Estornado</div><div class="kval" style="color:var(--t3)">'+fmt(totalEstornado)+'</div><div class="kft"><span class="kpr">'+estornados.length+' estorno</span></div></div>':'')+
-      '<div class="kc b"><div class="klbl">Prev. 3 Meses</div><div class="kval">'+fmt(prox3Total)+'</div><div class="kft"><span class="kpr">entradas previstas</span></div></div>';
+      '<div class="kc b"><div class="klbl">Prev. 3 Meses</div><div class="kval">'+fmt(prox3Total)+'</div><div class="kft"><span class="kpr">entradas previstas</span></div></div>'+
+      '<div class="kc o"><div class="klbl">Total a Receber</div><div class="kval" style="color:var(--or)">'+fmt(totalAReceber)+'</div><div class="kft"><span class="kpr">'+totalAReceberCnt+' entrada'+(totalAReceberCnt!==1?'s':'')+' em aberto</span></div></div>';
   }
   // ===== VENDAS POR MODALIDADE (regime de competência — saleDate) =====
   var modDiv=document.getElementById('carteiraModalidades');
