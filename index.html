@@ -3001,7 +3001,7 @@ function renderCarteira(){
       (totalCancelado>0?'<div class="kc"><div class="klbl">Cancelado</div><div class="kval" style="color:var(--t3)">'+fmt(totalCancelado)+'</div><div class="kft"><span class="kpr">'+cancelados.length+' cancel.</span></div></div>':'')+
       (totalEstornado>0?'<div class="kc"><div class="klbl">Estornado</div><div class="kval" style="color:var(--t3)">'+fmt(totalEstornado)+'</div><div class="kft"><span class="kpr">'+estornados.length+' estorno</span></div></div>':'')+
       '<div class="kc b"><div class="klbl">Prev. 3 Meses</div><div class="kval">'+fmt(prox3Total)+'</div><div class="kft"><span class="kpr">entradas previstas</span></div></div>'+
-      '<div class="kc o"><div class="klbl">Prev. Total</div><div class="kval" style="color:var(--or)">'+fmt(totalAReceber)+'</div><div class="kft"><span class="kpr">+'entradas previstas · '+['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][parseInt(_nextMonthKey.split('-')[1])-1]+'/'+_nextMonthKey.split('-')[0]+' em diante'+'</span></div></div>';
+      '<div class="kc o"><div class="klbl">Prev. Total</div><div class="kval" style="color:var(--or)">'+fmt(totalAReceber)+'</div><div class="kft"><span class="kpr">'+totalAReceberCnt+' entrada'+(totalAReceberCnt!==1?'s':'')+' prevista'+(totalAReceberCnt!==1?'s':'')+'</span></div></div>';
   }
   // ===== VENDAS POR MODALIDADE (regime de competência — saleDate) =====
   var modDiv=document.getElementById('carteiraModalidades');
