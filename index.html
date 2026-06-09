@@ -244,41 +244,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
 .calcel:hover .calev-del{display:flex}
 
 /* ===== VAI ===== */
-.vw{display:grid;grid-template-columns:1fr 285px;gap:20px;height:calc(100vh - 138px)}
-.vchat{background:var(--card);border:1.5px solid var(--bdr);border-radius:var(--rl);display:flex;flex-direction:column;overflow:hidden}
-.vhdr{padding:18px 22px;border-bottom:1.5px solid var(--bdr);display:flex;align-items:center;gap:13px;background:linear-gradient(135deg,rgba(196,165,90,.06) 0%,rgba(149,82,81,.04) 100%)}
-.vav{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--gdd),var(--gdl));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:#fff;position:relative;flex-shrink:0}
-.von{position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:var(--gr);border:2px solid var(--card);animation:pulse 2.5s infinite}
-.vnm{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--t1)}
-.vds{font-size:12px;color:var(--t3)}
-.vmsgs{flex:1;overflow-y:auto;padding:22px;display:flex;flex-direction:column;gap:15px}
-.vmsgs::-webkit-scrollbar{width:4px}
-.vmsgs::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px}
-.msg{display:flex;gap:10px;animation:mi .3s ease}
-@keyframes mi{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
-.msg.u{flex-direction:row-reverse}
-.mav{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
-.bbl{max-width:72%;padding:12px 16px;border-radius:13px;font-size:13.5px;line-height:1.65}
-.msg.ai .bbl{background:var(--bg);border:1.5px solid var(--bdr);color:var(--t1);border-radius:5px 13px 13px 13px}
-.msg.u .bbl{background:linear-gradient(135deg,var(--md),var(--m));color:#fff;border-radius:13px 5px 13px 13px}
-.vinp{padding:14px 18px;border-top:1.5px solid var(--bdr);display:flex;gap:9px;align-items:center}
-.vi{flex:1;background:var(--bg);border:1.5px solid var(--bdr);border-radius:9px;padding:11px 15px;font-family:'DM Sans',sans-serif;font-size:13.5px;color:var(--t1);outline:none;transition:border-color .2s}
-.vi::placeholder{color:var(--t4)} .vi:focus{border-color:var(--m)}
-.vs{width:38px;height:38px;border-radius:9px;background:var(--m);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;transition:all .14s;flex-shrink:0}
-.vs:hover{background:var(--md);box-shadow:0 4px 12px rgba(149,82,81,.4)}
-.tind{display:flex;gap:4px;align-items:center}
-.tind span{width:7px;height:7px;background:var(--t3);border-radius:50%;animation:ty 1.2s infinite}
-.tind span:nth-child(2){animation-delay:.2s}.tind span:nth-child(3){animation-delay:.4s}
-@keyframes ty{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-6px);opacity:1}}
-.icol{display:flex;flex-direction:column;gap:14px}
-.icard{background:var(--card);border:1.5px solid var(--bdr);border-radius:var(--r);padding:18px}
-.ilbl{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.09em;text-transform:uppercase;margin-bottom:13px}
-.iit{display:flex;align-items:flex-start;gap:9px;margin-bottom:11px;font-size:13px;line-height:1.6;color:var(--t2)}
-.iit:last-child{margin-bottom:0}
-.idot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px}
-.ql{display:flex;flex-direction:column;gap:6px}
-.qb{background:var(--bg);border:1.5px solid var(--bdr);border-radius:8px;padding:10px 13px;text-align:left;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--t2);cursor:pointer;transition:all .14s;font-weight:500}
-.qb:hover{background:var(--mp);border-color:rgba(149,82,81,.25);color:var(--m)}
 
 /* ===== MODAL ===== */
 .ov{position:fixed;inset:0;background:rgba(26,7,7,.45);z-index:100;display:none;align-items:center;justify-content:center;backdrop-filter:blur(5px)}
@@ -532,10 +497,6 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
     <div class="ni" onclick="sv('calendario',this)">
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M14 2v4M6 2v4M3 9h14"/></svg>Calendário
     </div>
-    <div class="nsec">Inteligência</div>
-    <div class="ni" onclick="sv('vai',this)">
-      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="7"/><path d="M10 7v3l2 2"/></svg>V.A.I Assistente
-    </div>
   </nav>
   <div class="sb-foot">
     <div class="urow">
@@ -781,37 +742,6 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
   </div>
 
   <!-- VAI -->
-  <div class="page" id="page-vai">
-    <div class="vw">
-      <div class="vchat">
-        <div class="vhdr"><div class="vav">V<span class="von"></span></div><div><div class="vnm">V.A.I</div><div class="vds">Vecchi Artificial Intelligence · Análise em tempo real</div></div></div>
-        <div class="vmsgs" id="vaiMsgs">
-          <div class="msg ai"><div class="mav" style="background:linear-gradient(135deg,var(--md),var(--ml));color:#fff">V</div><div class="bbl">Olá, Rosana! 👋 Sou o V.A.I, seu assistente executivo.<br><br><strong>📊 Resumo de hoje:</strong><br>• Faturamento: <strong>R$ 284.750</strong> (+18,3%)<br>• Rosana Academy superou a meta em <strong>23%</strong><br>• 3 contas vencem hoje — <strong>R$ 8.640</strong><br><br>Como posso ajudar?</div></div>
-        </div>
-        <div class="vinp"><input class="vi" id="vaiI" placeholder="Pergunte sobre finanças, crescimento, previsões..." onkeydown="if(event.key==='Enter')sendVai()"><button class="vs" onclick="sendVai()"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 10L3 3l3 7-3 7 16-7z"/></svg></button></div>
-      </div>
-      <div class="icol">
-        <div class="icard">
-          <div class="ilbl">💡 Insights</div>
-          <div class="iit"><span class="idot" style="background:var(--gr)"></span><span>Academy cresceu 31% em matrículas — recorde do ano</span></div>
-          <div class="iit"><span class="idot" style="background:var(--or)"></span><span>CPL subiu 8% — revisar mix de anúncios</span></div>
-          <div class="iit"><span class="idot" style="background:var(--m)"></span><span>Previsão agosto: R$ 316.000 (+11%)</span></div>
-          <div class="iit"><span class="idot" style="background:var(--re)"></span><span>Operacional NF 12% acima do orçamento</span></div>
-          <div class="iit"><span class="idot" style="background:var(--bl)"></span><span>Mentorias têm margem de 71% — escalar</span></div>
-        </div>
-        <div class="icard">
-          <div class="ilbl">🎯 Perguntas rápidas</div>
-          <div class="ql">
-            <button class="qb" onclick="askVai('Quanto faturamos este mês?')">Quanto faturamos este mês?</button>
-            <button class="qb" onclick="askVai('Qual empresa cresceu mais?')">Qual empresa cresceu mais?</button>
-            <button class="qb" onclick="askVai('Preveja o faturamento do próximo mês')">Previsão do próximo mês</button>
-            <button class="qb" onclick="askVai('Onde posso reduzir custos?')">Onde reduzir custos?</button>
-            <button class="qb" onclick="askVai('Qual categoria mais lucrou?')">Categoria mais lucrativa</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
   <!-- CARTEIRA -->
   <div class="page" id="page-carteira">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">
@@ -1380,7 +1310,7 @@ function setCo(c,btn){
 }
 
 // ===== NAV =====
-const pgMap={dashboard:['Dashboard Executivo','Visão geral estratégica'],financeiro:['Fluxo de Caixa','Lançamentos · Contas · Fluxo de Caixa'],carteira:['Carteira','Faturamento · Recebimentos · Agenda de entradas'],cursos:['Cursos — Rosana Academy','Controle financeiro por curso'],alunos:['Base de Alunos','Rosana Vecchi Academy'],vendedoras:['Vendedoras','Equipe de vendas — NatureFace & Academy'],pacientes:['Pacientes — Consultório','Base de pacientes'],procedimentos:['Procedimentos — Consultório','Serviços e tratamentos'],ceimport:['Clínica Experts','Integração e importação automática'],calendario:['Calendário','Agenda e eventos'],vai:['V.A.I — Assistente','Inteligência artificial executiva']};
+const pgMap={dashboard:['Dashboard Executivo','Visão geral estratégica'],financeiro:['Fluxo de Caixa','Lançamentos · Contas · Fluxo de Caixa'],carteira:['Carteira','Faturamento · Recebimentos · Agenda de entradas'],cursos:['Cursos — Rosana Academy','Controle financeiro por curso'],alunos:['Base de Alunos','Rosana Vecchi Academy'],vendedoras:['Vendedoras','Equipe de vendas — NatureFace & Academy'],pacientes:['Pacientes — Consultório','Base de pacientes'],procedimentos:['Procedimentos — Consultório','Serviços e tratamentos'],ceimport:['Clínica Experts','Integração e importação automática'],calendario:['Calendário','Agenda e eventos']};
 function updateYampiButtons(){
   const show=co==='nf'&&document.getElementById('page-financeiro')?.classList.contains('a');
   const b1=document.getElementById('yampiSyncBtn');const b2=document.getElementById('yampiResyncBtn');
@@ -2706,14 +2636,6 @@ document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{if(e.
 
 // ===== VAI =====
 const vm={'Quanto faturamos este mês?':'Com base nos dados de julho/2025, o faturamento total atingiu <strong>R$ 284.750</strong>:<br><br>• NatureFace: <strong>R$ 148.200</strong> (52%)<br>• Rosana Academy: <strong>R$ 136.550</strong> (48%)<br><br>Crescimento de <strong>+18,3%</strong> vs junho. 🚀','Qual empresa cresceu mais?':'A <strong>Rosana Academy lidera</strong> com <strong>+22%</strong> em julho, impulsionada por +31% em novas matrículas.<br><br>NatureFace cresceu +16%, com destaque para protocolos premium. 🎯','Preveja o faturamento do próximo mês':'Previsão para <strong>agosto/2025</strong>:<br><br>📊 <strong>R$ 316.000</strong> (±8%)<br>• NatureFace: ~R$ 164.000<br>• Rosana Academy: ~R$ 152.000<br><br>Alta demanda inverno + novo curso. Confiança: 78%','Onde posso reduzir custos?':'<strong>3 oportunidades identificadas:</strong><br><br>1️⃣ <strong>Marketing Digital</strong> — 12% acima do budget<br>2️⃣ <strong>Derma+</strong> — Negociar desconto por volume (-8%)<br>3️⃣ <strong>Licenças</strong> — Consolidar ferramentas (R$ 890/mês)','Qual categoria mais lucrou?':'🏆 <strong>Top 3 por margem em julho:</strong><br><br>1. <strong>Mentorias Premium</strong> — 71% → R$ 38.400<br>2. <strong>Protocolos Avançados</strong> — 58% → R$ 24.100<br>3. <strong>Cursos Certificadores</strong> — 52% → R$ 29.300'};
-function sendVai(){const inp=document.getElementById('vaiI');const txt=inp.value.trim();if(!txt)return;inp.value='';askVai(txt);}
-function askVai(txt){
-  const msgs=document.getElementById('vaiMsgs');
-  const ud=document.createElement('div');ud.className='msg u';ud.innerHTML=`<div class="mav" style="background:linear-gradient(135deg,var(--md),var(--m));color:#fff">RV</div><div class="bbl">${txt}</div>`;msgs.appendChild(ud);
-  const td=document.createElement('div');td.className='msg ai';td.innerHTML=`<div class="mav" style="background:linear-gradient(135deg,var(--m),var(--ml));color:#fff">V</div><div class="bbl"><div class="tind"><span></span><span></span><span></span></div></div>`;msgs.appendChild(td);msgs.scrollTop=msgs.scrollHeight;
-  const resp=vm[txt]||`Analisando <strong>"${txt}"</strong>...<br><br>Com base nos dados de julho/2025, posso ajudar com faturamento, custos, previsões e cursos. 💡`;
-  setTimeout(()=>{msgs.removeChild(td);const ad=document.createElement('div');ad.className='msg ai';ad.innerHTML=`<div class="mav" style="background:linear-gradient(135deg,var(--m),var(--ml));color:#fff">V</div><div class="bbl">${resp}</div>`;msgs.appendChild(ad);msgs.scrollTop=msgs.scrollHeight;},1500);
-}
 
 // VENDEDORAS
 let vendedoras=[
