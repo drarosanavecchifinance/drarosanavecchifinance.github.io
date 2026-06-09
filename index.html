@@ -2264,11 +2264,15 @@ function saveTx(){
       stuRef.saldoDevedor=(stuRef.saldoDevedor||0)+vlRest;
     }
   }
-  // Fix 1: Atualiza saldoDevedor da aluna ao registrar pagamento
+  // Fix 7: remove stuId órfão (aluna deletada)
+  if(tx.stuId&&!students.find(x=>x.id===tx.stuId))tx.stuId=null;
+  // Fix 2+5: Atualiza saldoDevedor da aluna ao registrar pagamento
   if(!editTxId&&tx.stuId&&tx.type==='receber'&&tx.status==='paid'){
     const stuPag=students.find(x=>x.id===tx.stuId);
     if(stuPag&&stuPag.saldoDevedor>0&&stuPag.txId!==tx.id){
-      stuPag.saldoDevedor=Math.max(0,stuPag.saldoDevedor-tx.val);
+      // Usa t.val (valor da parcela paga); se for parcelado, desconta cada parcela individualmente
+      const descVal=tx.parcelaNum&&tx.parcelaNum===1?(tx.val*(tx.parcelaTotal||1)-tx.val):tx.val;
+      stuPag.saldoDevedor=Math.max(0,stuPag.saldoDevedor-descVal);
     }
   }
   // Fix 5: Reabre ficha da aluna após registrar pagamento pendente
@@ -2937,10 +2941,10 @@ function renderCarteira(){
   // A Receber = pendentes/vencidos + crédito em compensação (dinheiro ainda vai chegar)
   var aReceberLiq=[].concat(pendentes,atrasados,parciais,emProc).reduce(function(s,t){return s+valLiq(t);},0);
   var aReceberCnt=pendentes.length+atrasados.length+parciais.length+emProc.length;
-  var totalPendente=pendentes.reduce(function(s,t){return s+t.val;},0);
-  var totalVencido=atrasados.reduce(function(s,t){return s+t.val;},0);
-  var totalCancelado=cancelados.reduce(function(s,t){return s+t.val;},0);
-  var totalEstornado=estornados.reduce(function(s,t){return s+t.val;},0);
+  var totalPendente=pendentes.reduce(function(s,t){return s+fatVal(t);},0);
+  var totalVencido=atrasados.reduce(function(s,t){return s+fatVal(t);},0);
+  var totalCancelado=cancelados.reduce(function(s,t){return s+fatVal(t);},0);
+  var totalEstornado=estornados.reduce(function(s,t){return s+fatVal(t);},0);
   var totalEmProc=emProc.reduce(function(s,t){return s+valLiq(t);},0);
   // Previsao 3 meses — a partir do mês filtrado (ou mês atual)
   // Soma entradas previstas (pagas mas ainda em compensação + pendentes) nos 3 meses seguintes
@@ -2986,7 +2990,7 @@ function renderCarteira(){
                transferencia:{nome:'Transferência',ico:'🔄',count:0,bruto:0,liq:0,cls:'b'},
                outros:{nome:'Outros',ico:'❓',count:0,bruto:0,liq:0,cls:''}};
     vendasMes.forEach(function(t){
-      var k=t.fpg||'outros';
+      var k=(t.fpg&&t.fpg!=='')?t.fpg:'outros';
       if(!modal[k])k='outros';
       var bruto=t.parcelaNum===1?t.val*(t.parcelaTotal||1):t.val;
       // Cria objeto sintético com valor bruto para calcular MDR total da venda
@@ -3069,7 +3073,7 @@ function renderCarteira(){
   }
   function section(title,icon,items,emptyMsg){
     if(!items.length)return'<div class="sc" style="margin-bottom:14px"><div style="padding:12px 16px;display:flex;align-items:center;gap:8px"><span style="font-size:16px">'+icon+'</span><span style="font-size:13.5px;font-weight:700;color:var(--t2)">'+title+'</span><span style="margin-left:auto;font-size:12px;color:var(--t3)">'+emptyMsg+'</span></div></div>';
-    var tot=items.reduce(function(s,t){return s+t.val;},0);
+    var tot=items.reduce(function(s,t){return s+fatVal(t);},0);
     var liqTot=items.reduce(function(s,t){return s+valLiq(t);},0);
     var showLiq=Math.abs(tot-liqTot)>0.01;
     return'<div class="sc" style="margin-bottom:14px"><div style="padding:12px 16px 10px;display:flex;align-items:center;gap:8px;border-bottom:1.5px solid var(--bdr)">'+
@@ -3101,6 +3105,13 @@ function renderCarteira(){
 function markPaid(id){
   var t=txs.find(function(x){return x.id===id;});if(!t)return;
   t.status='paid';t.paidAt=new Date().toISOString().slice(0,10);
+  // Fix 5: atualiza saldoDevedor da aluna ao marcar pago pela carteira
+  if(t.stuId&&t.type==='receber'){
+    var stuP=students.find(function(x){return x.id===t.stuId;});
+    if(stuP&&stuP.saldoDevedor>0&&stuP.txId!==t.id){
+      stuP.saldoDevedor=Math.max(0,stuP.saldoDevedor-t.val);
+    }
+  }
   renderCarteira();saveData();
 }
 
