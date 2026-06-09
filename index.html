@@ -726,6 +726,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
       <button class="cala" onclick="navCal(1)">›</button>
       <button class="cala" onclick="goToday()" title="Hoje" style="font-size:11px;font-weight:700;width:auto;padding:0 12px;border-radius:20px;color:var(--m);border-color:rgba(149,82,81,.3)">Hoje</button>
       <button class="bp" onclick="openAddEvent('')" style="padding:8px 16px;font-size:12.5px;border-radius:20px">+ Novo Evento</button>
+      <button id="btnLimparAgend" onclick="limparAgendamentos()" style="display:none;padding:8px 14px;font-size:12px;border-radius:20px;background:none;border:1px solid var(--re);color:var(--re);cursor:pointer;font-weight:600">🗑 Limpar duplicados</button>
     </div>
     <!-- Grid -->
     <div class="caldhdr">
@@ -2680,6 +2681,14 @@ const mns=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto
 function renderCal(){
   const y=calDate.getFullYear(),m=calDate.getMonth();
   document.getElementById('calMon').textContent=mns[m]+' '+y;
+  // Mostrar botão limpar se houver eventos "Agendamento"
+  const hasAgend=Object.values(evs).some(arr=>arr.some(e=>(e.title||'').toLowerCase().includes('agendamento')));
+  const btnLimpar=document.getElementById('btnLimparAgend');
+  if(btnLimpar){
+    const cnt=Object.values(evs).reduce((s,arr)=>s+arr.filter(e=>(e.title||'').toLowerCase().includes('agendamento')).length,0);
+    btnLimpar.style.display=hasAgend?'':'none';
+    btnLimpar.textContent=`🗑 Limpar duplicados (${cnt})`;
+  }
   const fd=new Date(y,m,1).getDay(),dim=new Date(y,m+1,0).getDate(),dp=new Date(y,m,0).getDate();
   const today=new Date();let cells=[];
   for(let i=fd-1;i>=0;i--)cells.push({d:dp-i,om:true,realM:m===0?11:m-1,realY:m===0?y-1:y});
@@ -2754,6 +2763,23 @@ function openEditEvent(key,id,e){
   setTimeout(()=>document.getElementById('evTi').focus(),80);
 }
 
+async function limparAgendamentos(){
+  // Conta quantos são
+  let total=0;
+  Object.values(evs).forEach(arr=>arr.forEach(e=>{if((e.title||'').toLowerCase().includes('agendamento'))total++;}));
+  if(!total){alert('Nenhum evento "Agendamento" encontrado.');return;}
+  if(!confirm(`Encontrei ${total} evento(s) chamado(s) "Agendamento Rosana".\n\nDeseja excluir todos?`))return;
+  // Remove
+  Object.keys(evs).forEach(k=>{
+    evs[k]=evs[k].filter(e=>!(e.title||'').toLowerCase().includes('agendamento'));
+    if(!evs[k].length)delete evs[k];
+  });
+  renderCal();
+  await saveData();
+  // Esconde botão
+  const btn=document.getElementById('btnLimparAgend');if(btn)btn.style.display='none';
+  alert(`✅ ${total} evento(s) removido(s) com sucesso!`);
+}
 async function deleteEvent(key,id,e){
   if(e)e.stopPropagation();
   if(!confirm('Excluir este evento?'))return;
