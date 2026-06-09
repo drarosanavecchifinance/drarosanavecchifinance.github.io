@@ -873,7 +873,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
       <div class="fgp"><label class="fl">E-mail</label><input class="fi" id="vEm" type="email" placeholder="email@natureface.com"></div>
       <div class="fgp"><label class="fl">Telefone / WhatsApp</label><input class="fi" id="vPh" placeholder="(00) 00000-0000" oninput="maskPhone(this)"></div>
       <div class="sec-div" style="font-size:12px;color:var(--m)">📍 Endereço</div>
-      <div class="fgp"><label class="fl">CEP</label><input class="fi" id="vCep" placeholder="00000-000"></div>
+      <div class="fgp"><label class="fl">CEP</label><input class="fi" id="vCep" placeholder="00000-000" oninput="maskCep(this)"></div>
       <div class="fgp"><label class="fl">Estado</label><select class="fse" id="vState">
         <option value="">— UF —</option><option>AC</option><option>AL</option><option>AM</option><option>AP</option><option>BA</option><option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option><option>MG</option><option>MS</option><option>MT</option><option>PA</option><option>PB</option><option>PE</option><option>PI</option><option>PR</option><option>RJ</option><option>RN</option><option>RO</option><option>RR</option><option>RS</option><option>SC</option><option selected>SP</option><option>SE</option><option>TO</option>
       </select></div>
@@ -1023,11 +1023,11 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
             <div class="fgp"><label class="fl">CPF</label><input class="fi" id="sCp" placeholder="000.000.000-00" oninput="maskCpf(this)"></div>
             <div class="fgp"><label class="fl">Curso Matriculado</label><select class="fse" id="sStuCrs" onchange="syncCourseFromStu()"><option value="">— Selecione o curso —</option></select></div>
             <div class="sec-div">📍 Endereço</div>
-            <div class="fgp fc1"><label class="fl">Logradouro e Número</label><input class="fi" id="sSt" placeholder="Ex: Rua das Flores, 123 — Apto 4B"></div>
-            <div class="fgp"><label class="fl">Bairro</label><input class="fi" id="sBa" placeholder="Jardim Paulista"></div>
-            <div class="fgp"><label class="fl">CEP</label><input class="fi" id="sCe" placeholder="00000-000"></div>
-            <div class="fgp"><label class="fl">Cidade</label><input class="fi" id="sCi" placeholder="São Paulo"></div>
+            <div class="fgp"><label class="fl">CEP</label><input class="fi" id="sCe" placeholder="00000-000" oninput="maskCep(this)"></div>
             <div class="fgp"><label class="fl">Estado</label><select class="fse" id="sSe"><option>SP</option><option>RJ</option><option>MG</option><option>RS</option><option>PR</option><option>SC</option><option>BA</option><option>GO</option><option>DF</option><option>CE</option><option>PE</option><option>Outro</option></select></div>
+            <div class="fgp"><label class="fl">Cidade</label><input class="fi" id="sCi" placeholder="São Paulo"></div>
+            <div class="fgp"><label class="fl">Bairro</label><input class="fi" id="sBa" placeholder="Jardim Paulista"></div>
+            <div class="fgp fc1"><label class="fl">Logradouro e Número</label><input class="fi" id="sSt" placeholder="Ex: Rua das Flores, 123 — Apto 4B"></div>
           </div>
         </div>
         <div id="stuExist" style="display:none">
@@ -1106,7 +1106,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
       <div class="fgp"><label class="fl">Vincular Curso</label><select class="fse" id="aMCrs"><option value="">— Nenhum —</option></select></div>
 
       <div class="sec-div" style="font-size:12px;color:var(--m)">📍 Endereço</div>
-      <div class="fgp"><label class="fl">CEP</label><input class="fi" id="aMCep" placeholder="00000-000"></div>
+      <div class="fgp"><label class="fl">CEP</label><input class="fi" id="aMCep" placeholder="00000-000" oninput="maskCep(this)"></div>
       <div class="fgp"><label class="fl">Estado</label><select class="fse" id="aMSta">
         <option value="">— UF —</option>
         <option>AC</option><option>AL</option><option>AM</option><option>AP</option><option>BA</option>
@@ -1158,6 +1158,37 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
 
 <script>
 // ===== MASKS =====
+function maskCep(el){
+  let v=el.value.replace(/\D/g,'').slice(0,8);
+  if(v.length>5) v=v.replace(/^(\d{5})(\d{0,3})/,'$1-$2');
+  el.value=v;
+  if(v.replace(/\D/g,'').length===8) buscarCep(el);
+}
+async function buscarCep(el){
+  const cep=el.value.replace(/\D/g,'');
+  if(cep.length!==8) return;
+  // detecta qual formulário pelo id do campo
+  const id=el.id;
+  let staId,citId,baId,strId;
+  if(id==='vCep'){staId='vState';citId='vCit';baId='vBa';strId='vStr';}
+  else if(id==='aMCep'){staId='aMSta';citId='aMCit';baId='aMBa';strId='aMStr';}
+  else if(id==='sCe'){staId='sSe';citId='sCi';baId='sBa';strId='sSt';}
+  else return;
+  try{
+    el.style.opacity='.5';
+    const r=await fetch('https://viacep.com.br/ws/'+cep+'/json/');
+    const d=await r.json();
+    el.style.opacity='1';
+    if(d.erro) return;
+    const sta=document.getElementById(staId);
+    if(sta){sta.value=d.uf;[...sta.options].forEach(o=>{if(o.value===d.uf||o.text===d.uf)sta.value=o.value;});}
+    const cit=document.getElementById(citId);if(cit)cit.value=d.localidade||'';
+    const ba=document.getElementById(baId);if(ba&&d.bairro)ba.value=d.bairro;
+    const str=document.getElementById(strId);if(str&&d.logradouro)str.value=d.logradouro;
+    // foca no campo número/complemento depois de preencher
+    if(str)setTimeout(()=>str.focus(),100);
+  }catch(e){el.style.opacity='1';}
+}
 function maskPhone(el){
   let v=el.value.replace(/\D/g,'');
   if(v.startsWith('55')&&v.length>11) v=v.slice(2);
