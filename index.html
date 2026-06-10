@@ -793,11 +793,11 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
           </div>
           <div>
             <label class="fl">Preço de Custo (R$)</label>
-            <input class="finp" id="eCusto" type="number" step="0.01" min="0" placeholder="0,00">
+            <input class="finp" id="eCusto" type="text" inputmode="decimal" placeholder="0,00" oninput="maskValorBR(this)">
           </div>
           <div>
             <label class="fl">Preço de Venda (R$)</label>
-            <input class="finp" id="eVenda" type="number" step="0.01" min="0" placeholder="0,00">
+            <input class="finp" id="eVenda" type="text" inputmode="decimal" placeholder="0,00" oninput="maskValorBR(this)">
           </div>
           <div style="grid-column:1/-1">
             <label class="fl">Observações</label>
@@ -1266,6 +1266,17 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
 
 <script>
 // ===== MASKS =====
+function maskValorBR(el){
+  let v=el.value.replace(/[^\d,]/g,'');
+  const parts=v.split(',');
+  if(parts.length>2)v=parts[0]+','+parts.slice(1).join('');
+  if(parts[1]&&parts[1].length>2)v=parts[0]+','+parts[1].slice(0,2);
+  el.value=v;
+}
+function parseValorBR(s){
+  if(!s)return 0;
+  return parseFloat(String(s).replace(',','.'))||0;
+}
 function maskCep(el){
   let v=el.value.replace(/\D/g,'').slice(0,8);
   if(v.length>5) v=v.replace(/^(\d{5})(\d{0,3})/,'$1-$2');
@@ -3176,8 +3187,8 @@ function openEstoqueModal(id){
   document.getElementById('eCat').value=p?p.cat:'';
   document.getElementById('eQtd').value=p?p.qtd:'';
   document.getElementById('eMin').value=p?p.min:'';
-  document.getElementById('eCusto').value=p?p.custo:'';
-  document.getElementById('eVenda').value=p?p.venda:'';
+  document.getElementById('eCusto').value=p&&p.custo?String(p.custo).replace('.',','):'';
+  document.getElementById('eVenda').value=p&&p.venda?String(p.venda).replace('.',','):'';
   document.getElementById('eObs').value=p?p.obs:'';
   document.getElementById('estoqueModal').classList.add('o');
 }
@@ -3192,8 +3203,8 @@ function salvarEstoque(){
     _editingEstoque.cat=document.getElementById('eCat').value.trim();
     _editingEstoque.qtd=qtd;
     _editingEstoque.min=parseFloat(document.getElementById('eMin').value)||0;
-    _editingEstoque.custo=parseFloat(document.getElementById('eCusto').value)||0;
-    _editingEstoque.venda=parseFloat(document.getElementById('eVenda').value)||0;
+    _editingEstoque.custo=parseValorBR(document.getElementById('eCusto').value);
+    _editingEstoque.venda=parseValorBR(document.getElementById('eVenda').value);
     _editingEstoque.forn=document.getElementById('eForn').value.trim();
     _editingEstoque.obs=document.getElementById('eObs').value.trim();
   } else {
@@ -3203,8 +3214,8 @@ function salvarEstoque(){
       cat:document.getElementById('eCat').value.trim(),
       qtd,
       min:parseFloat(document.getElementById('eMin').value)||0,
-      custo:parseFloat(document.getElementById('eCusto').value)||0,
-      venda:parseFloat(document.getElementById('eVenda').value)||0,
+      custo:parseValorBR(document.getElementById('eCusto').value),
+      venda:parseValorBR(document.getElementById('eVenda').value),
       forn:document.getElementById('eForn').value.trim(),
       obs:document.getElementById('eObs').value.trim(),
       movs:[]
