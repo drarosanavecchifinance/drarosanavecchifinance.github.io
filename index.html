@@ -3108,7 +3108,7 @@ function renderEstoque(){
         <td style="padding:10px 12px;color:var(--t3);font-size:12px">${p.forn||'—'}</td>
         <td style="text-align:center;padding:10px 8px">
           <div style="display:flex;gap:6px;justify-content:center">
-            <button onclick="openMovEstoque(${p.id})" title="Movimentar" style="background:none;border:1px solid var(--bd);color:var(--t3);border-radius:8px;padding:4px 8px;cursor:pointer;font-size:12px" onmouseover="this.style.color='var(--m)'" onmouseout="this.style.color='var(--t3)'">±</button>
+            <button onclick="openMovEstoque(${p.id})" title="Entrada / Saída de estoque" style="background:var(--bg2);border:1px solid var(--bd);color:var(--t2);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap" onmouseover="this.style.borderColor='var(--m)';this.style.color='var(--m)'" onmouseout="this.style.borderColor='var(--bd)';this.style.color='var(--t2)'">± Mover</button>
             <button onclick="editEstoque(${p.id})" title="Editar" style="background:none;border:1px solid var(--bd);color:var(--t3);border-radius:8px;padding:4px 8px;cursor:pointer;font-size:12px" onmouseover="this.style.color='var(--bl)'" onmouseout="this.style.color='var(--t3)'">✎</button>
             <button onclick="delEstoque(${p.id})" title="Excluir" style="background:none;border:1px solid var(--bd);color:var(--t3);border-radius:8px;padding:4px 8px;cursor:pointer;font-size:12px" onmouseover="this.style.color='var(--re)'" onmouseout="this.style.color='var(--t3)'">✕</button>
           </div>
