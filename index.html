@@ -3717,7 +3717,19 @@ function applyData(d){
   if(d.students&&d.students.length)students=d.students;
   if(d.vendedoras&&d.vendedoras.length)vendedoras=d.vendedoras;
   if(d.evs!==undefined&&d.evs!==null)evs=d.evs;
-  if(Array.isArray(d.estoque))estoque=d.estoque; // aceita {} para limpar todos os eventos
+  if(Array.isArray(d.estoque))estoque=d.estoque;
+  // Seed produtos NatureFace se estoque vazio
+  if(!estoque.length){
+    estoque=[
+      {id:estoqueNid++,nome:'NatureDay',cod:'43299556',cat:'NatureFace',qtd:0,min:5,custo:0,venda:0,forn:'Yampi',obs:'SKU: 4U9MPKNEW',movs:[]},
+      {id:estoqueNid++,nome:'NatureNight',cod:'43299557',cat:'NatureFace',qtd:0,min:5,custo:0,venda:0,forn:'Yampi',obs:'SKU: 2M5NU5NGF',movs:[]},
+      {id:estoqueNid++,nome:'NatureCalm',cod:'43299558',cat:'NatureFace',qtd:0,min:5,custo:0,venda:0,forn:'Yampi',obs:'SKU: HPY3GR8A5',movs:[]},
+      {id:estoqueNid++,nome:'Kit NatureFace',cod:'43299563',cat:'NatureFace',qtd:0,min:3,custo:0,venda:0,forn:'Yampi',obs:'SKU: V5JJ9XDMF — desconta NatureDay+NatureCalm+NatureNight',movs:[]},
+      {id:estoqueNid++,nome:'Cleansing Oil',cod:'43299565',cat:'NatureFace',qtd:0,min:5,custo:0,venda:0,forn:'Yampi',obs:'SKU: QDAJ7Y5XD',movs:[]},
+      {id:estoqueNid++,nome:'Sabonete Facial',cod:'43299566',cat:'NatureFace',qtd:0,min:5,custo:0,venda:0,forn:'Yampi',obs:'SKU: PK7Z9PWL9',movs:[]},
+    ];
+    estoqueNid=10;
+  }
   if(d.patients)patients=d.patients;
   if(d.procedures)procedures=d.procedures;
   function _migrateTaxaStore(raw,isMaq){
