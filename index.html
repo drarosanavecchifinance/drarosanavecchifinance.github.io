@@ -2301,6 +2301,14 @@ function saveTx(){
     tx.parcelaNum=origTx.parcelaNum||1;
     tx.parcelaTotal=parcelasVal;
   }
+  // Recebível de cartão/boleto cai em saleDate + prazo de compensação (ex.: crédito ~30 dias),
+  // não no dia da venda. PIX/dinheiro/transferência são instantâneos (due = data da venda).
+  // Parcela editada preserva o due original; parcelamento novo define o due de cada parcela abaixo.
+  if(!(editTxId&&origTx.parcelaNum)&&tx.type==='receber'&&tx.fpg&&tx.fpg!=='pix'&&tx.fpg!=='dinheiro'&&tx.fpg!=='transferencia'){
+    const _b=new Date(fDuVal+'T12:00:00');
+    _b.setDate(_b.getDate()+(getPrazo(tx)||0));
+    tx.due=_b.toISOString().slice(0,10);
+  }
   // Parcelamento (só para novos lançamentos)
   if(!editTxId){
     const rawPN=document.getElementById('fParcN')?.value;
@@ -4058,8 +4066,14 @@ async function autoImportYampiEvent(ev){
     statusStr==='paid'||statusStr.includes('paid')||statusStr.includes('aprovad')||statusStr.includes('approved')||
     statusStr.includes('confirmed')||statusStr.includes('complete')||statusStr==='4'||statusStr==='3';
   const{nome,val,items,num,fpg,bandeira,parcelas,saleDate}=parseYampiPayload(p);
+  // Produtos ignorados — não lançar no sistema
+  const _ignoredProducts=['programa de formação internacional boston','programa de formacao internacional boston'];
+  if(_ignoredProducts.some(function(ig){return(items||'').toLowerCase().includes(ig);})){
+    try{const db=sbAdmin||sbClient;await db.from('yampi_events').update({imported:true}).eq('id',ev.id);}catch(e){}
+    _yampiImporting.delete(ev.id);
+    return;
+  }
   if(!val||val<=0){
-    // Sem valor — descarta definitivamente
     try{const db=sbAdmin||sbClient;await db.from('yampi_events').update({imported:true}).eq('id',ev.id);}catch(e){}
     _yampiImporting.delete(ev.id);
     return;
