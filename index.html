@@ -3090,6 +3090,7 @@ function renderEstoque(){
     <div style="margin-top:28px">
       <div style="font-size:13px;font-weight:700;color:var(--t2);margin-bottom:12px;display:flex;align-items:center;gap:8px">
         📋 Histórico de Movimentações <span style="font-size:11px;font-weight:400;color:var(--t4)">(${allMovs.length} registro${allMovs.length!==1?'s':''})</span>
+        <button onclick="limparHistoricoEstoque()" style="margin-left:auto;background:none;border:1px solid var(--bd);color:var(--t4);border-radius:8px;padding:3px 10px;font-size:11px;cursor:pointer" onmouseover="this.style.color='var(--re)';this.style.borderColor='var(--re)'" onmouseout="this.style.color='var(--t4)';this.style.borderColor='var(--bd)'">🗑 Limpar histórico</button>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px">
         ${allMovs.slice(0,50).map(function(m){return`
@@ -3143,6 +3144,11 @@ function renderEstoque(){
   </table></div>${histHtml}`;
 }
 
+function limparHistoricoEstoque(){
+  if(!confirm('Limpar todo o histórico de movimentações?'))return;
+  estoque.forEach(function(p){p.movs=[];});
+  saveData();renderEstoque();
+}
 function seedEstoque(){
   if(estoque.length&&!confirm('Já existem produtos cadastrados. Adicionar os produtos NatureFace mesmo assim?'))return;
   const base=[
