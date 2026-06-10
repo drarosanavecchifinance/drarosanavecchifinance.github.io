@@ -3208,7 +3208,6 @@ function salvarEstoque(){
     _editingEstoque.min=parseFloat(document.getElementById('eMin').value)||0;
     _editingEstoque.custo=parseValorBR(document.getElementById('eCusto').value);
     _editingEstoque.venda=parseValorBR(document.getElementById('eVenda').value);
-    _editingEstoque.forn=document.getElementById('eForn').value.trim();
     _editingEstoque.obs=document.getElementById('eObs').value.trim();
   } else {
     estoque.push({
@@ -3219,7 +3218,6 @@ function salvarEstoque(){
       min:parseFloat(document.getElementById('eMin').value)||0,
       custo:parseValorBR(document.getElementById('eCusto').value),
       venda:parseValorBR(document.getElementById('eVenda').value),
-      forn:document.getElementById('eForn').value.trim(),
       obs:document.getElementById('eObs').value.trim(),
       movs:[]
     });
