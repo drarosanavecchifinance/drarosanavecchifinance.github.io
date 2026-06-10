@@ -4016,9 +4016,36 @@ async function autoImportYampiEvent(ev){
   }
   try{const db=sbAdmin||sbClient;await db.from('yampi_events').update({imported:true,tx_id:firstId}).eq('id',ev.id);}catch(e){console.warn('Yampi import error:',e);}
   _yampiImporting.delete(ev.id);
+  descontarEstoqueYampi(p);
   saveData();
   showYampiToast(name,val);
   refreshCurrentPage();
+}
+
+// Mapa Yampi SKU → produtos do estoque que devem ser descontados
+const _yampiSkuMap={
+  '4U9MPKNEW': [{nome:'NatureDay',qtd:1}],
+  '2M5NU5NGF': [{nome:'NatureNight',qtd:1}],
+  'HPY3GR8A5': [{nome:'NatureCalm',qtd:1}],
+  'QDAJ7Y5XD': [{nome:'Cleansing Oil',qtd:1}],
+  'PK7Z9PWL9': [{nome:'Sabonete Facial',qtd:1}],
+  // Kit NatureFace = 1 de cada (NatureDay + NatureCalm + NatureNight)
+  'V5JJ9XDMF': [{nome:'NatureDay',qtd:1},{nome:'NatureCalm',qtd:1},{nome:'NatureNight',qtd:1}],
+};
+function descontarEstoqueYampi(payload){
+  const r=payload.resource||payload;
+  const itemsArr=r.items?.data||r.items||[];
+  itemsArr.forEach(function(item){
+    const sku=(item.sku?.data?.sku||item.sku?.sku||item.sku||'').toString().trim().toUpperCase();
+    const qtdVendida=parseInt(item.quantity||item.qty||1)||1;
+    const descontos=_yampiSkuMap[sku];
+    if(!descontos)return;
+    descontos.forEach(function(d){
+      const nomeLower=d.nome.toLowerCase();
+      const prod=estoque.find(function(p){return(p.nome||'').toLowerCase()===nomeLower;});
+      if(prod){prod.qtd=Math.max(0,(prod.qtd||0)-(d.qtd*qtdVendida));}
+    });
+  });
 }
 
 function showYampiToast(nome,val){
