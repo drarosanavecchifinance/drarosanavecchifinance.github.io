@@ -800,10 +800,6 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
             <input class="finp" id="eVenda" type="number" step="0.01" min="0" placeholder="0,00">
           </div>
           <div style="grid-column:1/-1">
-            <label class="fl">Fornecedor</label>
-            <input class="finp" id="eForn" placeholder="Nome do fornecedor">
-          </div>
-          <div style="grid-column:1/-1">
             <label class="fl">Observações</label>
             <input class="finp" id="eObs" placeholder="Validade, instruções, etc.">
           </div>
@@ -3155,7 +3151,7 @@ function openEstoqueModal(id){
   document.getElementById('eVenda').value=p?p.venda:'';
   document.getElementById('eForn').value=p?p.forn:'';
   document.getElementById('eObs').value=p?p.obs:'';
-  document.getElementById('estoqueModal').classList.add('a');
+  document.getElementById('estoqueModal').classList.add('o');
 }
 function editEstoque(id){openEstoqueModal(id);}
 function salvarEstoque(){
@@ -3200,7 +3196,7 @@ function openMovEstoque(id){
   document.getElementById('eMovTipo').value='entrada';
   document.getElementById('eMovQtd').value='';
   document.getElementById('eMovObs').value='';
-  document.getElementById('estoqueMovModal').classList.add('a');
+  document.getElementById('estoqueMovModal').classList.add('o');
 }
 function confirmarMovEstoque(){
   const id=parseInt(document.getElementById('eMovId').value);
