@@ -1051,7 +1051,10 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
   <div class="mo w">
     <button class="mcl" onclick="closeM('txModal')">×</button>
     <div class="mttl" id="txMT">Novo Lançamento</div>
-    <div class="msub">Preencha os dados do lançamento financeiro</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:2px">
+      <div class="msub" style="margin:0">Preencha os dados do lançamento financeiro</div>
+      <button id="btnDividirTxTop" onclick="toggleDividirPanel()" style="background:none;border:1.5px solid var(--bl);color:var(--bl);border-radius:20px;padding:5px 14px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap">✂ Dividir Pagamento</button>
+    </div>
     <div class="fg">
       <div class="fgp fc1"><label class="fl">Descrição</label><input class="fi" id="fNm" placeholder="Ex: Aluguel — Clínica Faria Lima"></div>
       <div class="fgp" id="fTyWrap"><label class="fl">Tipo</label><select class="fse" id="fTy" onchange="checkStu();toggleRec();toggleVendField()"><option value="pagar">A Pagar</option><option value="receber">A Receber</option></select></div>
