@@ -621,6 +621,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
         <button class="bs" onclick="openGruposModal()" title="Gerenciar grupos de parcelamento">🔗 Parcelamentos</button>
         <button class="bs" id="undoBtn" onclick="undoLastDelete()" title="Desfazer última exclusão" style="display:none">↩ Desfazer</button>
         <button class="bs">📥 Exportar</button>
+        <button class="bs" onclick="abrirDividirDireto()" style="color:var(--bl);border-color:var(--bl)">✂ Dividir Pagamento</button>
         <button class="bp" onclick="openAddTx()">+ Novo Lançamento</button>
       </div>
     </div>
@@ -2632,6 +2633,19 @@ function registrarPagamentoAluna(){
     }
   },80);
   document.getElementById('txModal').classList.add('o');
+}
+function abrirDividirDireto(){
+  const hoje=new Date().toISOString().slice(0,10);
+  document.getElementById('dividirPagSub').textContent='Preencha os dois pagamentos abaixo';
+  document.getElementById('dp1Vl').value='';
+  document.getElementById('dp2Vl').value='';
+  document.getElementById('dp1Dt').value=hoje;
+  document.getElementById('dp2Dt').value=hoje;
+  document.getElementById('dp1Fpg').value='pix';
+  document.getElementById('dp2Fpg').value='credito';
+  document.getElementById('dpResumo').textContent='';
+  window._dividirFromTx={nome:'',co:co==='all'?'rv':co,courseId:null,vendId:null,cat:'Cursos'};
+  document.getElementById('dividirPagModal').classList.add('o');
 }
 function abrirDividirDeTxModal(){
   // Pega dados já preenchidos no modal de lançamento
