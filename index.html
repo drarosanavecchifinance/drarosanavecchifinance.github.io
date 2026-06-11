@@ -1234,12 +1234,16 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
         <div style="font-size:12px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Pagamento 1</div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
           <div><label class="fl">Forma</label>
-            <select class="fsel" id="dp1Fpg" style="width:100%">
+            <select class="fsel" id="dp1Fpg" style="width:100%" onchange="dpToggleBand(1)">
               <option value="pix">PIX</option><option value="credito">Cartão Crédito</option><option value="debito">Cartão Débito</option><option value="dinheiro">Dinheiro</option><option value="transferencia">Transferência</option><option value="boleto">Boleto</option>
             </select>
           </div>
           <div><label class="fl">Valor (R$)</label><input class="finp" id="dp1Vl" type="text" inputmode="decimal" placeholder="0,00" oninput="maskValorBR(this);dpAtualizaResto()"></div>
           <div><label class="fl">Data</label><input class="finp" id="dp1Dt" type="date"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+          <div id="dp1BandWrap" style="display:none"><label class="fl">Bandeira</label><select class="fsel" id="dp1Band" style="width:100%"><option value="visa">Visa</option><option value="master">Mastercard</option><option value="elo">Elo</option><option value="amex">Amex</option><option value="hipercard">Hipercard</option><option value="outros">Outros</option></select></div>
+          <div id="dp1ParcWrap" style="display:none"><label class="fl">Parcelas</label><select class="fsel" id="dp1Parc" style="width:100%"><option value="1">1x (à vista)</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option><option value="6">6x</option><option value="7">7x</option><option value="8">8x</option><option value="9">9x</option><option value="10">10x</option><option value="11">11x</option><option value="12">12x</option></select></div>
         </div>
       </div>
       <!-- Pagamento 2 -->
@@ -1247,12 +1251,16 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
         <div style="font-size:12px;font-weight:700;color:var(--bl);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Pagamento 2</div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
           <div><label class="fl">Forma</label>
-            <select class="fsel" id="dp2Fpg" style="width:100%">
+            <select class="fsel" id="dp2Fpg" style="width:100%" onchange="dpToggleBand(2)">
               <option value="pix">PIX</option><option value="credito">Cartão Crédito</option><option value="debito">Cartão Débito</option><option value="dinheiro">Dinheiro</option><option value="transferencia">Transferência</option><option value="boleto">Boleto</option>
             </select>
           </div>
           <div><label class="fl">Valor (R$)</label><input class="finp" id="dp2Vl" type="text" inputmode="decimal" placeholder="0,00" oninput="maskValorBR(this)"></div>
           <div><label class="fl">Data</label><input class="finp" id="dp2Dt" type="date"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+          <div id="dp2BandWrap" style="display:none"><label class="fl">Bandeira</label><select class="fsel" id="dp2Band" style="width:100%"><option value="visa">Visa</option><option value="master">Mastercard</option><option value="elo">Elo</option><option value="amex">Amex</option><option value="hipercard">Hipercard</option><option value="outros">Outros</option></select></div>
+          <div id="dp2ParcWrap" style="display:none"><label class="fl">Parcelas</label><select class="fsel" id="dp2Parc" style="width:100%"><option value="1">1x (à vista)</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option><option value="6">6x</option><option value="7">7x</option><option value="8">8x</option><option value="9">9x</option><option value="10">10x</option><option value="11">11x</option><option value="12">12x</option></select></div>
         </div>
       </div>
       <div id="dpResumo" style="font-size:12.5px;color:var(--t3);text-align:center"></div>
@@ -2804,6 +2812,15 @@ function dpAtualizaResto(){
   const total=v1+v2;
   document.getElementById('dpResumo').textContent=total>0?'Total lançado: '+fmt(total):'';
 }
+function dpToggleBand(n){
+  const fpg=document.getElementById('dp'+n+'Fpg')?.value;
+  const isCard=fpg==='credito'||fpg==='debito';
+  const isCred=fpg==='credito';
+  const bw=document.getElementById('dp'+n+'BandWrap');
+  const pw=document.getElementById('dp'+n+'ParcWrap');
+  if(bw)bw.style.display=isCard?'':'none';
+  if(pw)pw.style.display=isCred?'':'none';
+}
 function salvarDividirPagamento(){
   const v1=parseValorBR(document.getElementById('dp1Vl').value);
   const v2=parseValorBR(document.getElementById('dp2Vl').value);
@@ -2811,6 +2828,10 @@ function salvarDividirPagamento(){
   const dt2=document.getElementById('dp2Dt').value;
   const fpg1=document.getElementById('dp1Fpg').value;
   const fpg2=document.getElementById('dp2Fpg').value;
+  const band1=(fpg1==='credito'||fpg1==='debito')?(document.getElementById('dp1Band')?.value||'outros'):'';
+  const band2=(fpg2==='credito'||fpg2==='debito')?(document.getElementById('dp2Band')?.value||'outros'):'';
+  const parc1=fpg1==='credito'?parseInt(document.getElementById('dp1Parc')?.value||'1')||1:1;
+  const parc2=fpg2==='credito'?parseInt(document.getElementById('dp2Parc')?.value||'1')||1:1;
   if(!v1||v1<=0){alert('Informe o valor do Pagamento 1.');return;}
   if(!v2||v2<=0){alert('Informe o valor do Pagamento 2.');return;}
   if(!dt1){alert('Informe a data do Pagamento 1.');return;}
@@ -2823,8 +2844,8 @@ function salvarDividirPagamento(){
     ?{type:'receber',cat:ctx.cat||'Cursos',co:ctx.co||'rv',status:'paid',stuId:null,courseId:ctx.courseId,vendId:ctx.vendId,procedureId:null,parcelas:1,notes:'Pagamento dividido'}
     :{type:'receber',cat:'Cursos',co:'rv',status:'paid',stuId:s.id,courseId:s.courseId||null,vendId:origTx?.vendId||null,procedureId:null,parcelas:1,notes:'Pagamento dividido'};
   const label=ctx?ctx.nome:(s.name+' — Pagamento');
-  txs.push({...base,id:txNid++,name:label+' (1/2)',fpg:fpg1,bandeira:'',val:v1,due:dt1,saleDate:dt1});
-  txs.push({...base,id:txNid++,name:label+' (2/2)',fpg:fpg2,bandeira:'',val:v2,due:dt2,saleDate:dt2});
+  txs.push({...base,id:txNid++,name:label+' (1/2)',fpg:fpg1,bandeira:band1,parcelas:parc1,val:v1,due:dt1,saleDate:dt1});
+  txs.push({...base,id:txNid++,name:label+' (2/2)',fpg:fpg2,bandeira:band2,parcelas:parc2,val:v2,due:dt2,saleDate:dt2});
   window._dividirFromTx=null;
   closeM('dividirPagModal');
   saveData();renderTx();
