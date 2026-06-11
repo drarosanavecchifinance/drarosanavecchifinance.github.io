@@ -2112,7 +2112,8 @@ function toggleBandeiraField(){
   const fpg=document.getElementById('fFpg')?.value;
   const isCard=fpg==='credito'||fpg==='debito';
   const bw=document.getElementById('fBandeiraWrap');if(bw)bw.style.display=isCard?'':'none';
-  const pw=document.getElementById('fParcelasWrap');if(pw)pw.style.display=fpg==='credito'?'':'none';
+  const parcNVisible=document.getElementById('fParcWrap')?.style.display!=='none';
+  const pw=document.getElementById('fParcelasWrap');if(pw)pw.style.display=(fpg==='credito'&&!parcNVisible)?'':'none';
   const cw=document.getElementById('fCanalWrap');if(cw)cw.style.display=fpg?'':'none';
 }
 function toggleProcField(){
