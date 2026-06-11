@@ -1192,7 +1192,49 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
     <button class="mcl" onclick="closeM('alunoFinModal')">×</button>
     <div class="mttl">💳 Ficha Financeira</div>
     <div id="alunoFinContent" style="margin-top:18px"></div>
-    <div class="mft" style="margin-top:18px"><button class="bs" onclick="closeM('alunoFinModal')">Fechar</button><button class="bp" id="alunoFinPagarBtn" onclick="registrarPagamentoAluna()">+ Registrar Pagamento</button></div>
+    <div class="mft" style="margin-top:18px"><button class="bs" onclick="closeM('alunoFinModal')">Fechar</button><button class="bs" id="alunoFinDividirBtn" onclick="abrirDividirPagamento()" style="color:var(--bl);border-color:var(--bl)">✂ Dividir Pagamento</button><button class="bp" id="alunoFinPagarBtn" onclick="registrarPagamentoAluna()">+ Registrar Pagamento</button></div>
+  </div>
+</div>
+
+<!-- Modal Dividir Pagamento -->
+<div class="ov" id="dividirPagModal">
+  <div class="mo" style="width:580px;max-width:96vw">
+    <button class="mcl" onclick="closeM('dividirPagModal')">✕</button>
+    <div class="mttl">✂ Dividir Pagamento</div>
+    <div class="msub" id="dividirPagSub"></div>
+    <div style="display:grid;gap:18px;margin-top:6px">
+      <!-- Pagamento 1 -->
+      <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:16px">
+        <div style="font-size:12px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Pagamento 1</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+          <div><label class="fl">Forma</label>
+            <select class="fsel" id="dp1Fpg" style="width:100%">
+              <option value="pix">PIX</option><option value="credito">Cartão Crédito</option><option value="debito">Cartão Débito</option><option value="dinheiro">Dinheiro</option><option value="transferencia">Transferência</option><option value="boleto">Boleto</option>
+            </select>
+          </div>
+          <div><label class="fl">Valor (R$)</label><input class="finp" id="dp1Vl" type="text" inputmode="decimal" placeholder="0,00" oninput="maskValorBR(this);dpAtualizaResto()"></div>
+          <div><label class="fl">Data</label><input class="finp" id="dp1Dt" type="date"></div>
+        </div>
+      </div>
+      <!-- Pagamento 2 -->
+      <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:16px">
+        <div style="font-size:12px;font-weight:700;color:var(--bl);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Pagamento 2</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+          <div><label class="fl">Forma</label>
+            <select class="fsel" id="dp2Fpg" style="width:100%">
+              <option value="pix">PIX</option><option value="credito">Cartão Crédito</option><option value="debito">Cartão Débito</option><option value="dinheiro">Dinheiro</option><option value="transferencia">Transferência</option><option value="boleto">Boleto</option>
+            </select>
+          </div>
+          <div><label class="fl">Valor (R$)</label><input class="finp" id="dp2Vl" type="text" inputmode="decimal" placeholder="0,00" oninput="maskValorBR(this)"></div>
+          <div><label class="fl">Data</label><input class="finp" id="dp2Dt" type="date"></div>
+        </div>
+      </div>
+      <div id="dpResumo" style="font-size:12.5px;color:var(--t3);text-align:center"></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end">
+      <button class="bs" onclick="closeM('dividirPagModal')">Cancelar</button>
+      <button class="bp" onclick="salvarDividirPagamento()">Lançar 2 Pagamentos</button>
+    </div>
   </div>
 </div>
 
@@ -2585,6 +2627,52 @@ function registrarPagamentoAluna(){
     }
   },80);
   document.getElementById('txModal').classList.add('o');
+}
+function abrirDividirPagamento(){
+  const s=students.find(x=>x.id===_alunoFinId);if(!s)return;
+  const sTxs=txs.filter(t=>t.stuId===s.id||(s.txId&&t.id===s.txId));
+  const totalPago=sTxs.filter(t=>t.status==='paid').reduce((a,t)=>a+t.val,0);
+  const entradaVal=s.txId?txs.find(t=>t.id===s.txId)?.val||0:0;
+  const saldoOrig=s.saldoDevedor||0;
+  const pendente=saldoOrig>0?Math.max(0,saldoOrig-Math.max(0,totalPago-entradaVal)):sTxs.filter(t=>t.status!=='paid'&&t.status!=='cancelado'&&t.status!=='estornado').reduce((a,t)=>a+t.val,0);
+  const hoje=new Date().toISOString().slice(0,10);
+  document.getElementById('dividirPagSub').textContent=s.name+(pendente>0?' · Pendente: '+fmt(pendente):'');
+  document.getElementById('dp1Vl').value=pendente>0?String(pendente.toFixed(2)).replace('.',','):'';
+  document.getElementById('dp2Vl').value='';
+  document.getElementById('dp1Dt').value=hoje;
+  document.getElementById('dp2Dt').value=hoje;
+  document.getElementById('dp1Fpg').value='pix';
+  document.getElementById('dp2Fpg').value='credito';
+  dpAtualizaResto();
+  closeM('alunoFinModal');
+  document.getElementById('dividirPagModal').classList.add('o');
+}
+function dpAtualizaResto(){
+  const v1=parseValorBR(document.getElementById('dp1Vl').value)||0;
+  const v2=parseValorBR(document.getElementById('dp2Vl').value)||0;
+  const total=v1+v2;
+  document.getElementById('dpResumo').textContent=total>0?'Total lançado: '+fmt(total):'';
+}
+function salvarDividirPagamento(){
+  const s=students.find(x=>x.id===_alunoFinId);if(!s)return;
+  const v1=parseValorBR(document.getElementById('dp1Vl').value);
+  const v2=parseValorBR(document.getElementById('dp2Vl').value);
+  const dt1=document.getElementById('dp1Dt').value;
+  const dt2=document.getElementById('dp2Dt').value;
+  const fpg1=document.getElementById('dp1Fpg').value;
+  const fpg2=document.getElementById('dp2Fpg').value;
+  if(!v1||v1<=0){alert('Informe o valor do Pagamento 1.');return;}
+  if(!v2||v2<=0){alert('Informe o valor do Pagamento 2.');return;}
+  if(!dt1){alert('Informe a data do Pagamento 1.');return;}
+  if(!dt2){alert('Informe a data do Pagamento 2.');return;}
+  const origTx=s.txId?txs.find(t=>t.id===s.txId):null;
+  const base={type:'receber',cat:'Cursos',co:'rv',status:'paid',stuId:s.id,courseId:s.courseId||null,vendId:origTx?.vendId||null,procedureId:null,parcelas:1,notes:'Pagamento dividido'};
+  const label=s.name+' — Pagamento';
+  txs.push({...base,id:txNid++,name:label+' (1/2)',fpg:fpg1,bandeira:'',val:v1,due:dt1,saleDate:dt1});
+  txs.push({...base,id:txNid++,name:label+' (2/2)',fpg:fpg2,bandeira:'',val:v2,due:dt2,saleDate:dt2});
+  closeM('dividirPagModal');
+  saveData();renderTx();
+  alert('✅ 2 pagamentos lançados com sucesso!');
 }
 function viewAlunoFinanceiro(id){
   const s=students.find(x=>x.id===id);if(!s)return;
