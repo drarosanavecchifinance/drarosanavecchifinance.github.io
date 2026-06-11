@@ -1153,7 +1153,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
         </div>
       </div>
     </div>
-    <div class="mft"><button class="bs" onclick="closeM('txModal')">Cancelar</button><button class="bp" onclick="saveTx()">Salvar Lançamento</button></div>
+    <div class="mft"><button class="bs" onclick="closeM('txModal')">Cancelar</button><button class="bs" id="btnDividirTx" onclick="abrirDividirDeTxModal()" style="color:var(--bl);border-color:var(--bl);display:none">✂ Dividir Pagamento</button><button class="bp" onclick="saveTx()">Salvar Lançamento</button></div>
   </div>
 </div>
 
@@ -1994,10 +1994,10 @@ function renderTx(){
     const catCell=vend?vend.name.split(' ')[0]:'—';
     const isPagar=t.type==='pagar';
     html+=`<tr>
-      <td class="nm" title="${t.name}" style="max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.name}${parcelaBadge}${grupoBtn}</td>
-      ${isPagar?'':`<td style="font-size:12px;color:var(--t3);white-space:nowrap">${catCell}</td>`}
-      <td style="white-space:nowrap">${empCell}</td>
-      <td style="white-space:nowrap">${dueCell}</td>
+      <td class="nm" title="${t.name}">${t.name}${parcelaBadge}${grupoBtn}</td>
+      <td style="font-size:12px;color:var(--t3)">${isPagar?'':catCell}</td>
+      <td>${empCell}</td>
+      <td>${dueCell}</td>
       <td class="mo">${typeIco}${t.parcelaNum&&t.parcelaNum===1?`<span style="font-weight:800">${fmt(t.val*t.parcelaTotal)}</span><div style="font-size:10px;color:var(--t3);font-weight:500">${t.parcelaTotal}x de ${fmt(t.val)}</div>`:(t.parcelaNum?`<span style="color:var(--t3)">${fmt(t.val)}</span>`:`${fmt(t.val)}`)}</td>
       <td>${bmap[t.status]||''}</td>
       <td><div class="ract"><button class="rb" onclick="viewTxDetail(${t.id})" title="Ver detalhes">👁</button><button class="rb e" onclick="editTx(${t.id})" title="Editar">✏️</button><button class="rb d" onclick="delTx(${t.id})" title="Excluir">🗑</button></div></td>
@@ -2114,6 +2114,9 @@ function toggleVendField(){
 function toggleRec(){
   const isEdit=!!editTxId;
   const isPagar=document.getElementById('fTy')?.value==='pagar';
+  // Mostrar botão Dividir só em novo lançamento A Receber
+  const btnDiv=document.getElementById('btnDividirTx');
+  if(btnDiv)btnDiv.style.display=(!isPagar&&!isEdit)?'':'none';
   const rec=document.getElementById('fRec')?.value;
   const rw=document.getElementById('fRecWrap');
   if(rw)rw.style.display=(isPagar&&!isEdit)?'':'none';
@@ -2630,6 +2633,31 @@ function registrarPagamentoAluna(){
   },80);
   document.getElementById('txModal').classList.add('o');
 }
+function abrirDividirDeTxModal(){
+  // Pega dados já preenchidos no modal de lançamento
+  const nome=document.getElementById('fNm')?.value||'';
+  const val=parseFloat(document.getElementById('fVl')?.value)||0;
+  const hoje=new Date().toISOString().slice(0,10);
+  document.getElementById('dividirPagSub').textContent=nome+(val>0?' · Total: '+fmt(val):'');
+  document.getElementById('dp1Vl').value=val>0?String((val/2).toFixed(2)).replace('.',','):'';
+  document.getElementById('dp2Vl').value=val>0?String((val/2).toFixed(2)).replace('.',','):'';
+  document.getElementById('dp1Dt').value=document.getElementById('fDu')?.value||hoje;
+  document.getElementById('dp2Dt').value=hoje;
+  document.getElementById('dp1Fpg').value='pix';
+  document.getElementById('dp2Fpg').value='credito';
+  // Salva contexto para usar no salvar
+  window._dividirFromTx={
+    nome,
+    co:document.getElementById('fCo')?.value||'rv',
+    courseId:parseInt(document.getElementById('fCrs')?.value)||null,
+    vendId:parseInt(document.getElementById('fVend')?.value)||null,
+    cat:document.getElementById('fCat')?.value||'',
+    stuId:null
+  };
+  dpAtualizaResto();
+  closeM('txModal');
+  document.getElementById('dividirPagModal').classList.add('o');
+}
 function abrirDividirPagamento(){
   const s=students.find(x=>x.id===_alunoFinId);if(!s)return;
   const sTxs=txs.filter(t=>t.stuId===s.id||(s.txId&&t.id===s.txId));
@@ -2656,7 +2684,6 @@ function dpAtualizaResto(){
   document.getElementById('dpResumo').textContent=total>0?'Total lançado: '+fmt(total):'';
 }
 function salvarDividirPagamento(){
-  const s=students.find(x=>x.id===_alunoFinId);if(!s)return;
   const v1=parseValorBR(document.getElementById('dp1Vl').value);
   const v2=parseValorBR(document.getElementById('dp2Vl').value);
   const dt1=document.getElementById('dp1Dt').value;
@@ -2667,11 +2694,17 @@ function salvarDividirPagamento(){
   if(!v2||v2<=0){alert('Informe o valor do Pagamento 2.');return;}
   if(!dt1){alert('Informe a data do Pagamento 1.');return;}
   if(!dt2){alert('Informe a data do Pagamento 2.');return;}
-  const origTx=s.txId?txs.find(t=>t.id===s.txId):null;
-  const base={type:'receber',cat:'Cursos',co:'rv',status:'paid',stuId:s.id,courseId:s.courseId||null,vendId:origTx?.vendId||null,procedureId:null,parcelas:1,notes:'Pagamento dividido'};
-  const label=s.name+' — Pagamento';
+  // Contexto: veio da ficha da aluna ou do modal de lançamento
+  const ctx=window._dividirFromTx||null;
+  const s=!ctx?students.find(x=>x.id===_alunoFinId):null;
+  const origTx=s?.txId?txs.find(t=>t.id===s.txId):null;
+  const base=ctx
+    ?{type:'receber',cat:ctx.cat||'Cursos',co:ctx.co||'rv',status:'paid',stuId:null,courseId:ctx.courseId,vendId:ctx.vendId,procedureId:null,parcelas:1,notes:'Pagamento dividido'}
+    :{type:'receber',cat:'Cursos',co:'rv',status:'paid',stuId:s.id,courseId:s.courseId||null,vendId:origTx?.vendId||null,procedureId:null,parcelas:1,notes:'Pagamento dividido'};
+  const label=ctx?ctx.nome:(s.name+' — Pagamento');
   txs.push({...base,id:txNid++,name:label+' (1/2)',fpg:fpg1,bandeira:'',val:v1,due:dt1,saleDate:dt1});
   txs.push({...base,id:txNid++,name:label+' (2/2)',fpg:fpg2,bandeira:'',val:v2,due:dt2,saleDate:dt2});
+  window._dividirFromTx=null;
   closeM('dividirPagModal');
   saveData();renderTx();
   alert('✅ 2 pagamentos lançados com sucesso!');
