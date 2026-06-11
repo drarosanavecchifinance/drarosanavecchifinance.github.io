@@ -1992,11 +1992,12 @@ function renderTx(){
     const grupoBtn=t.grupoId?`<button class="grupo-tag" onclick="viewGrupo('${t.grupoId}')" title="Ver todas as parcelas deste grupo">🔗 grupo</button>`:'';
     const vend=t.vendId?vendedoras.find(function(v){return v.id===t.vendId;}):null;
     const catCell=vend?vend.name.split(' ')[0]:'—';
+    const isPagar=t.type==='pagar';
     html+=`<tr>
-      <td class="nm" title="${t.name}">${t.name}${parcelaBadge}${grupoBtn}</td>
-      <td style="font-size:12px;color:var(--t3)">${catCell}</td>
-      <td>${empCell}</td>
-      <td>${dueCell}</td>
+      <td class="nm" title="${t.name}" style="max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.name}${parcelaBadge}${grupoBtn}</td>
+      ${isPagar?'':`<td style="font-size:12px;color:var(--t3);white-space:nowrap">${catCell}</td>`}
+      <td style="white-space:nowrap">${empCell}</td>
+      <td style="white-space:nowrap">${dueCell}</td>
       <td class="mo">${typeIco}${t.parcelaNum&&t.parcelaNum===1?`<span style="font-weight:800">${fmt(t.val*t.parcelaTotal)}</span><div style="font-size:10px;color:var(--t3);font-weight:500">${t.parcelaTotal}x de ${fmt(t.val)}</div>`:(t.parcelaNum?`<span style="color:var(--t3)">${fmt(t.val)}</span>`:`${fmt(t.val)}`)}</td>
       <td>${bmap[t.status]||''}</td>
       <td><div class="ract"><button class="rb" onclick="viewTxDetail(${t.id})" title="Ver detalhes">👁</button><button class="rb e" onclick="editTx(${t.id})" title="Editar">✏️</button><button class="rb d" onclick="delTx(${t.id})" title="Excluir">🗑</button></div></td>
