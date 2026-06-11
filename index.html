@@ -1051,10 +1051,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
   <div class="mo w">
     <button class="mcl" onclick="closeM('txModal')">×</button>
     <div class="mttl" id="txMT">Novo Lançamento</div>
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:2px">
-      <div class="msub" style="margin:0">Preencha os dados do lançamento financeiro</div>
-      <button id="btnDividirTxTop" onclick="toggleDividirPanel()" style="background:none;border:1.5px solid var(--bl);color:var(--bl);border-radius:20px;padding:5px 14px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap">✂ Dividir Pagamento</button>
-    </div>
+    <div class="msub">Preencha os dados do lançamento financeiro</div>
     <div class="fg">
       <div class="fgp fc1"><label class="fl">Descrição</label><input class="fi" id="fNm" placeholder="Ex: Aluguel — Clínica Faria Lima"></div>
       <div class="fgp" id="fTyWrap"><label class="fl">Tipo</label><select class="fse" id="fTy" onchange="checkStu();toggleRec();toggleVendField()"><option value="pagar">A Pagar</option><option value="receber">A Receber</option></select></div>
@@ -1074,18 +1071,22 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:14px">
             <div style="font-size:11px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Pagamento 1</div>
-            <div style="display:flex;flex-direction:column;gap:8px">
-              <div><label class="fl">Valor (R$)</label><input class="fi" id="fdVl1" type="text" inputmode="decimal" placeholder="0,00" oninput="maskValorBR(this);fdAtualizaTotal()"></div>
-              <div><label class="fl">Forma</label><select class="fse" id="fdFpg1"><option value="pix">PIX</option><option value="credito">Cartão Crédito</option><option value="debito">Cartão Débito</option><option value="dinheiro">Dinheiro</option><option value="transferencia">Transferência</option><option value="boleto">Boleto</option></select></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div style="grid-column:1/-1"><label class="fl">Valor (R$)</label><input class="fi" id="fdVl1" type="text" inputmode="decimal" placeholder="0,00" oninput="maskValorBR(this);fdAtualizaTotal()"></div>
+              <div><label class="fl">Forma</label><select class="fse" id="fdFpg1" onchange="fdToggleBand(1)"><option value="pix">PIX</option><option value="credito">Cartão Crédito</option><option value="debito">Cartão Débito</option><option value="dinheiro">Dinheiro</option><option value="transferencia">Transferência</option><option value="boleto">Boleto</option></select></div>
               <div><label class="fl">Data</label><input class="fi" id="fdDt1" type="date"></div>
+              <div id="fdBand1Wrap" style="display:none"><label class="fl">Bandeira</label><select class="fse" id="fdBand1"><option value="visa">Visa</option><option value="master">Mastercard</option><option value="elo">Elo</option><option value="amex">Amex</option><option value="hipercard">Hipercard</option><option value="outros">Outros</option></select></div>
+              <div id="fdParc1Wrap" style="display:none"><label class="fl">Parcelas</label><select class="fse" id="fdParc1"><option value="1">À vista</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option><option value="6">6x</option><option value="7">7x</option><option value="8">8x</option><option value="9">9x</option><option value="10">10x</option><option value="11">11x</option><option value="12">12x</option></select></div>
             </div>
           </div>
           <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:14px">
             <div style="font-size:11px;font-weight:700;color:var(--bl);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Pagamento 2</div>
-            <div style="display:flex;flex-direction:column;gap:8px">
-              <div><label class="fl">Valor (R$)</label><input class="fi" id="fdVl2" type="text" inputmode="decimal" placeholder="0,00" oninput="maskValorBR(this);fdAtualizaTotal()"></div>
-              <div><label class="fl">Forma</label><select class="fse" id="fdFpg2"><option value="credito">Cartão Crédito</option><option value="pix">PIX</option><option value="debito">Cartão Débito</option><option value="dinheiro">Dinheiro</option><option value="transferencia">Transferência</option><option value="boleto">Boleto</option></select></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div style="grid-column:1/-1"><label class="fl">Valor (R$)</label><input class="fi" id="fdVl2" type="text" inputmode="decimal" placeholder="0,00" oninput="maskValorBR(this);fdAtualizaTotal()"></div>
+              <div><label class="fl">Forma</label><select class="fse" id="fdFpg2" onchange="fdToggleBand(2)"><option value="credito">Cartão Crédito</option><option value="pix">PIX</option><option value="debito">Cartão Débito</option><option value="dinheiro">Dinheiro</option><option value="transferencia">Transferência</option><option value="boleto">Boleto</option></select></div>
               <div><label class="fl">Data</label><input class="fi" id="fdDt2" type="date"></div>
+              <div id="fdBand2Wrap" style="display:none"><label class="fl">Bandeira</label><select class="fse" id="fdBand2"><option value="visa">Visa</option><option value="master">Mastercard</option><option value="elo">Elo</option><option value="amex">Amex</option><option value="hipercard">Hipercard</option><option value="outros">Outros</option></select></div>
+              <div id="fdParc2Wrap" style="display:none"><label class="fl">Parcelas</label><select class="fse" id="fdParc2"><option value="1">À vista</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option><option value="6">6x</option><option value="7">7x</option><option value="8">8x</option><option value="9">9x</option><option value="10">10x</option><option value="11">11x</option><option value="12">12x</option></select></div>
             </div>
           </div>
         </div>
@@ -1093,7 +1094,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
       </div>
       <div class="fgp" id="fRecWrap"><label class="fl">Recorrência</label><select class="fse" id="fRec" onchange="toggleRec()"><option value="">Sem recorrência</option><option value="semanal">Semanal</option><option value="quinzenal">Quinzenal</option><option value="mensal">Mensal</option><option value="bimestral">Bimestral</option><option value="trimestral">Trimestral</option><option value="anual">Anual</option></select></div>
       <div class="fgp" id="fRecQtdWrap" style="display:none"><label class="fl">Repetições</label><input class="fi" id="fRecQtd" type="number" placeholder="Ex: 12" min="2" max="60" value="12"><div style="font-size:11px;color:var(--t3);margin-top:4px">Nº total de parcelas/lançamentos</div></div>
-      <div class="fgp" id="fParcWrap"><label class="fl">Parcelar em</label><select class="fse" id="fParcN" onchange="toggleParc()"><option value="">À vista</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option><option value="6">6x</option><option value="7">7x</option><option value="8">8x</option><option value="9">9x</option><option value="10">10x</option><option value="11">11x</option><option value="12">12x</option><option value="13">13x</option><option value="14">14x</option><option value="15">15x</option><option value="16">16x</option><option value="17">17x</option><option value="18">18x</option><option value="custom">Personalizado...</option></select></div>
+      <div class="fgp" id="fParcWrap" style="display:flex;flex-direction:column;gap:4px"><div style="display:flex;align-items:center;gap:10px"><label class="fl" style="margin:0;flex:1">Parcelar em</label><button id="btnDividirTx" onclick="toggleDividirPanel()" style="background:none;border:1.5px solid var(--bl);color:var(--bl);border-radius:20px;padding:3px 12px;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0">✂ Dividir</button></div><select class="fse" id="fParcN" onchange="toggleParc()"><option value="">À vista</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option><option value="6">6x</option><option value="7">7x</option><option value="8">8x</option><option value="9">9x</option><option value="10">10x</option><option value="11">11x</option><option value="12">12x</option><option value="13">13x</option><option value="14">14x</option><option value="15">15x</option><option value="16">16x</option><option value="17">17x</option><option value="18">18x</option><option value="custom">Personalizado...</option></select></div>
       <div class="fgp" id="fParcCustomWrap" style="display:none"><label class="fl">Nº de Parcelas</label><input class="fi" id="fParcCustom" type="number" min="2" max="60" placeholder="Ex: 5" oninput="renderParcPreview()"></div>
       <div class="fgp fc1" id="fParcPreview" style="display:none"></div>
       <div class="fgp fc1" id="fVlRestWrap">
@@ -2368,9 +2369,13 @@ function saveTx(){
     if(!v1||v1<=0){alert('Informe o valor do Pagamento 1.');return;}
     if(!v2||v2<=0){alert('Informe o valor do Pagamento 2.');return;}
     if(!dt1||!dt2){alert('Informe as datas de ambos os pagamentos.');return;}
-    const base={type:document.getElementById('fTy').value,cat:'',co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,vendId:parseInt(document.getElementById('fVend')?.value)||null,procedureId:null,status:document.getElementById('fSt').value,parcelas:1,bandeira:'',canal:'online',notes:document.getElementById('fNo').value};
-    txs.push({...base,id:txNid++,name:name+' (1/2)',fpg:fpg1,val:v1,due:dt1,saleDate:dt1});
-    txs.push({...base,id:txNid++,name:name+' (2/2)',fpg:fpg2,val:v2,due:dt2,saleDate:dt2});
+    const band1=(fpg1==='credito'||fpg1==='debito')?(document.getElementById('fdBand1')?.value||'outros'):'';
+    const band2=(fpg2==='credito'||fpg2==='debito')?(document.getElementById('fdBand2')?.value||'outros'):'';
+    const parc1=fpg1==='credito'?parseInt(document.getElementById('fdParc1')?.value||'1')||1:1;
+    const parc2=fpg2==='credito'?parseInt(document.getElementById('fdParc2')?.value||'1')||1:1;
+    const base={type:document.getElementById('fTy').value,cat:'',co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,vendId:parseInt(document.getElementById('fVend')?.value)||null,procedureId:null,status:document.getElementById('fSt').value,canal:'online',notes:document.getElementById('fNo').value};
+    txs.push({...base,id:txNid++,name:name+' (1/2)',fpg:fpg1,bandeira:band1,parcelas:parc1,val:v1,due:dt1,saleDate:dt1});
+    txs.push({...base,id:txNid++,name:name+' (2/2)',fpg:fpg2,bandeira:band2,parcelas:parc2,val:v2,due:dt2,saleDate:dt2});
     _dividirPanelOn=false;
     closeM('txModal');renderTx();saveData();
     return;
@@ -2711,6 +2716,15 @@ function toggleDividirPanel(){
     toggleRec();
     if(btn)btn.textContent='✂ Dividir Pagamento';
   }
+}
+function fdToggleBand(n){
+  const fpg=document.getElementById('fdFpg'+n)?.value;
+  const isCard=fpg==='credito'||fpg==='debito';
+  const isCred=fpg==='credito';
+  const bw=document.getElementById('fdBand'+n+'Wrap');
+  const pw=document.getElementById('fdParc'+n+'Wrap');
+  if(bw)bw.style.display=isCard?'':'none';
+  if(pw)pw.style.display=isCred?'':'none';
 }
 function fdAtualizaTotal(){
   const v1=parseValorBR(document.getElementById('fdVl1').value)||0;
