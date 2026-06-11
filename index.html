@@ -2152,6 +2152,8 @@ function toggleRec(){
   // Mostrar botão Dividir só em novo lançamento A Receber
   const btnDiv=document.getElementById('btnDividirTx');
   if(btnDiv)btnDiv.style.display=(!isPagar&&!isEdit)?'':'none';
+  // Se mudou para A Pagar e o painel dividir estiver aberto, fechar
+  if(isPagar&&_dividirPanelOn){_dividirPanelOn=false;const dp=document.getElementById('fDividirPanel');if(dp)dp.style.display='none';const vw=document.getElementById('fVlWrap');if(vw)vw.style.display='';const dw=document.getElementById('fDuWrap');if(dw)dw.style.display='';}
   const rec=document.getElementById('fRec')?.value;
   const rw=document.getElementById('fRecWrap');
   if(rw)rw.style.display=(isPagar&&!isEdit)?'':'none';
