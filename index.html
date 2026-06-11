@@ -1064,8 +1064,30 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
       <div class="fgp" id="cursoFieldWrap"><label class="fl">Curso (opcional)</label><select class="fse" id="fCrs"><option value="">— Nenhum —</option></select></div>
       <div class="fgp" id="fProcWrap" style="display:none"><label class="fl">Procedimento (opcional)</label><select class="fse" id="fProc"><option value="">— Nenhum —</option></select></div>
       <div class="fgp"><label class="fl">Status</label><select class="fse" id="fSt"><option value="paid">Pago</option><option value="pend">Pendente</option><option value="due">Vence Hoje</option><option value="sched">Agendado</option></select></div>
-      <div class="fgp"><label class="fl">Data de Lançamento</label><input class="fi" id="fDu" type="date"></div>
-      <div class="fgp"><label class="fl">Valor (R$)</label><input class="fi" id="fVl" type="number" placeholder="0,00" min="0" step="0.01"></div>
+      <div class="fgp" id="fDuWrap"><label class="fl">Data de Lançamento</label><input class="fi" id="fDu" type="date"></div>
+      <div class="fgp" id="fVlWrap"><label class="fl">Valor (R$)</label><input class="fi" id="fVl" type="number" placeholder="0,00" min="0" step="0.01"></div>
+      <!-- Painel dividir pagamento (inline) -->
+      <div class="fgp fc1" id="fDividirPanel" style="display:none">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:14px">
+            <div style="font-size:11px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Pagamento 1</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div><label class="fl">Valor (R$)</label><input class="fi" id="fdVl1" type="text" inputmode="decimal" placeholder="0,00" oninput="maskValorBR(this);fdAtualizaTotal()"></div>
+              <div><label class="fl">Forma</label><select class="fse" id="fdFpg1"><option value="pix">PIX</option><option value="credito">Cartão Crédito</option><option value="debito">Cartão Débito</option><option value="dinheiro">Dinheiro</option><option value="transferencia">Transferência</option><option value="boleto">Boleto</option></select></div>
+              <div><label class="fl">Data</label><input class="fi" id="fdDt1" type="date"></div>
+            </div>
+          </div>
+          <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:14px">
+            <div style="font-size:11px;font-weight:700;color:var(--bl);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Pagamento 2</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div><label class="fl">Valor (R$)</label><input class="fi" id="fdVl2" type="text" inputmode="decimal" placeholder="0,00" oninput="maskValorBR(this);fdAtualizaTotal()"></div>
+              <div><label class="fl">Forma</label><select class="fse" id="fdFpg2"><option value="credito">Cartão Crédito</option><option value="pix">PIX</option><option value="debito">Cartão Débito</option><option value="dinheiro">Dinheiro</option><option value="transferencia">Transferência</option><option value="boleto">Boleto</option></select></div>
+              <div><label class="fl">Data</label><input class="fi" id="fdDt2" type="date"></div>
+            </div>
+          </div>
+        </div>
+        <div id="fdTotal" style="text-align:center;font-size:12.5px;color:var(--t3);margin-top:8px"></div>
+      </div>
       <div class="fgp" id="fRecWrap"><label class="fl">Recorrência</label><select class="fse" id="fRec" onchange="toggleRec()"><option value="">Sem recorrência</option><option value="semanal">Semanal</option><option value="quinzenal">Quinzenal</option><option value="mensal">Mensal</option><option value="bimestral">Bimestral</option><option value="trimestral">Trimestral</option><option value="anual">Anual</option></select></div>
       <div class="fgp" id="fRecQtdWrap" style="display:none"><label class="fl">Repetições</label><input class="fi" id="fRecQtd" type="number" placeholder="Ex: 12" min="2" max="60" value="12"><div style="font-size:11px;color:var(--t3);margin-top:4px">Nº total de parcelas/lançamentos</div></div>
       <div class="fgp" id="fParcWrap"><label class="fl">Parcelar em</label><select class="fse" id="fParcN" onchange="toggleParc()"><option value="">À vista</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option><option value="6">6x</option><option value="7">7x</option><option value="8">8x</option><option value="9">9x</option><option value="10">10x</option><option value="11">11x</option><option value="12">12x</option><option value="13">13x</option><option value="14">14x</option><option value="15">15x</option><option value="16">16x</option><option value="17">17x</option><option value="18">18x</option><option value="custom">Personalizado...</option></select></div>
@@ -1154,7 +1176,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
         </div>
       </div>
     </div>
-    <div class="mft"><button class="bs" onclick="closeM('txModal')">Cancelar</button><button class="bs" id="btnDividirTx" onclick="abrirDividirDeTxModal()" style="color:var(--bl);border-color:var(--bl)">✂ Dividir Pagamento</button><button class="bp" onclick="saveTx()">Salvar Lançamento</button></div>
+    <div class="mft"><button class="bs" onclick="closeM('txModal')">Cancelar</button><button class="bs" id="btnDividirTx" onclick="toggleDividirPanel()" style="color:var(--bl);border-color:var(--bl)">✂ Dividir Pagamento</button><button class="bp" onclick="saveTx()">Salvar Lançamento</button></div>
   </div>
 </div>
 
@@ -2331,6 +2353,25 @@ function editTx(id){
   document.getElementById('txModal').classList.add('o');
 }
 function saveTx(){
+  // Modo dividir — cria dois lançamentos
+  if(_dividirPanelOn){
+    const name=document.getElementById('fNm').value.trim();if(!name){document.getElementById('fNm').focus();return;}
+    const v1=parseValorBR(document.getElementById('fdVl1').value);
+    const v2=parseValorBR(document.getElementById('fdVl2').value);
+    const dt1=document.getElementById('fdDt1').value;
+    const dt2=document.getElementById('fdDt2').value;
+    const fpg1=document.getElementById('fdFpg1').value;
+    const fpg2=document.getElementById('fdFpg2').value;
+    if(!v1||v1<=0){alert('Informe o valor do Pagamento 1.');return;}
+    if(!v2||v2<=0){alert('Informe o valor do Pagamento 2.');return;}
+    if(!dt1||!dt2){alert('Informe as datas de ambos os pagamentos.');return;}
+    const base={type:document.getElementById('fTy').value,cat:'',co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,vendId:parseInt(document.getElementById('fVend')?.value)||null,procedureId:null,status:document.getElementById('fSt').value,parcelas:1,bandeira:'',canal:'online',notes:document.getElementById('fNo').value};
+    txs.push({...base,id:txNid++,name:name+' (1/2)',fpg:fpg1,val:v1,due:dt1,saleDate:dt1});
+    txs.push({...base,id:txNid++,name:name+' (2/2)',fpg:fpg2,val:v2,due:dt2,saleDate:dt2});
+    _dividirPanelOn=false;
+    closeM('txModal');renderTx();saveData();
+    return;
+  }
   const name=document.getElementById('fNm').value.trim();if(!name){document.getElementById('fNm').focus();return;}
   const existCat=editTxId?(txs.find(x=>x.id===editTxId)?.cat||''):'';
   const vendIdRaw=document.getElementById('fVend')?.value;
@@ -2633,6 +2674,46 @@ function registrarPagamentoAluna(){
     }
   },80);
   document.getElementById('txModal').classList.add('o');
+}
+let _dividirPanelOn=false;
+function toggleDividirPanel(){
+  _dividirPanelOn=!_dividirPanelOn;
+  const panel=document.getElementById('fDividirPanel');
+  const vlWrap=document.getElementById('fVlWrap');
+  const duWrap=document.getElementById('fDuWrap');
+  const parcWrap=document.getElementById('fParcWrap');
+  const recWrap=document.getElementById('fRecWrap');
+  const btn=document.getElementById('btnDividirTx');
+  if(_dividirPanelOn){
+    if(panel)panel.style.display='';
+    if(vlWrap)vlWrap.style.display='none';
+    if(duWrap)duWrap.style.display='none';
+    if(parcWrap)parcWrap.style.display='none';
+    if(recWrap)recWrap.style.display='none';
+    if(btn)btn.textContent='✕ Cancelar divisão';
+    const hoje=new Date().toISOString().slice(0,10);
+    const vAtual=document.getElementById('fVl')?.value||'';
+    document.getElementById('fdDt1').value=document.getElementById('fDu')?.value||hoje;
+    document.getElementById('fdDt2').value=hoje;
+    if(vAtual){
+      const metade=(parseFloat(vAtual)/2).toFixed(2);
+      document.getElementById('fdVl1').value=metade.replace('.',',');
+      document.getElementById('fdVl2').value=metade.replace('.',',');
+      fdAtualizaTotal();
+    }
+  } else {
+    if(panel)panel.style.display='none';
+    if(vlWrap)vlWrap.style.display='';
+    if(duWrap)duWrap.style.display='';
+    toggleRec();
+    if(btn)btn.textContent='✂ Dividir Pagamento';
+  }
+}
+function fdAtualizaTotal(){
+  const v1=parseValorBR(document.getElementById('fdVl1').value)||0;
+  const v2=parseValorBR(document.getElementById('fdVl2').value)||0;
+  const el=document.getElementById('fdTotal');
+  if(el)el.textContent=v1||v2?'Total: '+fmt(v1+v2):'';
 }
 function abrirDividirDireto(){
   const hoje=new Date().toISOString().slice(0,10);
