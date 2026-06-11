@@ -2691,12 +2691,20 @@ function toggleDividirPanel(){
   const parcWrap=document.getElementById('fParcWrap');
   const recWrap=document.getElementById('fRecWrap');
   const btn=document.getElementById('btnDividirTx');
+  const fpgWrap=document.getElementById('fFpgWrap');
+  const bandWrap=document.getElementById('fBandeiraWrap');
+  const canalWrap=document.getElementById('fCanalWrap');
+  const parcelasWrap=document.getElementById('fParcelasWrap');
   if(_dividirPanelOn){
     if(panel)panel.style.display='';
     if(vlWrap)vlWrap.style.display='none';
     if(duWrap)duWrap.style.display='none';
     if(parcWrap)parcWrap.style.display='none';
     if(recWrap)recWrap.style.display='none';
+    if(fpgWrap)fpgWrap.style.display='none';
+    if(bandWrap)bandWrap.style.display='none';
+    if(canalWrap)canalWrap.style.display='none';
+    if(parcelasWrap)parcelasWrap.style.display='none';
     if(btn)btn.textContent='✕ Cancelar divisão';
     const hoje=new Date().toISOString().slice(0,10);
     const vAtual=document.getElementById('fVl')?.value||'';
@@ -2708,6 +2716,7 @@ function toggleDividirPanel(){
       document.getElementById('fdVl2').value=metade.replace('.',',');
       fdAtualizaTotal();
     }
+    fdToggleBand(1);fdToggleBand(2);
   } else {
     if(panel)panel.style.display='none';
     if(vlWrap)vlWrap.style.display='';
