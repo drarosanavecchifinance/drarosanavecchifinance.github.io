@@ -2045,7 +2045,8 @@ function toggleCursoField(){
   const wrap=document.getElementById('cursoFieldWrap');
   if(wrap){wrap.style.display=isRV?'':'none';if(!isRV){const s=document.getElementById('fCrs');if(s)s.value='';}}
   const vr=document.getElementById('fVlRestWrap');
-  if(vr)vr.style.display=isRV?'':'none';
+  const tyVal=(document.getElementById('fTy')||{value:'receber'}).value;
+  if(vr)vr.style.display=(isRV&&tyVal==='receber')?'':'none';
 }
 let _saldoDevedorOn=false;
 function toggleSaldoDevedor(){
