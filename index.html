@@ -2142,7 +2142,7 @@ function toggleVendField(){
   if(vw)vw.style.display=isRec?'':'none';
   if(isRec){const sel=document.getElementById('fVend');if(sel){sel.innerHTML='<option value="">— Nenhuma —</option>'+vendedoras.filter(v=>v.status==='ativa').map(v=>`<option value="${v.id}">${v.name}</option>`).join('');}}
   const fw=document.getElementById('fFpgWrap');
-  if(fw)fw.style.display=isRec?'':'none';
+  if(fw)fw.style.display=''; // mostrar para A Receber e A Pagar
   const cw=document.getElementById('fCanalWrap');
   if(cw&&!isRec)cw.style.display='none';
 }
