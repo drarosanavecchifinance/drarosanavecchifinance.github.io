@@ -514,6 +514,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
     <div class="urow">
       <div class="uav" id="sbAvatar">RV</div>
       <div style="flex:1;min-width:0"><div class="uname" id="sbName">Carregando...</div><div class="urole" id="sbEmail" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px"></div></div>
+      <button onclick="forceSyncData(this)" title="Sincronizar dados" style="background:rgba(255,255,255,.1);border:none;border-radius:7px;width:30px;height:30px;cursor:pointer;color:rgba(255,255,255,.6);font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .14s;flex-shrink:0" onmouseover="this.style.background='rgba(255,255,255,.2)'" onmouseout="this.style.background='rgba(255,255,255,.1)'">↻</button>
       <button onclick="doSignOut()" title="Sair" style="background:rgba(255,255,255,.1);border:none;border-radius:7px;width:30px;height:30px;cursor:pointer;color:rgba(255,255,255,.6);font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .14s;flex-shrink:0" onmouseover="this.style.background='rgba(255,255,255,.2)'" onmouseout="this.style.background='rgba(255,255,255,.1)'">⏻</button>
     </div>
   </div>
@@ -4004,6 +4005,21 @@ async function saveData(){
   }catch(e){console.warn('Supabase saveData error:',e);}
 }
 
+async function forceSyncData(btn){
+  if(btn){btn.textContent='⏳';btn.disabled=true;}
+  try{
+    const db=sbAdmin||sbClient;
+    const{data,error}=await db.from('vai_data').select('value').eq('key','all_data').maybeSingle();
+    if(error||!data?.value){
+      alert('❌ Erro ao sincronizar: '+(error?.message||'dados não encontrados'));
+    } else {
+      applyData(data.value);
+      renderTx();renderCursos&&renderCursos();renderAlunos&&renderAlunos();updateDash&&updateDash();
+      alert('✅ Dados sincronizados com sucesso!');
+    }
+  }catch(e){alert('❌ Erro: '+e.message);}
+  finally{if(btn){btn.textContent='↻';btn.disabled=false;}}
+}
 // ===== CARREGAR =====
 async function loadData(){
   // Tenta carregar do Supabase primeiro
