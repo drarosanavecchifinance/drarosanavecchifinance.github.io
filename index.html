@@ -4012,13 +4012,15 @@ async function forceSyncData(btn){
     const{data,error}=await db.from('vai_data').select('value').eq('key','all_data').maybeSingle();
     if(error||!data?.value){
       alert('❌ Erro ao sincronizar: '+(error?.message||'dados não encontrados'));
+      if(btn){btn.textContent='↻';btn.disabled=false;}
     } else {
       applyData(data.value);
-      renderTx();renderCursos&&renderCursos();renderAlunos&&renderAlunos();updateDash&&updateDash();
-      alert('✅ Dados sincronizados com sucesso!');
+      location.reload();
     }
-  }catch(e){alert('❌ Erro: '+e.message);}
-  finally{if(btn){btn.textContent='↻';btn.disabled=false;}}
+  }catch(e){
+    alert('❌ Erro: '+e.message);
+    if(btn){btn.textContent='↻';btn.disabled=false;}
+  }
 }
 // ===== CARREGAR =====
 async function loadData(){
