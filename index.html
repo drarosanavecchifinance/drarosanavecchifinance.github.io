@@ -4058,44 +4058,18 @@ async function forceSyncData(btn){
 }
 async function restoreFromLocalBackup(btn){
   const raw=localStorage.getItem('vai_backup');
-  if(!raw){alert('❌ Nenhum backup local encontrado.');return;}
+  if(!raw){alert('Nenhum backup local encontrado.');return;}
   try{
-    const localData=JSON.parse(raw);
-    const localCount=(localData.txs?.length||0)+(localData.courses?.length||0)+(localData.students?.length||0);
-    if(!confirm(`Mesclar backup local (${localCount} registros) com o Supabase?\n\nOK = Mesclar e salvar\nCancelar = Não fazer nada`))return;
-    // Busca dados atuais do Supabase
+    const d=JSON.parse(raw);
+    const n=(d.txs||[]).length;
+    if(!confirm('Enviar backup local para o Supabase?\n'+n+' lancamentos encontrados.\n\nOK = Enviar\nCancelar = Nao fazer nada'))return;
     const db=sbAdmin||sbClient;
-    const{data:remoteRow}=await db.from('vai_data').select('value').eq('key','all_data').maybeSingle();
-    const remote=remoteRow?.value||{};
-    // Merge: une local + remoto por ID sem duplicar
-    function mergeArr(a,b){
-      const map=new Map();
-      const arrB=Array.isArray(b)?b:[];
-      const arrA=Array.isArray(a)?a:[];
-      arrB.forEach(x=>x&&x.id!=null&&map.set(x.id,x));
-      arrA.forEach(x=>x&&x.id!=null&&map.set(x.id,x));
-      return Array.from(map.values());
-    }
-    const merged={
-      ...remote,...localData,
-      txs:mergeArr(localData.txs,remote.txs),
-      courses:mergeArr(localData.courses,remote.courses),
-      students:mergeArr(localData.students,remote.students),
-      vendedoras:mergeArr(localData.vendedoras,remote.vendedoras),
-      patients:mergeArr(localData.patients,remote.patients),
-      procedures:mergeArr(localData.procedures,remote.procedures),
-      estoque:mergeArr(localData.estoque,remote.estoque),
-      evs:mergeArr(localData.evs,remote.evs),
-    };
-    const _ts=new Date().toISOString();
-    const{error}=await db.from('vai_data').upsert({key:'all_data',value:merged,updated_at:_ts});
-    if(error){alert('❌ Erro ao salvar: '+error.message);return;}
-    const total=(merged.txs?.length||0)+(merged.courses?.length||0)+(merged.students?.length||0);
-    alert(`✅ Mesclado! ${total} registros salvos no Supabase.\nA página vai recarregar.`);
+    const ts=new Date().toISOString();
+    const res=await db.from('vai_data').upsert({key:'all_data',value:d,updated_at:ts});
+    if(res.error){alert('Erro: '+res.error.message);return;}
+    alert('Enviado! '+n+' lancamentos salvos. Recarregando...');
     location.reload();
-  }catch(e){
-    alert('❌ Erro: '+e.message);
-  }
+  }catch(e){alert('Erro: '+e.message);}
 }
 function checkLocalBackupNewer(){
   try{
