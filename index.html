@@ -4132,12 +4132,11 @@ async function loadData(){
 function mergeAndApply(remote){
   // Merge arrays por ID — une local + remoto sem duplicar
   function mergeArr(local,rem){
-    if(!rem||!rem.length)return local||[];
-    if(!local||!local.length)return rem;
     const map=new Map();
-    local.forEach(x=>map.set(x.id,x));
-    // Remoto vence em conflito de mesmo ID (mais recente)
-    rem.forEach(x=>map.set(x.id,x));
+    const arrA=Array.isArray(local)?local:[];
+    const arrB=Array.isArray(rem)?rem:[];
+    arrA.forEach(x=>x&&x.id!=null&&map.set(x.id,x));
+    arrB.forEach(x=>x&&x.id!=null&&map.set(x.id,x));
     return Array.from(map.values());
   }
   const merged={
