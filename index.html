@@ -4035,18 +4035,20 @@ async function forceSyncData(btn){
 }
 async function restoreFromLocalBackup(btn){
   const raw=localStorage.getItem('vai_backup');
-  if(!raw){alert('❌ Nenhum backup local encontrado.');if(btn){btn.textContent='↻';btn.disabled=false;}return;}
+  if(!raw){alert('❌ Nenhum backup local encontrado.');if(btn&&btn.textContent!==undefined){btn.textContent='↻';btn.disabled=false;}return;}
   try{
     const localData=JSON.parse(raw);
     const localCount=(localData.txs?.length||0)+(localData.courses?.length||0)+(localData.students?.length||0);
-    if(!confirm(`Restaurar backup local com ${localCount} registros?\n\nIsso vai sobrescrever os dados atuais e salvar no Supabase.`))return;
-    applyData(localData);
-    await saveData();
-    alert('✅ Backup restaurado e salvo no Supabase!');
+    if(!confirm(`Sobrescrever Supabase com backup local?\n\n${localCount} registros encontrados.\n\nOK = Salvar no Supabase\nCancelar = Não fazer nada`))return;
+    // Salva direto no Supabase sem chamar applyData para evitar erros
+    const db=sbAdmin||sbClient;
+    const _ts=new Date().toISOString();
+    const{error}=await db.from('vai_data').upsert({key:'all_data',value:localData,updated_at:_ts});
+    if(error){alert('❌ Erro ao salvar no Supabase: '+error.message);return;}
+    alert('✅ Dados salvos no Supabase! A página vai recarregar.');
     location.reload();
   }catch(e){
-    alert('❌ Erro ao restaurar: '+e.message);
-    if(btn){btn.textContent='↻';btn.disabled=false;}
+    alert('❌ Erro: '+e.message);
   }
 }
 function checkLocalBackupNewer(){
