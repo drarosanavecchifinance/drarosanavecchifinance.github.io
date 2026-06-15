@@ -4008,17 +4008,40 @@ async function saveData(){
 async function forceSyncData(btn){
   if(btn){btn.textContent='⏳';btn.disabled=true;}
   try{
+    // Compara timestamp do backup local com o do Supabase antes de sobrescrever
+    const localRaw=localStorage.getItem('vai_backup');
+    const localData=localRaw?JSON.parse(localRaw):null;
     const db=sbAdmin||sbClient;
-    const{data,error}=await db.from('vai_data').select('value').eq('key','all_data').maybeSingle();
+    const{data,error}=await db.from('vai_data').select('value,updated_at').eq('key','all_data').maybeSingle();
     if(error||!data?.value){
       alert('❌ Erro ao sincronizar: '+(error?.message||'dados não encontrados'));
       if(btn){btn.textContent='↻';btn.disabled=false;}
-    } else {
-      applyData(data.value);
-      location.reload();
+      return;
     }
+    const remoteCount=(data.value.txs?.length||0)+(data.value.courses?.length||0);
+    const localCount=(localData?.txs?.length||0)+(localData?.courses?.length||0);
+    if(localData&&localCount>remoteCount){
+      const ok=confirm(`⚠️ Seu backup local tem mais dados (${localCount} registros) do que o Supabase (${remoteCount} registros).\n\nDeseja RESTAURAR do backup local e salvar no Supabase?\n\nOK = Restaurar backup local\nCancelar = Carregar do Supabase`);
+      if(ok){await restoreFromLocalBackup(btn);return;}
+    }
+    applyData(data.value);
+    location.reload();
   }catch(e){
     alert('❌ Erro: '+e.message);
+    if(btn){btn.textContent='↻';btn.disabled=false;}
+  }
+}
+async function restoreFromLocalBackup(btn){
+  const raw=localStorage.getItem('vai_backup');
+  if(!raw){alert('❌ Nenhum backup local encontrado.');if(btn){btn.textContent='↻';btn.disabled=false;}return;}
+  try{
+    const localData=JSON.parse(raw);
+    applyData(localData);
+    await saveData();
+    alert('✅ Backup local restaurado e salvo no Supabase!');
+    location.reload();
+  }catch(e){
+    alert('❌ Erro ao restaurar: '+e.message);
     if(btn){btn.textContent='↻';btn.disabled=false;}
   }
 }
