@@ -4105,6 +4105,32 @@ async function loadData(){
   }catch(e){console.warn('Erro ao carregar backup local:',e);}
 }
 
+function mergeAndApply(remote){
+  // Merge arrays por ID — une local + remoto sem duplicar
+  function mergeArr(local,rem){
+    if(!rem||!rem.length)return local||[];
+    if(!local||!local.length)return rem;
+    const map=new Map();
+    local.forEach(x=>map.set(x.id,x));
+    // Remoto vence em conflito de mesmo ID (mais recente)
+    rem.forEach(x=>map.set(x.id,x));
+    return Array.from(map.values());
+  }
+  const merged={
+    ...remote,
+    txs:mergeArr(txs,remote.txs),
+    courses:mergeArr(courses,remote.courses),
+    students:mergeArr(students,remote.students),
+    vendedoras:mergeArr(vendedoras,remote.vendedoras),
+    patients:mergeArr(patients,remote.patients),
+    procedures:mergeArr(procedures,remote.procedures),
+    estoque:mergeArr(estoque,remote.estoque),
+    evs:mergeArr(evs,remote.evs),
+  };
+  applyData(merged);
+  // Salva o resultado merged de volta no Supabase
+  setTimeout(saveData,500);
+}
 function applyData(d){
   if(d.txs&&d.txs.length){
     txs=d.txs;
@@ -4253,10 +4279,7 @@ function subscribeRealtime(){
       if(payload.new?.value){
         // Ignora evento gerado pelo próprio salvamento desta sessão
         if(payload.new.value._sessionId===_sessionId)return;
-        // Só aplica se dado for mais recente que o último save local
-        const incomingTs=payload.new.updated_at||payload.new.value._savedAt||'';
-        if(_lastSaveAt&&incomingTs&&incomingTs<_lastSaveAt)return;
-        applyData(payload.new.value);showSyncToast();
+        mergeAndApply(payload.new.value);showSyncToast();
       }
     })
     .subscribe();
