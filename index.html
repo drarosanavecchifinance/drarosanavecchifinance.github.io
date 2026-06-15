@@ -4003,8 +4003,30 @@ async function saveData(){
     const db=sbAdmin||sbClient;
     const _ts=new Date().toISOString();_lastSaveAt=_ts;
     const{error}=await db.from('vai_data').upsert({key:'all_data',value:payload,updated_at:_ts});
-    if(error)console.warn('Erro ao salvar no Supabase:',error);
-  }catch(e){console.warn('Supabase saveData error:',e);}
+    if(error){
+      console.warn('Erro ao salvar no Supabase:',error);
+      showSaveToast('❌ Erro ao salvar na nuvem! Dados só no backup local.');
+    } else {
+      showSaveToast('✓ Salvo');
+    }
+  }catch(e){
+    console.warn('Supabase saveData error:',e);
+    showSaveToast('❌ Sem conexão — dados salvos apenas localmente!');
+  }
+}
+let _saveToastTimer=null;
+function showSaveToast(msg){
+  let t=document.getElementById('saveToast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='saveToast';
+    t.style.cssText='position:fixed;bottom:24px;right:24px;background:#1a1a1a;color:#fff;padding:8px 16px;border-radius:8px;font-size:12.5px;font-weight:500;z-index:9999;transition:opacity .3s;pointer-events:none;';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;
+  t.style.opacity='1';
+  clearTimeout(_saveToastTimer);
+  _saveToastTimer=setTimeout(()=>{t.style.opacity='0';},msg.startsWith('✓')?1500:5000);
 }
 
 async function forceSyncData(btn){
