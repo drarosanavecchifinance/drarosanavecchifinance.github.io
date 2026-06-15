@@ -526,6 +526,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
     <div class="tbr">
       <button class="bs" id="yampiSyncBtn" onclick="syncYampiManual()" title="Verificar pedidos Yampi pendentes" style="padding:5px 11px;font-size:12px;gap:5px;display:none">↺ Yampi</button>
       <button class="bs" id="yampiResyncBtn" onclick="resyncYampiTxs()" title="Re-sincronizar todos os pedidos Yampi com valores corretos" style="padding:5px 11px;font-size:12px;gap:5px;color:var(--or);border-color:var(--or);display:none">⟳ Re-sync</button>
+      <button class="bs" id="restoreBackupBtn" onclick="restoreFromLocalBackup()" title="Restaurar dados do backup local" style="padding:5px 11px;font-size:12px;gap:5px;color:#e53935;border-color:#e53935;display:none">⚠ Restaurar Backup</button>
       <div class="tbico"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 2a6 6 0 0 1 6 6v2l1.3 2.6A1 1 0 0 1 16.4 14H3.6a1 1 0 0 1-.9-1.4L4 10V8a6 6 0 0 1 6-6z"/><path d="M8 14a2 2 0 0 0 4 0"/></svg><span class="ndot"></span></div>
     </div>
   </div>
@@ -3874,6 +3875,7 @@ function initSupabase(){
           document.getElementById('auth-screen').style.display='none';
           document.getElementById('app').style.display='flex';
           await loadData();
+          checkLocalBackupNewer();
           subscribeRealtime();
           setTimeout(initCharts,120);
         } else if(event==='SIGNED_OUT'){
@@ -4036,14 +4038,27 @@ async function restoreFromLocalBackup(btn){
   if(!raw){alert('❌ Nenhum backup local encontrado.');if(btn){btn.textContent='↻';btn.disabled=false;}return;}
   try{
     const localData=JSON.parse(raw);
+    const localCount=(localData.txs?.length||0)+(localData.courses?.length||0)+(localData.students?.length||0);
+    if(!confirm(`Restaurar backup local com ${localCount} registros?\n\nIsso vai sobrescrever os dados atuais e salvar no Supabase.`))return;
     applyData(localData);
     await saveData();
-    alert('✅ Backup local restaurado e salvo no Supabase!');
+    alert('✅ Backup restaurado e salvo no Supabase!');
     location.reload();
   }catch(e){
     alert('❌ Erro ao restaurar: '+e.message);
     if(btn){btn.textContent='↻';btn.disabled=false;}
   }
+}
+function checkLocalBackupNewer(){
+  try{
+    const raw=localStorage.getItem('vai_backup');
+    if(!raw)return;
+    const localData=JSON.parse(raw);
+    const localCount=(localData.txs?.length||0)+(localData.courses?.length||0)+(localData.students?.length||0);
+    const currentCount=(txs?.length||0)+(courses?.length||0)+(students?.length||0);
+    const btn=document.getElementById('restoreBackupBtn');
+    if(btn&&localCount>currentCount+2)btn.style.display='';
+  }catch(e){}
 }
 // ===== CARREGAR =====
 async function loadData(){
