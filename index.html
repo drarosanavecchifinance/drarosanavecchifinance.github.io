@@ -3987,13 +3987,49 @@ function undoLastDelete(){
   }catch(e){alert('Erro ao restaurar: '+e.message);}
 }
 
+// Mescla arrays por ID — local vence em conflito, mantém itens que só existem em um dos lados
+function mergeArrById(local,remote){
+  const map=new Map();
+  const arrR=Array.isArray(remote)?remote:[];
+  const arrL=Array.isArray(local)?local:[];
+  arrR.forEach(x=>x&&x.id!=null&&map.set(x.id,x));
+  arrL.forEach(x=>x&&x.id!=null&&map.set(x.id,x)); // local mais recente vence
+  return Array.from(map.values());
+}
 // ===== SALVAR =====
 async function saveData(){
-  const payload={
+  let localPayload={
     txs,courses,students,vendedoras,evs,estoque,patients,procedures,taxas,taxasMaq,taxas_version:_TAXAS_VER,_yampiParserV:7,
     _sessionId,
     ids:{txNid,cursoNid,cursoNcode,stuNid,stuNcode,vendNid,vendNcode,evNextId,grupoNid,patientNid,patientNcode,procedureNid,procedureNcode,estoqueNid}
   };
+  // Busca o que está no Supabase agora e mescla — evita que dois computadores se sobrescrevam
+  if(supabaseReady){
+    try{
+      const db=sbAdmin||sbClient;
+      const{data:remoteRow}=await db.from('vai_data').select('value').eq('key','all_data').maybeSingle();
+      const remote=remoteRow?.value;
+      if(remote){
+        const mergedTxs=mergeArrById(txs,remote.txs);
+        const mergedCourses=mergeArrById(courses,remote.courses);
+        const mergedStudents=mergeArrById(students,remote.students);
+        const mergedVend=mergeArrById(vendedoras,remote.vendedoras);
+        const mergedPatients=mergeArrById(patients,remote.patients);
+        const mergedProcedures=mergeArrById(procedures,remote.procedures);
+        const mergedEstoque=mergeArrById(estoque,remote.estoque);
+        const mergedEvs=mergeArrById(evs,remote.evs);
+        // Atualiza os arrays globais com o resultado mesclado para refletir na tela e em saves futuros
+        txs=mergedTxs;courses=mergedCourses;students=mergedStudents;vendedoras=mergedVend;
+        patients=mergedPatients;procedures=mergedProcedures;estoque=mergedEstoque;evs=mergedEvs;
+        localPayload={
+          ...localPayload,
+          txs,courses,students,vendedoras,patients,procedures,estoque,evs,
+        };
+        refreshCurrentPage();
+      }
+    }catch(e){console.warn('Erro ao mesclar com Supabase antes de salvar:',e);}
+  }
+  const payload=localPayload;
   // Sempre salva no localStorage como backup
   try{localStorage.setItem('vai_backup',JSON.stringify(payload));}catch(e){}
   // Salva no Supabase se configurado
