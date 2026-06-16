@@ -523,9 +523,6 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
   <div class="topbar">
     <div><div class="tb-title" id="tbT">Dashboard Executivo</div><div class="tb-sub" id="tbS">Visão geral estratégica · Todas as empresas</div></div>
     <div class="tbr">
-      <button class="bs" id="yampiSyncBtn" onclick="syncYampiManual()" title="Verificar pedidos Yampi pendentes" style="padding:5px 11px;font-size:12px;gap:5px;display:none">↺ Yampi</button>
-      <button class="bs" id="yampiResyncBtn" onclick="resyncYampiTxs()" title="Re-sincronizar todos os pedidos Yampi com valores corretos" style="padding:5px 11px;font-size:12px;gap:5px;color:var(--or);border-color:var(--or);display:none">⟳ Re-sync</button>
-      <button onclick="forceSyncData(this)" title="Sincronizar dados do Supabase" style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,.5);font-size:15px;padding:4px 6px" id="sbSyncBtn">↻</button>
       <div class="tbico"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 2a6 6 0 0 1 6 6v2l1.3 2.6A1 1 0 0 1 16.4 14H3.6a1 1 0 0 1-.9-1.4L4 10V8a6 6 0 0 1 6-6z"/><path d="M8 14a2 2 0 0 0 4 0"/></svg><span class="ndot"></span></div>
     </div>
   </div>
@@ -1555,7 +1552,6 @@ function setCo(c,btn){
   if(!isNF){const curP=document.querySelector('.page.a');if(curP&&curP.id==='page-estoque')sv('dashboard',document.querySelector('.ni'));}
   const nvEl=document.getElementById('navVendedoras');if(nvEl)nvEl.style.display='';
   ['navSecConsultorio','navPacientes','navProced','navCEImport'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=isCT?'':'none';});
-  updateYampiButtons();
   const curPage=document.querySelector('.page.a');
   if(!isRV&&curPage&&(curPage.id==='page-cursos'||curPage.id==='page-alunos'))sv('dashboard',document.querySelector('.ni'));
   if(!isCT&&curPage&&(curPage.id==='page-pacientes'||curPage.id==='page-procedimentos'||curPage.id==='page-ceimport'))sv('dashboard',document.querySelector('.ni'));
@@ -1565,12 +1561,6 @@ function setCo(c,btn){
 
 // ===== NAV =====
 const pgMap={dashboard:['Dashboard Executivo','Visão geral estratégica'],financeiro:['Fluxo de Caixa','Lançamentos · Contas · Fluxo de Caixa'],carteira:['Carteira','Faturamento · Recebimentos · Agenda de entradas'],cursos:['Cursos — Rosana Academy','Controle financeiro por curso'],alunos:['Base de Alunos','Rosana Vecchi Academy'],vendedoras:['Vendedoras','Equipe de vendas — NatureFace & Academy'],pacientes:['Pacientes — Consultório','Base de pacientes'],procedimentos:['Procedimentos — Consultório','Serviços e tratamentos'],ceimport:['Clínica Experts','Integração e importação automática'],calendario:['Calendário','Agenda e eventos'],estoque:['Estoque — NatureFace','Controle de produtos e inventário']};
-function updateYampiButtons(){
-  const show=co==='nf'&&document.getElementById('page-financeiro')?.classList.contains('a');
-  const b1=document.getElementById('yampiSyncBtn');const b2=document.getElementById('yampiResyncBtn');
-  if(b1)b1.style.display=show?'':'none';
-  if(b2)b2.style.display=show?'':'none';
-}
 function sv(v,el){
   if(el){document.querySelectorAll('.ni').forEach(n=>n.classList.remove('a'));el.classList.add('a');}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('a'));
@@ -1578,7 +1568,6 @@ function sv(v,el){
   if(pgMap[v]){document.getElementById('tbT').textContent=pgMap[v][0];document.getElementById('tbS').textContent=pgMap[v][1]+' · '+(v==='dashboard'?'Todas as empresas':cod[co].name);}
   if(v==='financeiro')renderTx();
   if(v==='carteira')renderCarteira();
-  updateYampiButtons();
   if(v==='cursos')renderCursos();
   if(v==='alunos')renderAlunos();
   if(v==='calendario')renderCal();
@@ -4338,34 +4327,6 @@ function subscribeRealtime(){
   loadYampiPending();
 }
 
-let _yampiSyncRunning=false;
-async function syncYampiManual(){
-  if(_yampiSyncRunning)return; // previne duplo clique
-  _yampiSyncRunning=true;
-  const btn=document.getElementById('yampiSyncBtn');
-  if(btn){btn.textContent='↺ ...';btn.disabled=true;}
-  try{await loadYampiPending();}
-  finally{_yampiSyncRunning=false;if(btn){btn.textContent='↺ Yampi';btn.disabled=false;}}
-}
-async function resyncYampiTxs(){
-  if(!supabaseReady){alert('Supabase não conectado.');return;}
-  if(!confirm('Isso vai re-importar todos os pedidos da Yampi com os valores corretos.\nAs vendedoras atribuídas serão preservadas.\n\nContinuar?'))return;
-  // Salva mapa yampiEventId -> vendId antes de deletar
-  const vendMap={};
-  txs.forEach(function(t){if(t.yampiEventId&&t.vendId)vendMap[t.yampiEventId]=t.vendId;});
-  // Remove todas as txs Yampi
-  txs=txs.filter(function(t){return!t.yampiEventId;});
-  // Reseta eventos no Supabase
-  const db=sbAdmin||sbClient;
-  await db.from('yampi_events').update({imported:false,tx_id:null}).neq('event_type','desconhecido');
-  // Re-importa
-  await loadYampiPending();
-  // Restaura vendedoras
-  txs.forEach(function(t){if(t.yampiEventId&&vendMap[t.yampiEventId])t.vendId=vendMap[t.yampiEventId];});
-  await saveData();
-  refreshCurrentPage();
-  alert('Re-sincronização concluída! Vendedoras preservadas.');
-}
 async function loadYampiPending(){
   if(!supabaseReady)return;
   try{
