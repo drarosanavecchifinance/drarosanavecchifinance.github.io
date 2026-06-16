@@ -2023,7 +2023,7 @@ function renderTx(){
     const empBg={nf:'rgba(196,128,127,.13)',rv:'rgba(149,82,81,.13)',ct:'rgba(123,158,135,.13)',all:'rgba(92,53,53,.1)'};
     const empCell=`<span style="display:inline-block;background:${empBg[t.co]};color:${cc[t.co]};font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;border:1px solid ${cc[t.co]}33;letter-spacing:.2px">${cnm[t.co]}</span>${crs?`<br><span style="font-size:11px;color:var(--m);font-weight:500">${crs.code}</span>`:''}`;
     const typeIco=t.type==='receber'?'<span style="color:var(--gr);font-size:11px;font-weight:700;margin-right:4px">↓</span>':'<span style="color:var(--re);font-size:11px;font-weight:700;margin-right:4px">↑</span>';
-    let dueCell=fmtDate(t.due);
+    let dueCell=fmtDate(t.saleDate||t.due);
     if(ftab==='pagar'&&subftab==='avencer'){
       const dueD=new Date(t.due+'T00:00:00');
       const diff=Math.round((dueD-today)/(1000*60*60*24));
