@@ -1516,6 +1516,13 @@ let txs=[];
 txNid=1;
 let editingEv=null, evNextId=20;
 let estoque=[]; let estoqueNid=1;
+// Tombstones — registra IDs excluídos para nunca ressuscitarem em merges entre computadores
+let _deleted={txs:[],courses:[],students:[],vendedoras:[],patients:[],procedures:[],estoque:[],evs:[]};
+function markDeleted(type,ids){
+  if(!_deleted[type])_deleted[type]=[];
+  const arr=Array.isArray(ids)?ids:[ids];
+  arr.forEach(id=>{if(id!=null&&!_deleted[type].includes(id))_deleted[type].push(id);});
+}
 let evs={
   '2025-7-5':[{id:1,title:'Pagamento Aluguel',type:'pagamento',co:'nf',time:'09:00',desc:''}],
   '2025-7-10':[{id:2,title:'Derma+ vencimento',type:'pagamento',co:'nf',time:'10:00',desc:''}],
@@ -1843,7 +1850,7 @@ function saveCurso(){
   }
   closeM('cursoModal');renderCursos();populateCursoSelects();if(document.getElementById('page-calendario').classList.contains('a'))renderCal();saveData();
 }
-function delCurso(id){if(!confirm('Excluir este curso? Os lançamentos vinculados não serão removidos.'))return;courses=courses.filter(c=>c.id!==id);renderCursos();saveData();}
+function delCurso(id){if(!confirm('Excluir este curso? Os lançamentos vinculados não serão removidos.'))return;markDeleted('courses',id);courses=courses.filter(c=>c.id!==id);renderCursos();saveData();}
 
 function viewCurso(id){
   viewingCursoId=id;
@@ -2528,27 +2535,31 @@ function saveTx(){
 function delTx(id){
   const t=txs.find(x=>x.id===id);if(!t)return;
   if(t.grupoId){
-    const cnt=txs.filter(x=>x.grupoId===t.grupoId).length;
-    if(!confirm('Excluir todas as '+cnt+' parcelas deste grupo?'))return;
+    const grp=txs.filter(x=>x.grupoId===t.grupoId);
+    if(!confirm('Excluir todas as '+grp.length+' parcelas deste grupo?'))return;
     snapshotBeforeDelete();
+    markDeleted('txs',grp.map(x=>x.id));
     txs=txs.filter(x=>x.grupoId!==t.grupoId);
     renderTx();saveData();return;
   }
   if(!confirm('Excluir este lançamento?'))return;
   snapshotBeforeDelete();
+  markDeleted('txs',id);
   txs=txs.filter(x=>x.id!==id);renderTx();saveData();
 }
 function delTxCart(id){
   const t=txs.find(x=>x.id===id);if(!t)return;
   if(t.grupoId){
-    const cnt=txs.filter(x=>x.grupoId===t.grupoId).length;
-    if(!confirm('Excluir todas as '+cnt+' parcelas deste grupo?'))return;
+    const grp=txs.filter(x=>x.grupoId===t.grupoId);
+    if(!confirm('Excluir todas as '+grp.length+' parcelas deste grupo?'))return;
     snapshotBeforeDelete();
+    markDeleted('txs',grp.map(x=>x.id));
     txs=txs.filter(x=>x.grupoId!==t.grupoId);
     renderCarteira();saveData();return;
   }
   if(!confirm('Excluir este lançamento?'))return;
   snapshotBeforeDelete();
+  markDeleted('txs',id);
   txs=txs.filter(x=>x.id!==id);renderCarteira();saveData();
 }
 function openGruposModal(){
@@ -2961,7 +2972,7 @@ function saveAluno(){
   if(editStuId){const i=students.findIndex(x=>x.id===editStuId);if(i>=0)students[i]=s;}else students.push(s);
   closeM('alunoModal');renderAlunos();saveData();
 }
-function delAluno(id){if(!confirm('Excluir esta aluna?'))return;students=students.filter(s=>s.id!==id);renderAlunos();saveData();}
+function delAluno(id){if(!confirm('Excluir esta aluna?'))return;markDeleted('students',id);students=students.filter(s=>s.id!==id);renderAlunos();saveData();}
 
 // ===== CALENDAR =====
 const mns=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -3070,6 +3081,7 @@ async function limparAgendamentos(){
 async function deleteEvent(key,id,e){
   if(e)e.stopPropagation();
   if(!confirm('Excluir este evento?'))return;
+  markDeleted('evs',id);
   if(evs[key]){evs[key]=evs[key].filter(x=>x.id!==id);if(!evs[key].length)delete evs[key];}
   renderCal();
   try{await saveData();}catch(err){console.warn('Erro ao salvar exclusão:',err);}
@@ -3079,6 +3091,7 @@ async function deleteEditingEvent(){
   if(!editingEv)return;
   if(!confirm('Excluir este evento?'))return;
   const{key,id}=editingEv;
+  markDeleted('evs',id);
   if(evs[key]){evs[key]=evs[key].filter(x=>x.id!==id);if(!evs[key].length)delete evs[key];}
   editingEv=null;closeM('evModal');renderCal();
   try{await saveData();}catch(err){console.warn('Erro ao salvar exclusão:',err);}
@@ -3502,6 +3515,7 @@ function salvarEstoque(){
 }
 function delEstoque(id){
   if(!confirm('Excluir este produto do estoque?'))return;
+  markDeleted('estoque',id);
   estoque=estoque.filter(p=>p.id!==id);
   renderEstoque();saveData();
 }
@@ -3822,7 +3836,7 @@ function saveVend(){
   closeM('vendModal');renderVendedoras();saveData();
 }
 
-function delVend(id){if(!confirm('Excluir esta vendedora?'))return;vendedoras=vendedoras.filter(v=>v.id!==id);renderVendedoras();saveData();}
+function delVend(id){if(!confirm('Excluir esta vendedora?'))return;markDeleted('vendedoras',id);vendedoras=vendedoras.filter(v=>v.id!==id);renderVendedoras();saveData();}
 
 // ================================================================
 // SUPABASE — Configure suas credenciais abaixo
@@ -3874,7 +3888,6 @@ function initSupabase(){
           document.getElementById('auth-screen').style.display='none';
           document.getElementById('app').style.display='flex';
           await loadData();
-          checkLocalBackupNewer();
           subscribeRealtime();
           setTimeout(initCharts,120);
         } else if(event==='SIGNED_OUT'){
@@ -3981,26 +3994,56 @@ function undoLastDelete(){
     const snap=JSON.parse(raw);
     const dt=new Date(snap.ts).toLocaleString('pt-BR');
     if(!confirm('Restaurar '+snap.txs.length+' lançamentos do snapshot de '+dt+'?\n\nOs dados atuais serão substituídos.'))return;
+    const restoredIds=new Set(snap.txs.map(t=>t.id));
+    _deleted.txs=(_deleted.txs||[]).filter(id=>!restoredIds.has(id));
     txs=snap.txs;
     renderTx();renderCarteira();saveData();
     alert('✅ Dados restaurados com sucesso!');
   }catch(e){alert('Erro ao restaurar: '+e.message);}
 }
 
-// Mescla arrays por ID — local vence em conflito, mantém itens que só existem em um dos lados
-function mergeArrById(local,remote){
+// Mescla arrays por ID — une local + remoto, exclui IDs marcados como deletados (tombstone)
+function mergeArrById(local,remote,deletedIds){
   const map=new Map();
   const arrR=Array.isArray(remote)?remote:[];
   const arrL=Array.isArray(local)?local:[];
-  arrR.forEach(x=>x&&x.id!=null&&map.set(x.id,x));
-  arrL.forEach(x=>x&&x.id!=null&&map.set(x.id,x)); // local mais recente vence
+  const del=new Set(deletedIds||[]);
+  arrR.forEach(x=>{if(x&&x.id!=null&&!del.has(x.id))map.set(x.id,x);});
+  arrL.forEach(x=>{if(x&&x.id!=null&&!del.has(x.id))map.set(x.id,x);}); // local mais recente vence em conflito de mesmo ID
   return Array.from(map.values());
+}
+// Mescla o calendário (objeto {data: [eventos]}) por ID de evento, respeitando tombstones
+function mergeEvsObj(local,remote,deletedIds){
+  const del=new Set(deletedIds||[]);
+  const localObj=(local&&typeof local==='object')?local:{};
+  const remoteObj=(remote&&typeof remote==='object')?remote:{};
+  const keys=new Set([...Object.keys(localObj),...Object.keys(remoteObj)]);
+  const result={};
+  keys.forEach(k=>{
+    const map=new Map();
+    (Array.isArray(remoteObj[k])?remoteObj[k]:[]).forEach(x=>{if(x&&x.id!=null&&!del.has(x.id))map.set(x.id,x);});
+    (Array.isArray(localObj[k])?localObj[k]:[]).forEach(x=>{if(x&&x.id!=null&&!del.has(x.id))map.set(x.id,x);});
+    const merged=Array.from(map.values());
+    if(merged.length)result[k]=merged;
+  });
+  return result;
+}
+// Mescla tombstones — união simples, nunca esquece uma exclusão já registrada em qualquer computador
+function mergeDeleted(local,remote){
+  const out={};
+  const types=['txs','courses','students','vendedoras','patients','procedures','estoque','evs'];
+  types.forEach(t=>{
+    const a=Array.isArray(local?.[t])?local[t]:[];
+    const b=Array.isArray(remote?.[t])?remote[t]:[];
+    out[t]=Array.from(new Set([...a,...b]));
+  });
+  return out;
 }
 // ===== SALVAR =====
 async function saveData(){
   let localPayload={
     txs,courses,students,vendedoras,evs,estoque,patients,procedures,taxas,taxasMaq,taxas_version:_TAXAS_VER,_yampiParserV:7,
-    _sessionId,
+    _sessionId,_deleted,
     ids:{txNid,cursoNid,cursoNcode,stuNid,stuNcode,vendNid,vendNcode,evNextId,grupoNid,patientNid,patientNcode,procedureNid,procedureNcode,estoqueNid}
   };
   // Busca o que está no Supabase agora e mescla — evita que dois computadores se sobrescrevam
@@ -4010,20 +4053,21 @@ async function saveData(){
       const{data:remoteRow}=await db.from('vai_data').select('value').eq('key','all_data').maybeSingle();
       const remote=remoteRow?.value;
       if(remote){
-        const mergedTxs=mergeArrById(txs,remote.txs);
-        const mergedCourses=mergeArrById(courses,remote.courses);
-        const mergedStudents=mergeArrById(students,remote.students);
-        const mergedVend=mergeArrById(vendedoras,remote.vendedoras);
-        const mergedPatients=mergeArrById(patients,remote.patients);
-        const mergedProcedures=mergeArrById(procedures,remote.procedures);
-        const mergedEstoque=mergeArrById(estoque,remote.estoque);
-        const mergedEvs=mergeArrById(evs,remote.evs);
+        _deleted=mergeDeleted(_deleted,remote._deleted);
+        const mergedTxs=mergeArrById(txs,remote.txs,_deleted.txs);
+        const mergedCourses=mergeArrById(courses,remote.courses,_deleted.courses);
+        const mergedStudents=mergeArrById(students,remote.students,_deleted.students);
+        const mergedVend=mergeArrById(vendedoras,remote.vendedoras,_deleted.vendedoras);
+        const mergedPatients=mergeArrById(patients,remote.patients,_deleted.patients);
+        const mergedProcedures=mergeArrById(procedures,remote.procedures,_deleted.procedures);
+        const mergedEstoque=mergeArrById(estoque,remote.estoque,_deleted.estoque);
+        const mergedEvs=mergeEvsObj(evs,remote.evs,_deleted.evs);
         // Atualiza os arrays globais com o resultado mesclado para refletir na tela e em saves futuros
         txs=mergedTxs;courses=mergedCourses;students=mergedStudents;vendedoras=mergedVend;
         patients=mergedPatients;procedures=mergedProcedures;estoque=mergedEstoque;evs=mergedEvs;
         localPayload={
           ...localPayload,
-          txs,courses,students,vendedoras,patients,procedures,estoque,evs,
+          txs,courses,students,vendedoras,patients,procedures,estoque,evs,_deleted,
         };
         refreshCurrentPage();
       }
@@ -4082,17 +4126,6 @@ async function restoreFromLocalBackup(btn){
     location.reload();
   }catch(e){alert('Erro: '+e.message);}
 }
-function checkLocalBackupNewer(){
-  try{
-    const raw=localStorage.getItem('vai_backup');
-    if(!raw)return;
-    const localData=JSON.parse(raw);
-    const localCount=(localData.txs?.length||0)+(localData.courses?.length||0)+(localData.students?.length||0);
-    const currentCount=(txs?.length||0)+(courses?.length||0)+(students?.length||0);
-    const btn=document.getElementById('restoreBackupBtn');
-    if(btn&&localCount>currentCount+2)btn.style.display='';
-  }catch(e){}
-}
 // ===== CARREGAR =====
 async function loadData(){
   // Tenta carregar do Supabase primeiro
@@ -4115,31 +4148,25 @@ async function loadData(){
 }
 
 function mergeAndApply(remote){
-  // Merge arrays por ID — une local + remoto sem duplicar
-  function mergeArr(local,rem){
-    const map=new Map();
-    const arrA=Array.isArray(local)?local:[];
-    const arrB=Array.isArray(rem)?rem:[];
-    arrA.forEach(x=>x&&x.id!=null&&map.set(x.id,x));
-    arrB.forEach(x=>x&&x.id!=null&&map.set(x.id,x));
-    return Array.from(map.values());
-  }
+  _deleted=mergeDeleted(_deleted,remote._deleted);
   const merged={
     ...remote,
-    txs:mergeArr(txs,remote.txs),
-    courses:mergeArr(courses,remote.courses),
-    students:mergeArr(students,remote.students),
-    vendedoras:mergeArr(vendedoras,remote.vendedoras),
-    patients:mergeArr(patients,remote.patients),
-    procedures:mergeArr(procedures,remote.procedures),
-    estoque:mergeArr(estoque,remote.estoque),
-    evs:mergeArr(evs,remote.evs),
+    txs:mergeArrById(txs,remote.txs,_deleted.txs),
+    courses:mergeArrById(courses,remote.courses,_deleted.courses),
+    students:mergeArrById(students,remote.students,_deleted.students),
+    vendedoras:mergeArrById(vendedoras,remote.vendedoras,_deleted.vendedoras),
+    patients:mergeArrById(patients,remote.patients,_deleted.patients),
+    procedures:mergeArrById(procedures,remote.procedures,_deleted.procedures),
+    estoque:mergeArrById(estoque,remote.estoque,_deleted.estoque),
+    evs:mergeEvsObj(evs,remote.evs,_deleted.evs),
+    _deleted,
   };
   applyData(merged);
   // Salva o resultado merged de volta no Supabase
   setTimeout(saveData,500);
 }
 function applyData(d){
+  if(d._deleted)_deleted=mergeDeleted(_deleted,d._deleted);
   if(d.txs&&d.txs.length){
     txs=d.txs;
     // Restaura saleDate de transações Yampi que perderam o campo ao serem editadas
@@ -4593,7 +4620,7 @@ function savePaciente(){
   if(editPacienteId){const i=patients.findIndex(function(x){return x.id===editPacienteId;});if(i>=0)patients[i]=p;}else patients.push(p);
   closeM('pacienteModal');renderPacientes();saveData();
 }
-function delPaciente(id){if(!confirm('Excluir este paciente?'))return;patients=patients.filter(function(p){return p.id!==id;});renderPacientes();saveData();}
+function delPaciente(id){if(!confirm('Excluir este paciente?'))return;markDeleted('patients',id);patients=patients.filter(function(p){return p.id!==id;});renderPacientes();saveData();}
 
 // ===== PROCEDIMENTOS =====
 function genProcCode(){return 'PRO'+String(procedureNcode).padStart(3,'0');}
@@ -4638,7 +4665,7 @@ function saveProcedimento(){
   if(editProcedimentoId){const i=procedures.findIndex(function(x){return x.id===editProcedimentoId;});if(i>=0)procedures[i]=p;}else procedures.push(p);
   closeM('procedimentoModal');renderProcedimentos();saveData();
 }
-function delProcedimento(id){if(!confirm('Excluir este procedimento?'))return;procedures=procedures.filter(function(p){return p.id!==id;});renderProcedimentos();saveData();}
+function delProcedimento(id){if(!confirm('Excluir este procedimento?'))return;markDeleted('procedures',id);procedures=procedures.filter(function(p){return p.id!==id;});renderProcedimentos();saveData();}
 
 // ===== CLÍNICA EXPERTS INTEGRATION =====
 async function loadCEEvents(){
