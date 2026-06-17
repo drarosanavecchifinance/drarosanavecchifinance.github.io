@@ -3529,7 +3529,7 @@ function confirmarMovEstoque(){
   if(tipo==='entrada') p.qtd=(p.qtd||0)+qtd;
   else if(tipo==='saida') p.qtd=Math.max(0,(p.qtd||0)-qtd);
   else if(tipo==='ajuste') p.qtd=qtd;
-  p.movs.push({tipo,qtd,obs,date,email:_currentUserEmail||'—'});
+  p.movs.push({mid:Date.now()+'_'+Math.random().toString(36).slice(2,7),tipo,qtd,obs,date,email:_currentUserEmail||'—'});
   closeM('estoqueMovModal');renderEstoque();saveData();
 }
 
@@ -3992,6 +3992,14 @@ function undoLastDelete(){
 }
 
 // Mescla arrays por ID — une local + remoto, exclui IDs marcados como deletados (tombstone)
+function mergeMovs(a,b){
+  // Une dois arrays de movimentações de estoque dedupando por chave (date+tipo+qtd+obs)
+  const seen=new Set();const out=[];
+  const add=m=>{if(!m)return;const k=(m.mid||'')+'|'+(m.date||'')+'|'+(m.tipo||'')+'|'+(m.qtd||0)+'|'+(m.obs||'');if(!seen.has(k)){seen.add(k);out.push(m);}};
+  (Array.isArray(b)?b:[]).forEach(add);
+  (Array.isArray(a)?a:[]).forEach(add);
+  return out;
+}
 function mergeArrById(local,remote,deletedIds){
   const map=new Map();
   const arrR=Array.isArray(remote)?remote:[];
@@ -3999,6 +4007,28 @@ function mergeArrById(local,remote,deletedIds){
   const del=new Set(deletedIds||[]);
   arrR.forEach(x=>{if(x&&x.id!=null&&!del.has(x.id))map.set(x.id,x);});
   arrL.forEach(x=>{if(x&&x.id!=null&&!del.has(x.id))map.set(x.id,x);}); // local mais recente vence em conflito de mesmo ID
+  return Array.from(map.values());
+}
+// Versão específica para estoque: mescla movimentos e preserva a qtd do lado com mais histórico
+function mergeEstoqueArr(local,remote,deletedIds){
+  const arrR=Array.isArray(remote)?remote:[];
+  const arrL=Array.isArray(local)?local:[];
+  const del=new Set(deletedIds||[]);
+  const map=new Map();
+  arrR.forEach(x=>{if(x&&x.id!=null&&!del.has(x.id))map.set(x.id,x);});
+  arrL.forEach(x=>{
+    if(!x||x.id==null||del.has(x.id))return;
+    const rem=map.get(x.id);
+    if(rem){
+      // mescla os movimentos dos dois lados
+      const movsM=mergeMovs(x.movs,rem.movs);
+      // vence o lado com mais movimentos (histórico mais completo) — mas campos não-qtd do local sempre ganham
+      const base=(movsM.length>(rem.movs||[]).length)?{...rem,...x}:{...x,...rem};
+      map.set(x.id,{...base,movs:movsM});
+    }else{
+      map.set(x.id,x);
+    }
+  });
   return Array.from(map.values());
 }
 // Mescla o calendário (objeto {data: [eventos]}) por ID de evento, respeitando tombstones
@@ -4049,7 +4079,7 @@ async function saveData(){
         const mergedVend=mergeArrById(vendedoras,remote.vendedoras,_deleted.vendedoras);
         const mergedPatients=mergeArrById(patients,remote.patients,_deleted.patients);
         const mergedProcedures=mergeArrById(procedures,remote.procedures,_deleted.procedures);
-        const mergedEstoque=mergeArrById(estoque,remote.estoque,_deleted.estoque);
+        const mergedEstoque=mergeEstoqueArr(estoque,remote.estoque,_deleted.estoque);
         const mergedEvs=mergeEvsObj(evs,remote.evs,_deleted.evs);
         // Atualiza os arrays globais com o resultado mesclado para refletir na tela e em saves futuros
         txs=mergedTxs;courses=mergedCourses;students=mergedStudents;vendedoras=mergedVend;
@@ -4122,7 +4152,7 @@ async function restoreFromLocalBackup(btn){
           vendedoras:mergeArrById(local.vendedoras,remote.vendedoras,del.vendedoras),
           patients:mergeArrById(local.patients,remote.patients,del.patients),
           procedures:mergeArrById(local.procedures,remote.procedures,del.procedures),
-          estoque:mergeArrById(local.estoque,remote.estoque,del.estoque),
+          estoque:mergeEstoqueArr(local.estoque,remote.estoque,del.estoque),
           evs:mergeEvsObj(local.evs,remote.evs,del.evs),
           _deleted:del};
       }
@@ -4165,7 +4195,7 @@ function mergeAndApply(remote){
     vendedoras:mergeArrById(vendedoras,remote.vendedoras,_deleted.vendedoras),
     patients:mergeArrById(patients,remote.patients,_deleted.patients),
     procedures:mergeArrById(procedures,remote.procedures,_deleted.procedures),
-    estoque:mergeArrById(estoque,remote.estoque,_deleted.estoque),
+    estoque:mergeEstoqueArr(estoque,remote.estoque,_deleted.estoque),
     evs:mergeEvsObj(evs,remote.evs,_deleted.evs),
     _deleted,
   };
@@ -4519,7 +4549,7 @@ function descontarEstoqueYampi(payload){
         const saida=d.qtd*qtdVendida;
         prod.qtd=Math.max(0,(prod.qtd||0)-saida);
         if(!prod.movs)prod.movs=[];
-        prod.movs.push({tipo:'saida',qtd:saida,obs:'Venda Yampi automática',date:new Date().toISOString().slice(0,10),email:'yampi@auto'});
+        prod.movs.push({mid:Date.now()+'_'+Math.random().toString(36).slice(2,7),tipo:'saida',qtd:saida,obs:'Venda Yampi automática',date:new Date().toISOString().slice(0,10),email:'yampi@auto'});
       }
     });
   });
