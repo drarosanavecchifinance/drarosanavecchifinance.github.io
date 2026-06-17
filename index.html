@@ -4104,14 +4104,33 @@ async function restoreFromLocalBackup(btn){
   const raw=localStorage.getItem('vai_backup');
   if(!raw){alert('Nenhum backup local encontrado.');return;}
   try{
-    const d=JSON.parse(raw);
-    const n=(d.txs||[]).length;
+    const local=JSON.parse(raw);
+    const n=(local.txs||[]).length;
     if(!confirm('Enviar backup local para o Supabase?\n'+n+' lancamentos encontrados.\n\nOK = Enviar\nCancelar = Nao fazer nada'))return;
     const db=sbAdmin||sbClient;
+    // merge com nuvem antes de sobrescrever
+    let merged=local;
+    try{
+      const{data:remoteRow}=await db.from('vai_data').select('value').eq('key','all_data').maybeSingle();
+      const remote=remoteRow?.value;
+      if(remote){
+        const del=mergeDeleted(local._deleted,remote._deleted);
+        merged={...local,
+          txs:mergeArrById(local.txs,remote.txs,del.txs),
+          courses:mergeArrById(local.courses,remote.courses,del.courses),
+          students:mergeArrById(local.students,remote.students,del.students),
+          vendedoras:mergeArrById(local.vendedoras,remote.vendedoras,del.vendedoras),
+          patients:mergeArrById(local.patients,remote.patients,del.patients),
+          procedures:mergeArrById(local.procedures,remote.procedures,del.procedures),
+          estoque:mergeArrById(local.estoque,remote.estoque,del.estoque),
+          evs:mergeEvsObj(local.evs,remote.evs,del.evs),
+          _deleted:del};
+      }
+    }catch(e){console.warn('Merge antes de restore falhou, usando local puro:',e);}
     const ts=new Date().toISOString();
-    const res=await db.from('vai_data').upsert({key:'all_data',value:d,updated_at:ts});
+    const res=await db.from('vai_data').upsert({key:'all_data',value:merged,updated_at:ts});
     if(res.error){alert('Erro: '+res.error.message);return;}
-    alert('Enviado! '+n+' lancamentos salvos. Recarregando...');
+    alert('Enviado! '+(merged.txs||[]).length+' lancamentos salvos. Recarregando...');
     location.reload();
   }catch(e){alert('Erro: '+e.message);}
 }
