@@ -880,7 +880,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
           <div id="taxasFields" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;max-height:480px;overflow-y:auto;padding-right:4px">
             <div style="grid-column:1/-1;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;padding-top:4px">Outros</div>
             <div><label style="font-size:12px;font-weight:600;color:var(--t2)">PIX</label><div style="display:flex;gap:4px;margin-top:4px;align-items:center"><input class="finp" id="txPix" type="number" step="0.01" min="0" max="20" title="Taxa %"><input class="finp" id="txPixFixo" type="number" step="0.01" min="0" max="99" style="width:46px" title="Taxa fixa por transação (R$)" placeholder="0.99"><input class="finp" id="txPixPrazo" type="number" step="1" min="0" max="999" style="width:38px" title="Dias para recebimento"></div></div>
-            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Boleto</label><div style="display:flex;gap:4px;margin-top:4px;align-items:center"><input class="finp" id="txBoleto" type="number" step="0.01" min="0" max="20"><input class="finp" id="txBoletoPrazo" type="number" step="1" min="0" max="999" style="width:38px" title="Dias para recebimento"></div></div>
+            <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Boleto (R$ por boleto)</label><div style="display:flex;gap:4px;margin-top:4px;align-items:center"><input class="finp" id="txBoleto" type="number" step="0.01" min="0" max="20" title="Custo fixo em reais por boleto"><input class="finp" id="txBoletoPrazo" type="number" step="1" min="0" max="999" style="width:38px" title="Dias para recebimento"></div></div>
             <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Transferência</label><div style="display:flex;gap:4px;margin-top:4px;align-items:center"><input class="finp" id="txTransf" type="number" step="0.01" min="0" max="20"><input class="finp" id="txTransfPrazo" type="number" step="1" min="0" max="999" style="width:38px" title="Dias para recebimento"></div></div>
             <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Dinheiro</label><div style="display:flex;gap:4px;margin-top:4px;align-items:center"><input class="finp" id="txDinheiro" type="number" step="0.01" min="0" max="20"><input class="finp" id="txDinheiroPrazo" type="number" step="1" min="0" max="999" style="width:38px" title="Dias para recebimento"></div></div>
             <div style="grid-column:1/-1;padding-top:4px">
@@ -1417,7 +1417,7 @@ let editProcedimentoId=null, procedureNid=1, procedureNcode=1;
 const _sessionId=Math.random().toString(36).slice(2,10);
 let _lastSaveAt='';
 // Versão das taxas — incrementar quando defaults NF mudarem para forçar migração
-const _TAXAS_VER=5;
+const _TAXAS_VER=6;
 let patients=[];
 let procedures=[];
 function _mkCred(t1,t2,t3,t4,t5){
@@ -1429,7 +1429,7 @@ const taxasDef={
   pix:0,pix_fixo:0,pix_prazo:1,
   dinheiro:0,dinheiro_prazo:1,
   transferencia:0,transferencia_prazo:1,
-  boleto:2,boleto_prazo:2,
+  boleto:0,boleto_fixo:2,boleto_prazo:2,
   visa_debito:1.49,visa_debito_prazo:1,
   master_debito:1.49,master_debito_prazo:1,
   elo_debito:1.79,elo_debito_prazo:1,
@@ -1447,7 +1447,7 @@ const _taxasNFOnline={
   pix:1,pix_fixo:0.99,pix_prazo:1,
   dinheiro:0,dinheiro_prazo:1,
   transferencia:0,transferencia_prazo:1,
-  boleto:0,boleto_prazo:2,
+  boleto:0,boleto_fixo:2,boleto_prazo:2,
   visa_debito:1.46,visa_debito_prazo:1,
   master_debito:1.46,master_debito_prazo:1,
   elo_debito:1.46,elo_debito_prazo:1,
@@ -1465,7 +1465,7 @@ const _taxasMaqNF={
   pix:0,pix_fixo:0,pix_prazo:1,
   dinheiro:0,dinheiro_prazo:1,
   transferencia:0,transferencia_prazo:1,
-  boleto:0,boleto_prazo:2,
+  boleto:0,boleto_fixo:2,boleto_prazo:2,
   visa_debito:1.23,visa_debito_prazo:1,
   master_debito:1.23,master_debito_prazo:1,
   elo_debito:1.23,elo_debito_prazo:1,
@@ -1483,7 +1483,7 @@ const _taxasRV={
   pix:0.99,pix_fixo:0,pix_prazo:1,
   dinheiro:0,dinheiro_prazo:1,
   transferencia:0,transferencia_prazo:1,
-  boleto:0,boleto_prazo:2,
+  boleto:0,boleto_fixo:2,boleto_prazo:2,
   visa_debito:1.63,visa_debito_prazo:1,
   master_debito:1.63,master_debito_prazo:1,
   elo_debito:2.18,elo_debito_prazo:1,
@@ -2281,7 +2281,7 @@ function viewTxDetail(id){
       return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--bdr);font-size:13px">
         <span style="background:var(--gdp);color:var(--gdd);font-weight:800;font-size:11px;padding:2px 7px;border-radius:5px;min-width:32px;text-align:center">${p.parcelaNum}/${p.parcelaTotal}</span>
         <span style="flex:1;color:var(--t2)">${fmtDate(p.due)}</span>
-        <span style="text-align:right"><div style="font-weight:600">${fmt(p.val)}</div>${taxa>0?`<div style="font-size:10px;color:var(--t3)">liq. ${fmt(liq)}</div>`:''}</span>
+        <span style="text-align:right"><div style="font-weight:600">${fmt(p.val)}</div>${(taxa>0||getTaxaFixo(p)>0)?`<div style="font-size:10px;color:var(--t3)">liq. ${fmt(liq)}</div>`:''}</span>
         <span>${stMap[p.status]||p.status}</span>
       </div>`;
     }).join('');
@@ -2326,12 +2326,12 @@ function viewTxDetail(id){
       <div style="background:var(--mp);border-radius:10px;padding:12px 14px">
         <div style="font-size:11px;color:var(--t3);font-weight:600;margin-bottom:3px">VALOR BRUTO${t.parcelaNum?` (parcela ${t.parcelaNum}/${t.parcelaTotal||'?'})`:''}</div>
         <div style="font-weight:800;font-size:16px;color:${typeColor}">${fmt(t.val)}</div>
-        ${getTaxa(t)>0?`<div style="font-size:11px;color:var(--t3);margin-top:3px">taxa ${(getTaxa(t)*100).toFixed(2)}% → líquido <strong style="color:${typeColor}">${fmt(valLiq(t))}</strong></div>`:''}
+        ${(getTaxa(t)>0||getTaxaFixo(t)>0)?`<div style="font-size:11px;color:var(--t3);margin-top:3px">${getTaxa(t)>0?'taxa '+(getTaxa(t)*100).toFixed(2)+'%':''}${getTaxaFixo(t)>0?(getTaxa(t)>0?' + ':'')+'custo '+fmt(getTaxaFixo(t)):''} → líquido <strong style="color:${typeColor}">${fmt(valLiq(t))}</strong></div>`:''}
       </div>
       ${t.parcelaNum===1?`<div style="background:var(--mp);border-radius:10px;padding:12px 14px">
         <div style="font-size:11px;color:var(--t3);font-weight:600;margin-bottom:3px">FATURAMENTO TOTAL</div>
         <div style="font-weight:800;font-size:16px;color:${typeColor}">${fmt(t.val*t.parcelaTotal)}</div>
-        ${getTaxa(t)>0?`<div style="font-size:11px;color:var(--t3);margin-top:3px">líquido total <strong style="color:${typeColor}">${fmt(valLiq(t)*t.parcelaTotal)}</strong></div>`:''}
+        ${(getTaxa(t)>0||getTaxaFixo(t)>0)?`<div style="font-size:11px;color:var(--t3);margin-top:3px">líquido total <strong style="color:${typeColor}">${fmt(valLiq(t)*t.parcelaTotal)}</strong></div>`:''}
       </div>`:''}
       ${t.notes?`<div style="grid-column:1/-1;background:var(--mp);border-radius:10px;padding:12px 14px">
         <div style="font-size:11px;color:var(--t3);font-weight:600;margin-bottom:3px">OBSERVAÇÕES</div>
@@ -3189,7 +3189,7 @@ function openTaxasModal(){
 }
 const _txFieldsFlat=[
   ['txPix','pix'],['txPixFixo','pix_fixo'],['txPixPrazo','pix_prazo'],
-  ['txBoleto','boleto'],['txBoletoPrazo','boleto_prazo'],
+  ['txBoleto','boleto_fixo'],['txBoletoPrazo','boleto_prazo'],
   ['txTransf','transferencia'],['txTransfPrazo','transferencia_prazo'],
   ['txDinheiro','dinheiro'],['txDinheiroPrazo','dinheiro_prazo'],
   ['txVisaDeb','visa_debito'],['txVisaDebPrazo','visa_debito_prazo'],
@@ -3652,8 +3652,10 @@ function renderCarteira(){
       var k=(t.fpg&&t.fpg!=='')?t.fpg:'outros';
       if(!modal[k])k='outros';
       var bruto=t.parcelaNum===1?t.val*(t.parcelaTotal||1):t.val;
+      // Custo fixo (ex.: R$2 por boleto) × nº de boletos do grupo
+      var nFixo=t.parcelaNum===1?(t.parcelaTotal||1):1;
       // Cria objeto sintético com valor bruto para calcular MDR total da venda
-      var liqTotal=t.parcelaNum===1?bruto*(1-getTaxa(t)):t.val*(1-getTaxa(t));
+      var liqTotal=bruto*(1-getTaxa(t))-getTaxaFixo(t)*nFixo;
       modal[k].count++;
       modal[k].bruto+=bruto;
       modal[k].liq+=liqTotal;
@@ -4287,7 +4289,13 @@ function applyData(d){
     Object.assign(taxas.nf,_taxasNFOnline);
     Object.assign(taxas.rv,_taxasRV);
     Object.assign(taxasMaq.rv,_taxasRV);
-    console.log('Taxa migration v'+_TAXAS_VER+': taxas NF e Academy (Cielo) atualizadas');
+    // Boleto passa a ter custo FIXO de R$ 2 por boleto (antes era percentual)
+    [taxas,taxasMaq].forEach(function(store){
+      Object.keys(store).forEach(function(c){
+        if(store[c]){store[c].boleto=0;if(store[c].boleto_fixo==null)store[c].boleto_fixo=2;}
+      });
+    });
+    console.log('Taxa migration v'+_TAXAS_VER+': taxas NF/Academy + boleto R$2 fixo');
   }
   if(d.ids){
     const ids=d.ids;
