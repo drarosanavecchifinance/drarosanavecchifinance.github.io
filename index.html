@@ -4200,8 +4200,19 @@ function mergeAndApply(remote){
     _deleted,
   };
   applyData(merged);
-  // Salva o resultado merged de volta no Supabase
-  setTimeout(saveData,500);
+  // Só re-salva se o merge local acrescentou algo que o remoto ainda não tinha.
+  // Sem isso, dois navegadores abertos ficam num ping-pong infinito de saves (egress).
+  const arrTypes=['txs','courses','students','vendedoras','patients','procedures','estoque'];
+  let changed=arrTypes.some(k=>(merged[k]?.length||0)>((remote[k]?.length)||0));
+  if(!changed){
+    const mEvs=merged.evs||{},rEvs=remote.evs||{};
+    changed=Object.keys(mEvs).some(k=>(mEvs[k]?.length||0)>((rEvs[k]?.length)||0));
+  }
+  if(!changed){
+    const types=['txs','courses','students','vendedoras','patients','procedures','estoque','evs'];
+    changed=types.some(t=>(_deleted[t]?.length||0)>((remote._deleted?.[t]?.length)||0));
+  }
+  if(changed)setTimeout(saveData,500);
 }
 function applyData(d){
   if(d._deleted)_deleted=mergeDeleted(_deleted,d._deleted);
