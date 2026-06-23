@@ -6,7 +6,25 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="build" content="20260623001">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
+<script>
+// Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
+(function(){
+  try{
+    var meuBuild=document.querySelector('meta[name="build"]').content;
+    fetch(location.pathname+'?cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text();}).then(function(txt){
+      var m=txt.match(/<meta name="build" content="(\d+)"/);
+      if(!m)return;
+      var novo=m[1];
+      if(novo>meuBuild && !sessionStorage.getItem('upd_'+novo)){
+        sessionStorage.setItem('upd_'+novo,'1');
+        location.replace(location.pathname+'?v='+novo);
+      }
+    }).catch(function(){});
+  }catch(e){}
+})();
+</script>
 <link rel="icon" type="image/png" href="nf-logo.png">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
