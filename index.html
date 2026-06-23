@@ -1664,7 +1664,9 @@ function updateDashCharts(){
   if(charts.vend){
     const totals={};
     vendedoras.forEach(v=>{totals[v.id]=0;});
-    txs.filter(t=>t.co==='nf'&&t.type==='receber'&&t.vendId).forEach(t=>{const v=fatVal(t);if(totals[t.vendId]!==undefined)totals[t.vendId]+=v;else totals[t.vendId]=v;});
+    const _nowV=new Date();const _cmV=_nowV.getFullYear()+'-'+String(_nowV.getMonth()+1).padStart(2,'0');
+    const _sdV=t=>t.saleDate||t.due||'';
+    txs.filter(t=>(t.co==='nf'||t.co==='rv')&&t.type==='receber'&&t.vendId&&_sdV(t).startsWith(_cmV)).forEach(t=>{const v=fatVal(t);if(totals[t.vendId]!==undefined)totals[t.vendId]+=v;else totals[t.vendId]=v;});
     const vLabels=vendedoras.map(v=>v.name.split(' ')[0]+' '+v.name.split(' ')[1]);
     const vData=vendedoras.map(v=>totals[v.id]||0);
     charts.vend.data.labels=vLabels;
@@ -1829,7 +1831,7 @@ function saveCurso(){
   const nm=document.getElementById('cNm').value.trim();if(!nm){document.getElementById('cNm').focus();return;}
   const code=document.getElementById('cCode').value.trim().toUpperCase()||genCursoCode();
   if(!editCursoId)cursoNcode++;
-  const c={id:editCursoId||cursoNid++,code,name:nm,cat:document.getElementById('cCat').value,
+  const c={id:editCursoId||newTxId(),code,name:nm,cat:document.getElementById('cCat').value,
     status:document.getElementById('cStat').value,color:'#955251',
     startDate:document.getElementById('cDtI').value,endDate:document.getElementById('cDtF').value,
     maxStu:parseInt(document.getElementById('cMax').value)||20,
@@ -2452,7 +2454,7 @@ function saveTx(){
         const code=typedCode||genStuCode();if(!typedCode)stuNcode++;
         const stuCrsId=parseInt(document.getElementById('sStuCrs')?.value)||tx.courseId||null;
         const stuCrs=stuCrsId?courses.find(x=>x.id===stuCrsId):null;
-        const newStu={id:stuNid++,code,name:sname,email:document.getElementById('sEm')?.value||'',phone:document.getElementById('sPh')?.value||'',cpf:document.getElementById('sCp')?.value||'',course:stuCrs?stuCrs.name:'',courseId:stuCrsId,status:'ativo',enrolledAt:new Date().toISOString().slice(0,10),street:document.getElementById('sSt')?.value||'',bairro:document.getElementById('sBa')?.value||'',city:document.getElementById('sCi')?.value||'',state:document.getElementById('sSe')?.value||'SP',cep:document.getElementById('sCe')?.value||'',notes:'',txId:tx.id};
+        const newStu={id:newTxId(),code,name:sname,email:document.getElementById('sEm')?.value||'',phone:document.getElementById('sPh')?.value||'',cpf:document.getElementById('sCp')?.value||'',course:stuCrs?stuCrs.name:'',courseId:stuCrsId,status:'ativo',enrolledAt:new Date().toISOString().slice(0,10),street:document.getElementById('sSt')?.value||'',bairro:document.getElementById('sBa')?.value||'',city:document.getElementById('sCi')?.value||'',state:document.getElementById('sSe')?.value||'SP',cep:document.getElementById('sCe')?.value||'',notes:'',txId:tx.id};
         students.push(newStu);
         tx.stuId=newStu.id;
         const idx=txs.findIndex(x=>x.id===tx.id);if(idx>=0)txs[idx]=tx;}
@@ -2961,7 +2963,7 @@ function saveAluno(){
   const name=document.getElementById('aMNm').value.trim();if(!name){document.getElementById('aMNm').focus();return;}
   const code=document.getElementById('aMCode').value.trim().toUpperCase()||genStuCode();
   if(!editStuId)stuNcode++;
-  const s={id:editStuId||stuNid++,code,name,email:document.getElementById('aMEm').value,phone:document.getElementById('aMPh').value,cpf:document.getElementById('aMCpf').value,course:document.getElementById('aMMCr').value,courseId:parseInt(document.getElementById('aMCrs').value)||null,status:document.getElementById('aMSt').value,birth:document.getElementById('aMBirth')?.value||'',enrolledAt:editStuId?students.find(x=>x.id===editStuId)?.enrolledAt:new Date().toISOString().slice(0,10),street:document.getElementById('aMStr').value,bairro:document.getElementById('aMBa').value,cep:document.getElementById('aMCep').value,city:document.getElementById('aMCit').value,state:document.getElementById('aMSta').value,notes:document.getElementById('aMNo').value,txId:editStuId?students.find(x=>x.id===editStuId)?.txId:null};
+  const s={id:editStuId||newTxId(),code,name,email:document.getElementById('aMEm').value,phone:document.getElementById('aMPh').value,cpf:document.getElementById('aMCpf').value,course:document.getElementById('aMMCr').value,courseId:parseInt(document.getElementById('aMCrs').value)||null,status:document.getElementById('aMSt').value,birth:document.getElementById('aMBirth')?.value||'',enrolledAt:editStuId?students.find(x=>x.id===editStuId)?.enrolledAt:new Date().toISOString().slice(0,10),street:document.getElementById('aMStr').value,bairro:document.getElementById('aMBa').value,cep:document.getElementById('aMCep').value,city:document.getElementById('aMCit').value,state:document.getElementById('aMSta').value,notes:document.getElementById('aMNo').value,txId:editStuId?students.find(x=>x.id===editStuId)?.txId:null};
   if(editStuId){const i=students.findIndex(x=>x.id===editStuId);if(i>=0)students[i]=s;}else students.push(s);
   closeM('alunoModal');renderAlunos();saveData();
 }
@@ -3493,7 +3495,7 @@ function salvarEstoque(){
     _editingEstoque.obs=document.getElementById('eObs').value.trim();
   } else {
     estoque.push({
-      id:estoqueNid++,nome,
+      id:newTxId(),nome,
       cod:document.getElementById('eCod').value.trim(),
       cat:document.getElementById('eCat').value.trim(),
       qtd,
@@ -3826,7 +3828,7 @@ function saveVend(){
   const name=document.getElementById('vNm').value.trim();if(!name){document.getElementById('vNm').focus();return;}
   const code=document.getElementById('vCode').value.trim().toUpperCase()||genVendCode();
   if(!editVendId)vendNcode++;
-  const v={id:editVendId||vendNid++,code,name,cpf:document.getElementById('vCpf').value,email:document.getElementById('vEm').value,phone:document.getElementById('vPh').value,status:document.getElementById('vSt').value,birth:document.getElementById('vBirth')?.value||'',since:editVendId?vendedoras.find(x=>x.id===editVendId)?.since:new Date().toISOString().slice(0,10),street:document.getElementById('vStr').value,bairro:document.getElementById('vBa').value,cep:document.getElementById('vCep').value,city:document.getElementById('vCit').value,state:document.getElementById('vState').value,notes:document.getElementById('vNo').value};
+  const v={id:editVendId||newTxId(),code,name,cpf:document.getElementById('vCpf').value,email:document.getElementById('vEm').value,phone:document.getElementById('vPh').value,status:document.getElementById('vSt').value,birth:document.getElementById('vBirth')?.value||'',since:editVendId?vendedoras.find(x=>x.id===editVendId)?.since:new Date().toISOString().slice(0,10),street:document.getElementById('vStr').value,bairro:document.getElementById('vBa').value,cep:document.getElementById('vCep').value,city:document.getElementById('vCit').value,state:document.getElementById('vState').value,notes:document.getElementById('vNo').value};
   if(editVendId){const i=vendedoras.findIndex(x=>x.id===editVendId);if(i>=0)vendedoras[i]=v;}else vendedoras.push(v);
   closeM('vendModal');renderVendedoras();saveData();
 }
@@ -4652,7 +4654,7 @@ function savePaciente(){
   const name=document.getElementById('pacNm').value.trim();if(!name){document.getElementById('pacNm').focus();return;}
   const code=document.getElementById('pacCode').value.trim().toUpperCase()||genPacCode();
   if(!editPacienteId)patientNcode++;
-  const p={id:editPacienteId||patientNid++,code,name,status:document.getElementById('pacSt').value,cpf:document.getElementById('pacCpf').value||'',email:document.getElementById('pacEm').value||'',phone:document.getElementById('pacPh').value||'',birth:document.getElementById('pacBirth')?.value||'',notes:document.getElementById('pacNo').value||''};
+  const p={id:editPacienteId||newTxId(),code,name,status:document.getElementById('pacSt').value,cpf:document.getElementById('pacCpf').value||'',email:document.getElementById('pacEm').value||'',phone:document.getElementById('pacPh').value||'',birth:document.getElementById('pacBirth')?.value||'',notes:document.getElementById('pacNo').value||''};
   if(editPacienteId){const i=patients.findIndex(function(x){return x.id===editPacienteId;});if(i>=0)patients[i]=p;}else patients.push(p);
   closeM('pacienteModal');renderPacientes();saveData();
 }
@@ -4697,7 +4699,7 @@ function saveProcedimento(){
   const name=document.getElementById('procNm').value.trim();if(!name){document.getElementById('procNm').focus();return;}
   const code=document.getElementById('procCode').value.trim().toUpperCase()||genProcCode();
   if(!editProcedimentoId)procedureNcode++;
-  const p={id:editProcedimentoId||procedureNid++,code,name,status:document.getElementById('procStat').value,cat:document.getElementById('procCat').value,val:parseFloat(document.getElementById('procVal').value)||0,dur:parseInt(document.getElementById('procDur').value)||null,desc:document.getElementById('procDs').value||''};
+  const p={id:editProcedimentoId||newTxId(),code,name,status:document.getElementById('procStat').value,cat:document.getElementById('procCat').value,val:parseFloat(document.getElementById('procVal').value)||0,dur:parseInt(document.getElementById('procDur').value)||null,desc:document.getElementById('procDs').value||''};
   if(editProcedimentoId){const i=procedures.findIndex(function(x){return x.id===editProcedimentoId;});if(i>=0)procedures[i]=p;}else procedures.push(p);
   closeM('procedimentoModal');renderProcedimentos();saveData();
 }
