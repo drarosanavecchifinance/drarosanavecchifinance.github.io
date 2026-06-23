@@ -4104,21 +4104,40 @@ async function saveData(){
   // Sempre salva no localStorage como backup
   try{localStorage.setItem('vai_backup',JSON.stringify(payload));}catch(e){}
   // Salva no Supabase se configurado
-  if(!supabaseReady)return;
+  if(!supabaseReady){showCloudWarning('SEM CONEXÃO COM A NUVEM — este lançamento ficou só neste computador. Recarregue a página quando a internet voltar.');return;}
   try{
     const db=sbAdmin||sbClient;
     const _ts=new Date().toISOString();_lastSaveAt=_ts;
     const{error}=await db.from('vai_data').upsert({key:'all_data',value:payload,updated_at:_ts});
     if(error){
       console.warn('Erro ao salvar no Supabase:',error);
-      showSaveToast('❌ Erro ao salvar na nuvem! Dados só no backup local.');
+      showSaveToast('❌ Erro ao salvar na nuvem!');
+      showCloudWarning('NÃO SALVOU NA NUVEM — este lançamento está SÓ neste computador. Verifique a internet e refaça. Não confie nos valores até este aviso sumir.');
     } else {
       showSaveToast('✓ Salvo');
+      clearCloudWarning();
     }
   }catch(e){
     console.warn('Supabase saveData error:',e);
-    showSaveToast('❌ Sem conexão — dados salvos apenas localmente!');
+    showSaveToast('❌ Sem conexão!');
+    showCloudWarning('SEM CONEXÃO — este lançamento ficou SÓ neste computador. Verifique a internet e refaça. Não confie nos valores até este aviso sumir.');
   }
+}
+// Aviso vermelho persistente no topo quando algo NÃO chegou na nuvem
+function showCloudWarning(msg){
+  let b=document.getElementById('cloudWarn');
+  if(!b){
+    b=document.createElement('div');
+    b.id='cloudWarn';
+    b.style.cssText='position:fixed;top:0;left:0;right:0;background:#B00020;color:#fff;padding:13px 18px;font-size:14px;font-weight:700;z-index:99999;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,.35);font-family:DM Sans,sans-serif;line-height:1.4';
+    document.body.appendChild(b);
+  }
+  b.innerHTML='⚠️ '+msg;
+  b.style.display='block';
+}
+function clearCloudWarning(){
+  const b=document.getElementById('cloudWarn');
+  if(b)b.style.display='none';
 }
 let _saveToastTimer=null;
 function showSaveToast(msg){
@@ -4186,10 +4205,14 @@ async function loadData(){
       }
     }catch(e){console.warn('Supabase loadData error:',e);}
   }
-  // Fallback: localStorage
+  // Fallback: localStorage — estado PERIGOSO (não está vendo a nuvem)
   try{
     const backup=localStorage.getItem('vai_backup');
-    if(backup){applyData(JSON.parse(backup));console.log('📦 Dados carregados do backup local');}
+    if(backup){
+      applyData(JSON.parse(backup));
+      console.log('📦 Dados carregados do backup local');
+      showCloudWarning('SEM CONEXÃO COM A NUVEM — você está vendo apenas dados deste computador, que podem estar desatualizados. NÃO faça lançamentos até reconectar. Recarregue a página.');
+    }
   }catch(e){console.warn('Erro ao carregar backup local:',e);}
 }
 
