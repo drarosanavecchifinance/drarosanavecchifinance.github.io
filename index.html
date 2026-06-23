@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623001">
+<meta name="build" content="20260623002">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -1541,6 +1541,16 @@ function markDeleted(type,ids){
   if(!_deleted[type])_deleted[type]=[];
   const arr=Array.isArray(ids)?ids:[ids];
   arr.forEach(id=>{if(id!=null&&!_deleted[type].includes(id))_deleted[type].push(id);});
+}
+// Exclusões espúrias geradas pelo caos de IDs — Jullya/Lara/Michelli e a venda da Nayara
+// nunca devem ser apagadas. Esta cura roda em todo sync e desfaz a marca, mesmo que um
+// computador antigo tente reapagar.
+const _badTombstones={vendedoras:[1,2,3],txs:[286]};
+function sanitizeDeleted(){
+  for(const type in _badTombstones){
+    if(Array.isArray(_deleted[type]))
+      _deleted[type]=_deleted[type].filter(id=>!_badTombstones[type].includes(id));
+  }
 }
 let evs={
   '2025-7-5':[{id:1,title:'Pagamento Aluguel',type:'pagamento',co:'nf',time:'09:00',desc:''}],
@@ -4099,6 +4109,7 @@ async function saveData(){
       const remote=remoteRow?.value;
       if(remote){
         _deleted=mergeDeleted(_deleted,remote._deleted);
+        sanitizeDeleted();
         const mergedTxs=mergeArrById(txs,remote.txs,_deleted.txs);
         const mergedCourses=mergeArrById(courses,remote.courses,_deleted.courses);
         const mergedStudents=mergeArrById(students,remote.students,_deleted.students);
@@ -4236,6 +4247,7 @@ async function loadData(){
 
 function mergeAndApply(remote){
   _deleted=mergeDeleted(_deleted,remote._deleted);
+  sanitizeDeleted();
   const merged={
     ...remote,
     txs:mergeArrById(txs,remote.txs,_deleted.txs),
@@ -4265,6 +4277,7 @@ function mergeAndApply(remote){
 }
 function applyData(d){
   if(d._deleted)_deleted=mergeDeleted(_deleted,d._deleted);
+  sanitizeDeleted();
   if(d.txs&&d.txs.length){
     txs=d.txs;
     // Restaura saleDate de transações Yampi que perderam o campo ao serem editadas
