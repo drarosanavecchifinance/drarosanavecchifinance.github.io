@@ -1406,6 +1406,10 @@ function maskCpf(el){
 // ===== STATE =====
 let co='all', ftab='receber', subftab='pagas', editTxId=null, txNid=11;
 let grupoNid=1, filterGrupo=null;
+// ID único à prova de colisão entre computadores (horário + aleatório, sempre crescente nesta sessão)
+let _idBase=Date.now()*1000+Math.floor(Math.random()*1000);
+function newTxId(){return ++_idBase;}
+function newGrupoId(){return 'G'+(++_idBase);}
 let editStuId=null, stuMode='new', stuNid=5, stuNcode=5;
 let editCursoId=null, cursoNid=4, cursoNcode=4;
 let viewingCursoId=null;
@@ -2381,8 +2385,8 @@ function saveTx(){
     const parc1=fpg1==='credito'?parseInt(document.getElementById('fdParc1')?.value||'1')||1:1;
     const parc2=fpg2==='credito'?parseInt(document.getElementById('fdParc2')?.value||'1')||1:1;
     const base={type:document.getElementById('fTy').value,cat:'',co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,vendId:parseInt(document.getElementById('fVend')?.value)||null,procedureId:null,status:document.getElementById('fSt').value,canal:'online',notes:document.getElementById('fNo').value};
-    txs.push({...base,id:txNid++,name:name+' (1/2)',fpg:fpg1,bandeira:band1,parcelas:parc1,val:v1,due:dt1,saleDate:dt1});
-    txs.push({...base,id:txNid++,name:name+' (2/2)',fpg:fpg2,bandeira:band2,parcelas:parc2,val:v2,due:dt2,saleDate:dt2});
+    txs.push({...base,id:newTxId(),name:name+' (1/2)',fpg:fpg1,bandeira:band1,parcelas:parc1,val:v1,due:dt1,saleDate:dt1});
+    txs.push({...base,id:newTxId(),name:name+' (2/2)',fpg:fpg2,bandeira:band2,parcelas:parc2,val:v2,due:dt2,saleDate:dt2});
     _dividirPanelOn=false;
     closeM('txModal');renderTx();saveData();
     return;
@@ -2399,7 +2403,7 @@ function saveTx(){
   const fDuVal=document.getElementById('fDu').value||new Date().toISOString().slice(0,10);
   // Para parcelado, preserva o due original (data de vencimento da parcela); atualiza só saleDate
   const dueVal=(editTxId&&origTx.parcelaNum)?origTx.due:fDuVal;
-  const tx={...origTx,id:editTxId||txNid++,name,type:document.getElementById('fTy').value,cat:existCat,co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,procedureId:procIdRaw?parseInt(procIdRaw):null,vendId:vendIdRaw?parseInt(vendIdRaw):null,fpg:fpgVal,bandeira:bandeiraVal,parcelas:parcelasVal,canal:canalVal,status:document.getElementById('fSt').value,due:dueVal,saleDate:fDuVal,val:parseFloat(document.getElementById('fVl').value)||0,notes:document.getElementById('fNo').value};
+  const tx={...origTx,id:editTxId||newTxId(),name,type:document.getElementById('fTy').value,cat:existCat,co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,procedureId:procIdRaw?parseInt(procIdRaw):null,vendId:vendIdRaw?parseInt(vendIdRaw):null,fpg:fpgVal,bandeira:bandeiraVal,parcelas:parcelasVal,canal:canalVal,status:document.getElementById('fSt').value,due:dueVal,saleDate:fDuVal,val:parseFloat(document.getElementById('fVl').value)||0,notes:document.getElementById('fNo').value};
   // Garante parcelaNum/parcelaTotal ao editar transação parcelada
   if(editTxId&&fpgVal==='credito'&&parcelasVal>1){
     tx.parcelaNum=origTx.parcelaNum||1;
@@ -2418,7 +2422,7 @@ function saveTx(){
     const rawPN=document.getElementById('fParcN')?.value;
     const parcN=rawPN==='custom'?parseInt(document.getElementById('fParcCustom')?.value)||0:parseInt(rawPN)||0;
     if(parcN>=2){
-      const gid='G'+String(grupoNid++).padStart(5,'0');
+      const gid=newGrupoId();
       const parcVal=Math.round(tx.val/parcN*100)/100;
       for(let i=0;i<parcN;i++){
         const dtEl=document.getElementById('parcDt'+i);
@@ -2429,7 +2433,7 @@ function saveTx(){
           base.setMonth(base.getMonth()+i);
           due=base.toISOString().slice(0,10);
         }
-        txs.push({...tx,id:i===0?tx.id:txNid++,val:parcVal,due,grupoId:gid,parcelaNum:i+1,parcelaTotal:parcN});
+        txs.push({...tx,id:i===0?tx.id:newTxId(),val:parcVal,due,grupoId:gid,parcelaNum:i+1,parcelaTotal:parcN});
       }
       closeM('txModal');renderTx();saveData();if(document.getElementById('page-cursos').classList.contains('a'))renderCursos();
       return;
@@ -2481,7 +2485,7 @@ function saveTx(){
       else if(recType==='bimestral'){nd.setMonth(nd.getMonth()+i*2);}
       else if(recType==='trimestral'){nd.setMonth(nd.getMonth()+i*3);}
       else if(recType==='anual'){nd.setFullYear(nd.getFullYear()+i);}
-      txs.push({...tx,id:txNid++,due:nd.toISOString().slice(0,10)});
+      txs.push({...tx,id:newTxId(),due:nd.toISOString().slice(0,10)});
     }
   }
   // Saldo devedor — salva na ficha da aluna, NÃO cria transações
@@ -2847,8 +2851,8 @@ function salvarDividirPagamento(){
     ?{type:'receber',cat:ctx.cat||'Cursos',co:ctx.co||'rv',status:'paid',stuId:null,courseId:ctx.courseId,vendId:ctx.vendId,procedureId:null,parcelas:1,notes:'Pagamento dividido'}
     :{type:'receber',cat:'Cursos',co:'rv',status:'paid',stuId:s.id,courseId:s.courseId||null,vendId:origTx?.vendId||null,procedureId:null,parcelas:1,notes:'Pagamento dividido'};
   const label=ctx?ctx.nome:(s.name+' — Pagamento');
-  txs.push({...base,id:txNid++,name:label+' (1/2)',fpg:fpg1,bandeira:band1,parcelas:parc1,val:v1,due:dt1,saleDate:dt1});
-  txs.push({...base,id:txNid++,name:label+' (2/2)',fpg:fpg2,bandeira:band2,parcelas:parc2,val:v2,due:dt2,saleDate:dt2});
+  txs.push({...base,id:newTxId(),name:label+' (1/2)',fpg:fpg1,bandeira:band1,parcelas:parc1,val:v1,due:dt1,saleDate:dt1});
+  txs.push({...base,id:newTxId(),name:label+' (2/2)',fpg:fpg2,bandeira:band2,parcelas:parc2,val:v2,due:dt2,saleDate:dt2});
   window._dividirFromTx=null;
   closeM('dividirPagModal');
   saveData();renderTx();
@@ -4422,7 +4426,7 @@ async function autoImportCEEvent(ev){
   const fpgMap={'CARTÃO DE CRÉDITO':'credito','CARTÃO DE DÉBITO':'debito','PIX':'pix','DINHEIRO':'dinheiro','TRANSFERÊNCIA':'transferencia','BOLETO':'boleto'};
   const fpgVal=fpgMap[(fpg||'').toUpperCase()]||'';
   const now=new Date().toISOString().slice(0,10);
-  const tx={id:txNid++,name:(procs&&procs!=='—'?procs:(p.type||ev.event_type))+' — '+(nome||'Paciente'),type:'receber',cat:'Procedimentos',co:'ct',courseId:null,procedureId:null,vendId:null,fpg:fpgVal,bandeira:(fpgVal==='credito'||fpgVal==='debito')?bandeira:'',parcelas:fpgVal==='credito'?parcelas:1,status:'paid',due:now,val,notes:'Auto-importado do Clínica Experts'};
+  const tx={id:newTxId(),name:(procs&&procs!=='—'?procs:(p.type||ev.event_type))+' — '+(nome||'Paciente'),type:'receber',cat:'Procedimentos',co:'ct',courseId:null,procedureId:null,vendId:null,fpg:fpgVal,bandeira:(fpgVal==='credito'||fpgVal==='debito')?bandeira:'',parcelas:fpgVal==='credito'?parcelas:1,status:'paid',due:now,val,notes:'Auto-importado do Clínica Experts'};
   txs.push(tx);
   try{const db=sbAdmin||sbClient;await db.from('ce_events').update({imported:true,tx_id:tx.id}).eq('id',ev.id);}catch(e){console.warn('CE auto-import mark error:',e);}
   saveData();
@@ -4523,7 +4527,7 @@ async function autoImportYampiEvent(ev){
   const isCred=fpg==='credito'&&parcelas>1;
   let firstId=txNid;
   if(isCred){
-    const gid='G'+String(grupoNid++).padStart(5,'0');
+    const gid=newGrupoId();
     const parcVal=Math.round(val/parcelas*100)/100;
     const baseTx={name,type:'receber',cat:'Vendas',co:'nf',canal:'online',courseId:null,procedureId:null,vendId:null,fpg,bandeira:(fpg==='credito'||fpg==='debito')?bandeira:'',parcelas,status:'paid',saleDate:realSaleDate,notes:'Auto-importado da Yampi',yampiEventId:ev.id};
     const prazoBase=getPrazo({co:'nf',fpg:'credito',bandeira,parcelas,canal:'online'})||31;
@@ -4532,10 +4536,10 @@ async function autoImportYampiEvent(ev){
     for(let i=0;i<parcelas;i++){
       const d=new Date(baseDate);d.setMonth(d.getMonth()+i);
       const due=d.toISOString().slice(0,10);
-      txs.push({...baseTx,id:txNid++,val:parcVal,due,grupoId:gid,parcelaNum:i+1,parcelaTotal:parcelas});
+      txs.push({...baseTx,id:newTxId(),val:parcVal,due,grupoId:gid,parcelaNum:i+1,parcelaTotal:parcelas});
     }
   }else{
-    const tx={id:txNid++,name,type:'receber',cat:'Vendas',co:'nf',canal:'online',courseId:null,procedureId:null,vendId:null,fpg,bandeira:(fpg==='credito'||fpg==='debito')?bandeira:'',parcelas:1,status:'paid',due:realSaleDate,saleDate:realSaleDate,val,notes:'Auto-importado da Yampi',yampiEventId:ev.id};
+    const tx={id:newTxId(),name,type:'receber',cat:'Vendas',co:'nf',canal:'online',courseId:null,procedureId:null,vendId:null,fpg,bandeira:(fpg==='credito'||fpg==='debito')?bandeira:'',parcelas:1,status:'paid',due:realSaleDate,saleDate:realSaleDate,val,notes:'Auto-importado da Yampi',yampiEventId:ev.id};
     txs.push(tx);
   }
   try{const db=sbAdmin||sbClient;await db.from('yampi_events').update({imported:true,tx_id:firstId}).eq('id',ev.id);}catch(e){console.warn('Yampi import error:',e);}
@@ -4771,7 +4775,7 @@ async function importCEEvent(eventId,metaStr){
   const fpgMap={'CARTÃO DE CRÉDITO':'credito','CARTÃO DE DÉBITO':'debito','PIX':'pix','DINHEIRO':'dinheiro','TRANSFERÊNCIA':'transferencia','BOLETO':'boleto'};
   const fpg=fpgMap[(meta.fpg||'').toUpperCase()]||'';
   const band=(fpg==='credito'||fpg==='debito')?(meta.bandeira||'outros'):'';
-  const tx={id:txNid++,name:(meta.procs&&meta.procs!=='—'?meta.procs:meta.tipo)+' — '+(meta.nome||'Paciente'),type:'receber',cat:'Procedimentos',co:'ct',courseId:null,procedureId:null,vendId:null,fpg,bandeira:band,parcelas:fpg==='credito'?(parseInt(meta.parcelas)||1):1,status:'paid',due:now,val:parseFloat(meta.val)||0,notes:'Importado do Clínica Experts'};
+  const tx={id:newTxId(),name:(meta.procs&&meta.procs!=='—'?meta.procs:meta.tipo)+' — '+(meta.nome||'Paciente'),type:'receber',cat:'Procedimentos',co:'ct',courseId:null,procedureId:null,vendId:null,fpg,bandeira:band,parcelas:fpg==='credito'?(parseInt(meta.parcelas)||1):1,status:'paid',due:now,val:parseFloat(meta.val)||0,notes:'Importado do Clínica Experts'};
   txs.push(tx);
   try{
     const db=sbAdmin||sbClient;
