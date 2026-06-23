@@ -4227,7 +4227,7 @@ function applyData(d){
     // Parceladas: recalcula saleDate a partir da 1ª parcela menos o prazo
     // Também corrige txs onde a migração anterior colocou saleDate = due erroneamente
     var grupos={};
-    txs.forEach(function(t){if(t.yampiEventId&&t.parcelaNum&&t.grupoId)grupos[t.grupoId]=grupos[t.grupoId]||[];if(t.grupoId)grupos[t.grupoId].push(t);});
+    txs.forEach(function(t){if(t.yampiEventId&&t.parcelaNum&&t.grupoId){grupos[t.grupoId]=grupos[t.grupoId]||[];grupos[t.grupoId].push(t);}});
     Object.values(grupos).forEach(function(group){
       var first=group.find(function(t){return t.parcelaNum===1;});
       if(!first||!first.due)return;
@@ -4364,8 +4364,11 @@ function refreshCurrentPage(){
 }
 
 // Realtime — sincroniza entre todos os usuários da empresa
+let _realtimeSubscribed=false;
 function subscribeRealtime(){
   if(!supabaseReady)return;
+  if(_realtimeSubscribed)return; // evita assinar o canal duas vezes (erro postgres_changes after subscribe)
+  _realtimeSubscribed=true;
   sbClient.channel('empresa-sync')
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'vai_data',filter:'key=eq.all_data'},payload=>{
       if(payload.new?.value){
