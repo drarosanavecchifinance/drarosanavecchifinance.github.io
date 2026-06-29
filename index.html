@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623020">
+<meta name="build" content="20260623021">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -2045,8 +2045,10 @@ function renderTx(){
     }
     return ftab==='pagar'&&subftab==='avencer'?true:inPeriod(t);
   });
-  // Fluxo de Caixa: colapsa parcelamentos — mostra só parcela 1 (com valor bruto)
-  // Mostra cada parcela separada (receitas e despesas) — cada uma com seu valor e vencimento
+  // Receitas: agrupa (mostra só a 1ª parcela, com o total). Despesas: mostra cada parcela separada.
+  if(!filterGrupo){
+    list=list.filter(t=>!t.parcelaNum||t.parcelaNum===1||t.type==='pagar');
+  }
   // Ordenação
   if(ftab==='pagar'&&subftab==='avencer'){
     list=list.sort((a,b)=>new Date(a.due)-new Date(b.due));
@@ -2084,7 +2086,7 @@ function renderTx(){
       <td style="font-size:12px;color:var(--t3)">${isPagar?'':catCell}</td>
       <td>${empCell}</td>
       <td>${dueCell}</td>
-      <td class="mo">${typeIco}${(t.parcelaNum===1&&!t.grupoId&&(t.parcelaTotal||1)>1)?`<span style="font-weight:800">${fmt(t.val*t.parcelaTotal)}</span><div style="font-size:10px;color:var(--t3);font-weight:500">${t.parcelaTotal}x de ${fmt(t.val)}</div>`:`<span style="font-weight:800">${fmt(t.val)}</span>${t.parcelaNum?`<div style="font-size:10px;color:var(--t3);font-weight:500">parcela ${t.parcelaNum}/${t.parcelaTotal}</div>`:''}`}</td>
+      <td class="mo">${typeIco}${(t.parcelaNum===1&&(t.parcelaTotal||1)>1&&(t.type==='receber'||!t.grupoId))?`<span style="font-weight:800">${fmt(t.val*t.parcelaTotal)}</span><div style="font-size:10px;color:var(--t3);font-weight:500">${t.parcelaTotal}x de ${fmt(t.val)}</div>`:`<span style="font-weight:800">${fmt(t.val)}</span>${t.parcelaNum?`<div style="font-size:10px;color:var(--t3);font-weight:500">parcela ${t.parcelaNum}/${t.parcelaTotal}</div>`:''}`}</td>
       <td>${bmap[t.status]||''}</td>
       <td><div class="ract">${t.status!=='paid'?`<button class="rb" onclick="marcarPago(${t.id})" title="Marcar como pago" style="color:var(--gr);font-weight:800">✓</button>`:''}<button class="rb" onclick="viewTxDetail(${t.id})" title="Ver detalhes">👁</button><button class="rb e" onclick="editTx(${t.id})" title="Editar">✏️</button><button class="rb d" onclick="delTx(${t.id})" title="Excluir">🗑</button></div></td>
     </tr>`;
