@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623005">
+<meta name="build" content="20260623006">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -2012,7 +2012,7 @@ function renderTx(){
   // Banner filtro de grupo / busca
   const bannerEl=document.getElementById('grupoBanner');
   if(bannerEl){
-    if(srch){bannerEl.style.display='';bannerEl.innerHTML=`🔍 Busca ativa: "<strong>${srch}</strong>" — mostrando todas as empresas e períodos <button onclick="document.getElementById('fSrch').value='';renderTx()">✕ Limpar</button>`;}
+    if(srch){const _cnmB={nf:'NatureFace',rv:'Rosana Academy',ct:'Consultório',all:'todas as empresas'};bannerEl.style.display='';bannerEl.innerHTML=`🔍 Busca ativa: "<strong>${srch}</strong>" — em <strong>${_cnmB[co]||'todas as empresas'}</strong>, todos os períodos <button onclick="document.getElementById('fSrch').value='';renderTx()">✕ Limpar</button>`;}
     else if(filterGrupo){const cnt=txs.filter(t=>t.grupoId===filterGrupo).length;bannerEl.style.display='';bannerEl.innerHTML=`🔗 Exibindo grupo <strong>${filterGrupo}</strong> — ${cnt} parcelas <button onclick="clearGrupoFilter()">✕ Limpar</button>`;}
     else{bannerEl.style.display='none';}
   }
@@ -2021,6 +2021,7 @@ function renderTx(){
   let list=txs.filter(t=>{
     // Busca por texto: ignora filtros de empresa/mês/tab quando há busca ativa
     if(srch){
+      if(co!=='all'&&t.co!==co)return false; // busca respeita a empresa ativa
       const matchName=t.name&&t.name.toLowerCase().includes(srch);
       const matchVal=String(t.val).includes(srch)||t.val.toLocaleString('pt-BR',{minimumFractionDigits:2}).includes(srch);
       const matchGrupo=t.grupoId&&t.grupoId.toLowerCase().includes(srch);
