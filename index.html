@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623009">
+<meta name="build" content="20260623010">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -1868,6 +1868,7 @@ function saveCurso(){
     startDate:document.getElementById('cDtI').value,endDate:document.getElementById('cDtF').value,
     maxStu:parseInt(document.getElementById('cMax').value)||20,
     desc:document.getElementById('cDs').value};
+  c._upd=Date.now();
   if(editCursoId){const i=courses.findIndex(x=>x.id===editCursoId);if(i>=0)courses[i]=c;}
   else{
     courses.push(c);
@@ -2447,7 +2448,7 @@ function saveTx(){
     const band2=(fpg2==='credito'||fpg2==='debito')?(document.getElementById('fdBand2')?.value||'outros'):'';
     const parc1=fpg1==='credito'?parseInt(document.getElementById('fdParc1')?.value||'1')||1:1;
     const parc2=fpg2==='credito'?parseInt(document.getElementById('fdParc2')?.value||'1')||1:1;
-    const base={type:document.getElementById('fTy').value,cat:'',co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,vendId:parseInt(document.getElementById('fVend')?.value)||null,procedureId:null,status:document.getElementById('fSt').value,canal:'online',notes:document.getElementById('fNo').value};
+    const base={type:document.getElementById('fTy').value,cat:'',co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,vendId:parseInt(document.getElementById('fVend')?.value)||null,procedureId:null,status:document.getElementById('fSt').value,canal:'online',notes:document.getElementById('fNo').value,_upd:Date.now()};
     txs.push({...base,id:newTxId(),name:name+' (1/2)',fpg:fpg1,bandeira:band1,parcelas:parc1,val:v1,due:dt1,saleDate:dt1});
     txs.push({...base,id:newTxId(),name:name+' (2/2)',fpg:fpg2,bandeira:band2,parcelas:parc2,val:v2,due:dt2,saleDate:dt2});
     _dividirPanelOn=false;
@@ -2466,7 +2467,7 @@ function saveTx(){
   const fDuVal=document.getElementById('fDu').value||new Date().toISOString().slice(0,10);
   // Para parcelado, preserva o due original (data de vencimento da parcela); atualiza só saleDate
   const dueVal=(editTxId&&origTx.parcelaNum)?origTx.due:fDuVal;
-  const tx={...origTx,id:editTxId||newTxId(),name,type:document.getElementById('fTy').value,cat:existCat,co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,procedureId:procIdRaw?parseInt(procIdRaw):null,vendId:vendIdRaw?parseInt(vendIdRaw):null,fpg:fpgVal,bandeira:bandeiraVal,parcelas:parcelasVal,canal:canalVal,status:document.getElementById('fSt').value,due:dueVal,saleDate:fDuVal,val:parseFloat(document.getElementById('fVl').value)||0,notes:document.getElementById('fNo').value};
+  const tx={...origTx,id:editTxId||newTxId(),name,type:document.getElementById('fTy').value,cat:existCat,co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,procedureId:procIdRaw?parseInt(procIdRaw):null,vendId:vendIdRaw?parseInt(vendIdRaw):null,fpg:fpgVal,bandeira:bandeiraVal,parcelas:parcelasVal,canal:canalVal,status:document.getElementById('fSt').value,due:dueVal,saleDate:fDuVal,val:parseFloat(document.getElementById('fVl').value)||0,notes:document.getElementById('fNo').value,_upd:Date.now()};
   // Garante parcelaNum/parcelaTotal ao editar transação parcelada
   if(editTxId&&fpgVal==='credito'&&parcelasVal>1){
     tx.parcelaNum=origTx.parcelaNum||1;
@@ -3025,6 +3026,7 @@ function saveAluno(){
   const code=document.getElementById('aMCode').value.trim().toUpperCase()||genStuCode();
   if(!editStuId)stuNcode++;
   const s={id:editStuId||newTxId(),code,name,email:document.getElementById('aMEm').value,phone:document.getElementById('aMPh').value,cpf:document.getElementById('aMCpf').value,course:document.getElementById('aMMCr').value,courseId:parseInt(document.getElementById('aMCrs').value)||null,status:document.getElementById('aMSt').value,birth:document.getElementById('aMBirth')?.value||'',enrolledAt:editStuId?students.find(x=>x.id===editStuId)?.enrolledAt:new Date().toISOString().slice(0,10),street:document.getElementById('aMStr').value,bairro:document.getElementById('aMBa').value,cep:document.getElementById('aMCep').value,city:document.getElementById('aMCit').value,state:document.getElementById('aMSta').value,notes:document.getElementById('aMNo').value,txId:editStuId?students.find(x=>x.id===editStuId)?.txId:null};
+  s._upd=Date.now();
   if(editStuId){const i=students.findIndex(x=>x.id===editStuId);if(i>=0)students[i]=s;}else students.push(s);
   closeM('alunoModal');renderAlunos();saveData();
 }
@@ -3890,6 +3892,7 @@ function saveVend(){
   const code=document.getElementById('vCode').value.trim().toUpperCase()||genVendCode();
   if(!editVendId)vendNcode++;
   const v={id:editVendId||newTxId(),code,name,cpf:document.getElementById('vCpf').value,email:document.getElementById('vEm').value,phone:document.getElementById('vPh').value,status:document.getElementById('vSt').value,birth:document.getElementById('vBirth')?.value||'',since:editVendId?vendedoras.find(x=>x.id===editVendId)?.since:new Date().toISOString().slice(0,10),street:document.getElementById('vStr').value,bairro:document.getElementById('vBa').value,cep:document.getElementById('vCep').value,city:document.getElementById('vCit').value,state:document.getElementById('vState').value,notes:document.getElementById('vNo').value};
+  v._upd=Date.now();
   if(editVendId){const i=vendedoras.findIndex(x=>x.id===editVendId);if(i>=0)vendedoras[i]=v;}else vendedoras.push(v);
   closeM('vendModal');renderVendedoras();saveData();
 }
@@ -4074,8 +4077,15 @@ function mergeArrById(local,remote,deletedIds){
   const arrR=Array.isArray(remote)?remote:[];
   const arrL=Array.isArray(local)?local:[];
   const del=new Set(deletedIds||[]);
-  arrR.forEach(x=>{if(x&&x.id!=null&&!del.has(x.id))map.set(x.id,x);});
-  arrL.forEach(x=>{if(x&&x.id!=null&&!del.has(x.id))map.set(x.id,x);}); // local mais recente vence em conflito de mesmo ID
+  // Em conflito de mesmo ID, vence a versão EDITADA MAIS RECENTEMENTE (_upd) — assim uma edição
+  // nova não é mais sobrescrita por um computador com dados antigos.
+  const put=x=>{
+    if(!x||x.id==null||del.has(x.id))return;
+    const ex=map.get(x.id);
+    if(!ex||(x._upd||0)>=(ex._upd||0))map.set(x.id,x);
+  };
+  arrR.forEach(put);
+  arrL.forEach(put);
   return Array.from(map.values());
 }
 // Versão específica para estoque: mescla movimentos e preserva a qtd do lado com mais histórico
@@ -4742,6 +4752,7 @@ function savePaciente(){
   const code=document.getElementById('pacCode').value.trim().toUpperCase()||genPacCode();
   if(!editPacienteId)patientNcode++;
   const p={id:editPacienteId||newTxId(),code,name,status:document.getElementById('pacSt').value,cpf:document.getElementById('pacCpf').value||'',email:document.getElementById('pacEm').value||'',phone:document.getElementById('pacPh').value||'',birth:document.getElementById('pacBirth')?.value||'',notes:document.getElementById('pacNo').value||''};
+  p._upd=Date.now();
   if(editPacienteId){const i=patients.findIndex(function(x){return x.id===editPacienteId;});if(i>=0)patients[i]=p;}else patients.push(p);
   closeM('pacienteModal');renderPacientes();saveData();
 }
@@ -4787,6 +4798,7 @@ function saveProcedimento(){
   const code=document.getElementById('procCode').value.trim().toUpperCase()||genProcCode();
   if(!editProcedimentoId)procedureNcode++;
   const p={id:editProcedimentoId||newTxId(),code,name,status:document.getElementById('procStat').value,cat:document.getElementById('procCat').value,val:parseFloat(document.getElementById('procVal').value)||0,dur:parseInt(document.getElementById('procDur').value)||null,desc:document.getElementById('procDs').value||''};
+  p._upd=Date.now();
   if(editProcedimentoId){const i=procedures.findIndex(function(x){return x.id===editProcedimentoId;});if(i>=0)procedures[i]=p;}else procedures.push(p);
   closeM('procedimentoModal');renderProcedimentos();saveData();
 }
