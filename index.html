@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623010">
+<meta name="build" content="20260623011">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -4265,27 +4265,43 @@ async function restoreFromLocalBackup(btn){
 }
 // ===== CARREGAR =====
 async function loadData(){
-  // Tenta carregar do Supabase primeiro
+  let cloud=null;
   if(supabaseReady){
     try{
       const db=sbAdmin||sbClient;
       const{data,error}=await db.from('vai_data').select('value').eq('key','all_data').maybeSingle();
-      if(!error&&data?.value&&Object.keys(data.value).length>0){
-        applyData(data.value);
-        console.log('✅ Dados carregados do Supabase');
-        return;
-      }
+      if(!error&&data?.value&&Object.keys(data.value).length>0)cloud=data.value;
     }catch(e){console.warn('Supabase loadData error:',e);}
   }
-  // Fallback: localStorage — estado PERIGOSO (não está vendo a nuvem)
-  try{
-    const backup=localStorage.getItem('vai_backup');
-    if(backup){
-      applyData(JSON.parse(backup));
-      console.log('📦 Dados carregados do backup local');
-      showCloudWarning('SEM CONEXÃO COM A NUVEM — você está vendo apenas dados deste computador, que podem estar desatualizados. NÃO faça lançamentos até reconectar. Recarregue a página.');
-    }
-  }catch(e){console.warn('Erro ao carregar backup local:',e);}
+  let local=null;
+  try{const b=localStorage.getItem('vai_backup');if(b)local=JSON.parse(b);}catch(e){}
+  if(cloud&&local){
+    // Mescla nuvem + backup local: une por ID (vence a edição mais recente), preserva o que
+    // este computador tinha e ainda não subiu, e respeita exclusões. Nada se perde.
+    const del=mergeDeleted(local._deleted,cloud._deleted);
+    _deleted=del;sanitizeDeleted();
+    const merged={...cloud,
+      txs:mergeArrById(local.txs,cloud.txs,_deleted.txs),
+      courses:mergeArrById(local.courses,cloud.courses,_deleted.courses),
+      students:mergeArrById(local.students,cloud.students,_deleted.students),
+      vendedoras:mergeArrById(local.vendedoras,cloud.vendedoras,_deleted.vendedoras),
+      patients:mergeArrById(local.patients,cloud.patients,_deleted.patients),
+      procedures:mergeArrById(local.procedures,cloud.procedures,_deleted.procedures),
+      estoque:mergeEstoqueArr(local.estoque,cloud.estoque,_deleted.estoque),
+      evs:mergeEvsObj(local.evs,cloud.evs,_deleted.evs),
+      _deleted};
+    applyData(merged);
+    console.log('✅ Nuvem + backup local mesclados');
+    // Sobe o merge para a nuvem, garantindo que dados locais não sincronizados subam
+    setTimeout(saveData,1200);
+    return;
+  }
+  if(cloud){applyData(cloud);console.log('✅ Dados carregados do Supabase');return;}
+  if(local){
+    applyData(local);
+    console.log('📦 Dados carregados do backup local');
+    showCloudWarning('SEM CONEXÃO COM A NUVEM — você está vendo apenas dados deste computador, que podem estar desatualizados. NÃO faça lançamentos até reconectar. Recarregue a página.');
+  }
 }
 
 function mergeAndApply(remote){
