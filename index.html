@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623007">
+<meta name="build" content="20260623008">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -2092,9 +2092,17 @@ function renderTx(){
   body.innerHTML=html;
   // Summary cards — only paid, filtered by empresa
   // Colapsa parcelas: só conta parcela 1 com valor bruto (val * parcelaTotal)
+  // Os cards respeitam os mesmos filtros da lista (categoria, curso, vendedora, forma de pgto)
+  const matchFiltros=t=>{
+    if(catSel&&t.cat!==catSel)return false;
+    if(cursoSel&&String(t.courseId||'')!==cursoSel)return false;
+    if(vendSel&&String(t.vendId||'')!==vendSel)return false;
+    if(fpgSel&&t.fpg!==fpgSel)return false;
+    return true;
+  };
   // Receitas: colapsa parcelas (valor total na 1ª). Despesas: cada parcela no seu vencimento.
-  const receber=txs.filter(t=>inPeriod(t)&&(co==='all'||t.co===co)&&t.status==='paid'&&t.type==='receber'&&(!t.parcelaNum||t.parcelaNum===1));
-  const pagar=txs.filter(t=>inPeriod(t)&&(co==='all'||t.co===co)&&t.status==='paid'&&t.type==='pagar');
+  const receber=txs.filter(t=>inPeriod(t)&&(co==='all'||t.co===co)&&t.status==='paid'&&t.type==='receber'&&(!t.parcelaNum||t.parcelaNum===1)&&matchFiltros(t));
+  const pagar=txs.filter(t=>inPeriod(t)&&(co==='all'||t.co===co)&&t.status==='paid'&&t.type==='pagar'&&matchFiltros(t));
   const totalRec=receber.reduce((a,t)=>a+fatVal(t),0);
   const totalPag=pagar.reduce((a,t)=>a+t.val,0);
   const resultado=totalRec-totalPag;
