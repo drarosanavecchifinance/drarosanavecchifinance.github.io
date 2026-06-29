@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623002">
+<meta name="build" content="20260623003">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -631,6 +631,13 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
         <option>Operacional</option><option>Insumos</option><option>Marketing</option>
         <option>RH</option><option>Tecnologia</option><option>Cursos</option><option>Mentorias</option>
         <option>Procedimentos</option><option>Seguros</option><option>Outros</option>
+      </select>
+      <select class="fsel" id="fFiltCurso" onchange="renderTx()"><option value="">Todos os cursos</option></select>
+      <select class="fsel" id="fFiltVend" onchange="renderTx()"><option value="">Todas vendedoras</option></select>
+      <select class="fsel" id="fFiltFpg" onchange="renderTx()">
+        <option value="">Toda forma pgto</option>
+        <option value="pix">PIX</option><option value="credito">Crédito</option><option value="debito">Débito</option>
+        <option value="boleto">Boleto</option><option value="dinheiro">Dinheiro</option><option value="transferencia">Transferência</option>
       </select>
       <input class="srch" id="fSrch" placeholder="Buscar por descrição ou valor..." oninput="renderTx()" style="min-width:220px">
       <div style="margin-left:auto;display:flex;gap:8px">
@@ -1979,10 +1986,20 @@ function populateCursoSelects(){
     if(cur)sel.value=cur;
   });
 }
+function populateTxFilterSelects(){
+  const cs=document.getElementById('fFiltCurso');
+  if(cs){const cur=cs.value;cs.innerHTML='<option value="">Todos os cursos</option>'+courses.map(c=>`<option value="${c.id}">${c.code} — ${c.name}</option>`).join('');cs.value=cur;}
+  const vs=document.getElementById('fFiltVend');
+  if(vs){const cur=vs.value;vs.innerHTML='<option value="">Todas vendedoras</option>'+vendedoras.map(v=>`<option value="${v.id}">${v.name}</option>`).join('');vs.value=cur;}
+}
 function renderTx(){
   const body=document.getElementById('txBody');if(!body)return;
+  populateTxFilterSelects();
   const mesSel=(document.getElementById('fFiltMes')?.value||'').trim();
   const catSel=(document.getElementById('fFiltCat')?.value||'').trim();
+  const cursoSel=(document.getElementById('fFiltCurso')?.value||'').trim();
+  const vendSel=(document.getElementById('fFiltVend')?.value||'').trim();
+  const fpgSel=(document.getElementById('fFiltFpg')?.value||'').trim();
   const srch=(document.getElementById('fSrch')?.value||'').trim().toLowerCase();
   const mesMap={Janeiro:1,Fevereiro:2,'Março':3,Abril:4,Maio:5,Junho:6,Julho:7,Agosto:8,Setembro:9,Outubro:10,Novembro:11,Dezembro:12};
   let filterMes=0,filterAno=0;
@@ -2013,6 +2030,9 @@ function renderTx(){
     if(!showAllStatus&&t.status!=='paid')return false;
     if(ftab!=='todos'&&t.type!==ftab)return false;
     if(catSel&&t.cat!==catSel)return false;
+    if(cursoSel&&String(t.courseId||'')!==cursoSel)return false;
+    if(vendSel&&String(t.vendId||'')!==vendSel)return false;
+    if(fpgSel&&t.fpg!==fpgSel)return false;
     if(ftab==='pagar'){
       const due=new Date(t.due+'T00:00:00');
       if(subftab==='pagas'&&t.status!=='paid')return false;
