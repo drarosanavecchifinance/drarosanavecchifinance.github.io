@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623018">
+<meta name="build" content="20260623019">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -2389,10 +2389,10 @@ function viewTxDetail(id){
         <div style="font-size:11px;color:var(--t3);font-weight:600;margin-bottom:3px">STATUS</div>
         <div style="font-weight:600">${statusMap[t.status]||t.status}</div>
       </div>
-      <div style="background:var(--mp);border-radius:10px;padding:12px 14px">
+      ${(isRec&&vend)?`<div style="background:var(--mp);border-radius:10px;padding:12px 14px">
         <div style="font-size:11px;color:var(--t3);font-weight:600;margin-bottom:3px">VENDEDORA</div>
-        <div style="font-weight:600">${vend?vend.name:'—'}</div>
-      </div>
+        <div style="font-weight:600">${vend.name}</div>
+      </div>`:''}
       <div style="background:var(--mp);border-radius:10px;padding:12px 14px">
         <div style="font-size:11px;color:var(--t3);font-weight:600;margin-bottom:3px">VALOR BRUTO${t.parcelaNum?` (parcela ${t.parcelaNum}/${t.parcelaTotal||'?'})`:''}</div>
         <div style="font-weight:800;font-size:16px;color:${typeColor}">${fmt(t.val)}</div>
@@ -2473,7 +2473,7 @@ function saveTx(){
   const fDuVal=document.getElementById('fDu').value||new Date().toISOString().slice(0,10);
   // Para parcelado, preserva o due original (data de vencimento da parcela); atualiza só saleDate
   const dueVal=(editTxId&&origTx.parcelaNum)?origTx.due:fDuVal;
-  const tx={...origTx,id:editTxId||newTxId(),name,type:document.getElementById('fTy').value,cat:existCat,co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,procedureId:procIdRaw?parseInt(procIdRaw):null,vendId:vendIdRaw?parseInt(vendIdRaw):null,fpg:fpgVal,bandeira:bandeiraVal,parcelas:parcelasVal,canal:canalVal,status:document.getElementById('fSt').value,due:dueVal,saleDate:fDuVal,val:parseFloat(document.getElementById('fVl').value)||0,notes:document.getElementById('fNo').value,_upd:Date.now()};
+  const tx={...origTx,id:editTxId||newTxId(),name,type:document.getElementById('fTy').value,cat:existCat,co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,procedureId:procIdRaw?parseInt(procIdRaw):null,vendId:(document.getElementById('fTy').value==='receber'&&vendIdRaw)?parseInt(vendIdRaw):null,fpg:fpgVal,bandeira:bandeiraVal,parcelas:parcelasVal,canal:canalVal,status:document.getElementById('fSt').value,due:dueVal,saleDate:fDuVal,val:parseFloat(document.getElementById('fVl').value)||0,notes:document.getElementById('fNo').value,_upd:Date.now()};
   // Garante parcelaNum/parcelaTotal ao editar transação parcelada
   if(editTxId&&fpgVal==='credito'&&parcelasVal>1){
     tx.parcelaNum=origTx.parcelaNum||1;
