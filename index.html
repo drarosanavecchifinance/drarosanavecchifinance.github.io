@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623011">
+<meta name="build" content="20260623012">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -2428,7 +2428,10 @@ function editTx(id){
   toggleProcField();setTimeout(()=>{const sp=document.getElementById('fProc');if(sp&&t.procedureId)sp.value=t.procedureId;},30);
   toggleVendField();setTimeout(()=>{const sv=document.getElementById('fVend');if(sv&&t.vendId)sv.value=t.vendId;const sf=document.getElementById('fFpg');if(sf&&t.fpg){sf.value=t.fpg;toggleBandeiraField();const sb=document.getElementById('fBandeira');if(sb&&t.bandeira)sb.value=t.bandeira;const sp=document.getElementById('fParcelas');if(sp&&t.parcelas)sp.value=t.parcelas;const sc=document.getElementById('fCanal');if(sc)sc.value=t.canal||'online';}},30);
   checkStu();const linked=students.find(s=>s.txId===id);
-  if(linked){tgStu('exist');setTimeout(()=>{const sel=document.getElementById('sExSel');if(sel){sel.value=linked.id;previewExistStu();}},60);}else tgStu('new');
+  if(linked){tgStu('exist');setTimeout(()=>{const sel=document.getElementById('sExSel');if(sel){sel.value=linked.id;previewExistStu();}
+    // previewExistStu sobrepõe o curso com o da aluna — ao editar, mantém o curso da própria venda
+    const fc=document.getElementById('fCrs');if(fc)fc.value=t.courseId||'';
+  },60);}else tgStu('new');
   document.getElementById('txModal').classList.add('o');
 }
 function saveTx(){
