@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623022">
+<meta name="build" content="20260623023">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -4572,7 +4572,10 @@ async function autoImportCEEvent(ev){
   const fpgMap={'CARTÃO DE CRÉDITO':'credito','CARTÃO DE DÉBITO':'debito','PIX':'pix','DINHEIRO':'dinheiro','TRANSFERÊNCIA':'transferencia','BOLETO':'boleto'};
   const fpgVal=fpgMap[(fpg||'').toUpperCase()]||'';
   const now=new Date().toISOString().slice(0,10);
-  const tx={id:newTxId(),name:(procs&&procs!=='—'?procs:(p.type||ev.event_type))+' — '+(nome||'Paciente'),type:'receber',cat:'Procedimentos',co:'ct',courseId:null,procedureId:null,vendId:null,fpg:fpgVal,bandeira:(fpgVal==='credito'||fpgVal==='debito')?bandeira:'',parcelas:fpgVal==='credito'?parcelas:1,status:'paid',due:now,val,notes:'Auto-importado do Clínica Experts'};
+  // Cartão de crédito: dinheiro cai 31 dias após a venda
+  let dueCE=now;
+  if(fpgVal==='credito'){const _d=new Date(now+'T12:00:00');_d.setDate(_d.getDate()+31);dueCE=_d.toISOString().slice(0,10);}
+  const tx={id:newTxId(),name:(procs&&procs!=='—'?procs:(p.type||ev.event_type))+' — '+(nome||'Paciente'),type:'receber',cat:'Procedimentos',co:'ct',courseId:null,procedureId:null,vendId:null,fpg:fpgVal,bandeira:(fpgVal==='credito'||fpgVal==='debito')?bandeira:'',parcelas:fpgVal==='credito'?parcelas:1,status:'paid',due:dueCE,val,notes:'Auto-importado do Clínica Experts'};
   txs.push(tx);
   try{const db=sbAdmin||sbClient;await db.from('ce_events').update({imported:true,tx_id:tx.id}).eq('id',ev.id);}catch(e){console.warn('CE auto-import mark error:',e);}
   saveData();
@@ -4685,7 +4688,9 @@ async function autoImportYampiEvent(ev){
       txs.push({...baseTx,id:newTxId(),val:parcVal,due,grupoId:gid,parcelaNum:i+1,parcelaTotal:parcelas});
     }
   }else{
-    const tx={id:newTxId(),name,type:'receber',cat:'Vendas',co:'nf',canal:'online',courseId:null,procedureId:null,vendId:null,fpg,bandeira:(fpg==='credito'||fpg==='debito')?bandeira:'',parcelas:1,status:'paid',due:realSaleDate,saleDate:realSaleDate,val,notes:'Auto-importado da Yampi',yampiEventId:ev.id};
+    let dueY=realSaleDate;
+    if(fpg==='credito'){const _d=new Date(realSaleDate+'T12:00:00');_d.setDate(_d.getDate()+31);dueY=_d.toISOString().slice(0,10);}
+    const tx={id:newTxId(),name,type:'receber',cat:'Vendas',co:'nf',canal:'online',courseId:null,procedureId:null,vendId:null,fpg,bandeira:(fpg==='credito'||fpg==='debito')?bandeira:'',parcelas:1,status:'paid',due:dueY,saleDate:realSaleDate,val,notes:'Auto-importado da Yampi',yampiEventId:ev.id};
     txs.push(tx);
   }
   try{const db=sbAdmin||sbClient;await db.from('yampi_events').update({imported:true,tx_id:firstId}).eq('id',ev.id);}catch(e){console.warn('Yampi import error:',e);}
@@ -4923,7 +4928,9 @@ async function importCEEvent(eventId,metaStr){
   const fpgMap={'CARTÃO DE CRÉDITO':'credito','CARTÃO DE DÉBITO':'debito','PIX':'pix','DINHEIRO':'dinheiro','TRANSFERÊNCIA':'transferencia','BOLETO':'boleto'};
   const fpg=fpgMap[(meta.fpg||'').toUpperCase()]||'';
   const band=(fpg==='credito'||fpg==='debito')?(meta.bandeira||'outros'):'';
-  const tx={id:newTxId(),name:(meta.procs&&meta.procs!=='—'?meta.procs:meta.tipo)+' — '+(meta.nome||'Paciente'),type:'receber',cat:'Procedimentos',co:'ct',courseId:null,procedureId:null,vendId:null,fpg,bandeira:band,parcelas:fpg==='credito'?(parseInt(meta.parcelas)||1):1,status:'paid',due:now,val:parseFloat(meta.val)||0,notes:'Importado do Clínica Experts'};
+  let dueCEm=now;
+  if(fpg==='credito'){const _d=new Date(now+'T12:00:00');_d.setDate(_d.getDate()+31);dueCEm=_d.toISOString().slice(0,10);}
+  const tx={id:newTxId(),name:(meta.procs&&meta.procs!=='—'?meta.procs:meta.tipo)+' — '+(meta.nome||'Paciente'),type:'receber',cat:'Procedimentos',co:'ct',courseId:null,procedureId:null,vendId:null,fpg,bandeira:band,parcelas:fpg==='credito'?(parseInt(meta.parcelas)||1):1,status:'paid',due:dueCEm,val:parseFloat(meta.val)||0,notes:'Importado do Clínica Experts'};
   txs.push(tx);
   try{
     const db=sbAdmin||sbClient;
