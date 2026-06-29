@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623016">
+<meta name="build" content="20260623017">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -1791,8 +1791,8 @@ function updateInsights(){
 // ===== COURSES =====
 function genCursoCode(){return 'RVC'+String(cursoNcode).padStart(3,'0');}
 function getCourseLabel(id){if(!id)return'—';const c=courses.find(x=>x.id===id);return c?`${c.code} · ${c.name}`:'—';}
-function getCourseRevenue(id){return txs.filter(t=>t.courseId===id&&t.type==='receber').reduce((a,t)=>a+t.val,0);}
-function getCourseExpenses(id){return txs.filter(t=>t.courseId===id&&t.type==='pagar').reduce((a,t)=>a+t.val,0);}
+function getCourseRevenue(id){return txs.filter(t=>t.courseId===id&&t.type==='receber').reduce((a,t)=>a+fatVal(t),0);}
+function getCourseExpenses(id){return txs.filter(t=>t.courseId===id&&t.type==='pagar').reduce((a,t)=>a+fatVal(t),0);}
 function getCourseStudents(id){return students.filter(s=>s.courseId===id).length;}
 function fmt(v){return'R$ '+v.toLocaleString('pt-BR');}
 function fmtDate(d){if(!d)return'—';const p=d.split('-');return`${p[2]}/${p[1]}/${p[0]}`;}
@@ -2045,11 +2045,7 @@ function renderTx(){
     return ftab==='pagar'&&subftab==='avencer'?true:inPeriod(t);
   });
   // Fluxo de Caixa: colapsa parcelamentos — mostra só parcela 1 (com valor bruto)
-  // A Carteira é onde se vê as parcelas individuais
-  if(!filterGrupo){
-    // Receitas: colapsa parcelas (mostra só a 1ª). Despesas: mostra cada parcela separada (cada vencimento).
-    list=list.filter(t=>!t.parcelaNum||t.parcelaNum===1||t.type==='pagar');
-  }
+  // Mostra cada parcela separada (receitas e despesas) — cada uma com seu valor e vencimento
   // Ordenação
   if(ftab==='pagar'&&subftab==='avencer'){
     list=list.sort((a,b)=>new Date(a.due)-new Date(b.due));
@@ -2087,7 +2083,7 @@ function renderTx(){
       <td style="font-size:12px;color:var(--t3)">${isPagar?'':catCell}</td>
       <td>${empCell}</td>
       <td>${dueCell}</td>
-      <td class="mo">${typeIco}${(t.parcelaNum===1&&t.type==='receber')?`<span style="font-weight:800">${fmt(t.val*t.parcelaTotal)}</span><div style="font-size:10px;color:var(--t3);font-weight:500">${t.parcelaTotal}x de ${fmt(t.val)}</div>`:(t.parcelaNum?`<span style="font-weight:800">${fmt(t.val)}</span>`:`${fmt(t.val)}`)}</td>
+      <td class="mo">${typeIco}${(t.parcelaNum===1&&!t.grupoId&&(t.parcelaTotal||1)>1)?`<span style="font-weight:800">${fmt(t.val*t.parcelaTotal)}</span><div style="font-size:10px;color:var(--t3);font-weight:500">${t.parcelaTotal}x de ${fmt(t.val)}</div>`:`<span style="font-weight:800">${fmt(t.val)}</span>${t.parcelaNum?`<div style="font-size:10px;color:var(--t3);font-weight:500">parcela ${t.parcelaNum}/${t.parcelaTotal}</div>`:''}`}</td>
       <td>${bmap[t.status]||''}</td>
       <td><div class="ract">${t.status!=='paid'?`<button class="rb" onclick="marcarPago(${t.id})" title="Marcar como pago" style="color:var(--gr);font-weight:800">✓</button>`:''}<button class="rb" onclick="viewTxDetail(${t.id})" title="Ver detalhes">👁</button><button class="rb e" onclick="editTx(${t.id})" title="Editar">✏️</button><button class="rb d" onclick="delTx(${t.id})" title="Excluir">🗑</button></div></td>
     </tr>`;
@@ -2103,11 +2099,11 @@ function renderTx(){
     if(fpgSel&&t.fpg!==fpgSel)return false;
     return true;
   };
-  // Conta tudo do período (pago E pendente). Receitas: colapsa parcelas. Despesas: cada parcela no seu vencimento.
-  const receber=txs.filter(t=>inPeriod(t)&&(co==='all'||t.co===co)&&t.type==='receber'&&(!t.parcelaNum||t.parcelaNum===1)&&matchFiltros(t));
+  // Conta tudo do período (pago E pendente). fatVal entende os 2 formatos de parcelado (registro único × vários registros)
+  const receber=txs.filter(t=>inPeriod(t)&&(co==='all'||t.co===co)&&t.type==='receber'&&matchFiltros(t));
   const pagar=txs.filter(t=>inPeriod(t)&&(co==='all'||t.co===co)&&t.type==='pagar'&&matchFiltros(t));
   const totalRec=receber.reduce((a,t)=>a+fatVal(t),0);
-  const totalPag=pagar.reduce((a,t)=>a+t.val,0);
+  const totalPag=pagar.reduce((a,t)=>a+fatVal(t),0);
   const resultado=totalRec-totalPag;
   const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
   s('sumRec',fmt(totalRec));
