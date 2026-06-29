@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623012">
+<meta name="build" content="20260623013">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -645,10 +645,13 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
         <button class="bp" onclick="openAddTx()">+ Novo Lançamento</button>
       </div>
     </div>
-    <div id="subTabsPagar" class="tabs" style="margin-bottom:14px">
-      <button class="tab a" onclick="swSubTab(this,'pagas')">✓ Pagas</button>
-      <button class="tab" onclick="swSubTab(this,'apagar')">⏳ A Pagar</button>
-      <button class="tab" onclick="swSubTab(this,'avencer')">🔔 A Vencer</button>
+    <div id="subTabsPagar" style="margin-bottom:14px;display:none">
+      <select class="fsel" id="fFiltSit" onchange="swSubTabSel(this.value)">
+        <option value="todas">Situação: Todas</option>
+        <option value="apagar">⏳ A pagar (pendentes)</option>
+        <option value="pagas">✓ Pagas</option>
+        <option value="avencer">🔔 A vencer (30 dias)</option>
+      </select>
     </div>
     <div id="grupoBanner" class="grupo-banner" style="display:none"></div>
     <div class="kg3" style="margin-bottom:18px">
@@ -2015,7 +2018,7 @@ function renderTx(){
     else{bannerEl.style.display='none';}
   }
   // Todos e Contas a Receber mostram todos os status; Pagar/Pagas mostra só paid
-  const showAllStatus=ftab==='todos'||ftab==='receber'||(ftab==='pagar'&&(subftab==='apagar'||subftab==='avencer'));
+  const showAllStatus=ftab==='todos'||ftab==='receber'||(ftab==='pagar'&&(subftab==='apagar'||subftab==='avencer'||subftab==='todas'));
   let list=txs.filter(t=>{
     // Busca por texto: ignora filtros de empresa/mês/tab quando há busca ativa
     if(srch){
@@ -2086,7 +2089,7 @@ function renderTx(){
       <td>${dueCell}</td>
       <td class="mo">${typeIco}${t.parcelaNum&&t.parcelaNum===1?`<span style="font-weight:800">${fmt(t.val*t.parcelaTotal)}</span><div style="font-size:10px;color:var(--t3);font-weight:500">${t.parcelaTotal}x de ${fmt(t.val)}</div>`:(t.parcelaNum?`<span style="color:var(--t3)">${fmt(t.val)}</span>`:`${fmt(t.val)}`)}</td>
       <td>${bmap[t.status]||''}</td>
-      <td><div class="ract"><button class="rb" onclick="viewTxDetail(${t.id})" title="Ver detalhes">👁</button><button class="rb e" onclick="editTx(${t.id})" title="Editar">✏️</button><button class="rb d" onclick="delTx(${t.id})" title="Excluir">🗑</button></div></td>
+      <td><div class="ract">${t.status!=='paid'?`<button class="rb" onclick="marcarPago(${t.id})" title="Marcar como pago" style="color:var(--gr);font-weight:800">✓</button>`:''}<button class="rb" onclick="viewTxDetail(${t.id})" title="Ver detalhes">👁</button><button class="rb e" onclick="editTx(${t.id})" title="Editar">✏️</button><button class="rb d" onclick="delTx(${t.id})" title="Excluir">🗑</button></div></td>
     </tr>`;
   });
   body.innerHTML=html;
@@ -2121,15 +2124,12 @@ function swTab(el,t){
   el.classList.add('a');
   ftab=t;
   const sub=document.getElementById('subTabsPagar');
-  if(sub){sub.style.display=t==='pagar'?'flex':'none';}
-  if(t==='pagar'){subftab='pagas';const first=sub?.querySelector('.tab');if(first){sub.querySelectorAll('.tab').forEach(x=>x.classList.remove('a'));first.classList.add('a');}}
+  if(sub){sub.style.display=t==='pagar'?'':'none';}
+  if(t==='pagar'){subftab='todas';const sel=document.getElementById('fFiltSit');if(sel)sel.value='todas';}
   renderTx();
 }
-function swSubTab(el,t){
-  const sub=document.getElementById('subTabsPagar');
-  sub.querySelectorAll('.tab').forEach(x=>x.classList.remove('a'));
-  el.classList.add('a');
-  subftab=t;
+function swSubTabSel(v){
+  subftab=v;
   renderTx();
 }
 
@@ -2328,6 +2328,12 @@ function openAddTx(){
   const ss=document.getElementById('sSe');if(ss)ss.value='SP';
   const ep=document.getElementById('existStuPreview');if(ep)ep.style.display='none';
   document.getElementById('txModal').classList.add('o');
+}
+function marcarPago(id){
+  const t=txs.find(x=>x.id===id);if(!t)return;
+  if(!confirm('Marcar "'+t.name+'" como PAGO?'))return;
+  t.status='paid';t.paidAt=new Date().toISOString().slice(0,10);t._upd=Date.now();
+  renderTx();if(document.getElementById('page-carteira')?.classList.contains('a'))renderCarteira();saveData();
 }
 function viewTxDetail(id){
   const t=txs.find(x=>x.id===id);if(!t)return;
