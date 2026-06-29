@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623014">
+<meta name="build" content="20260623015">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -2006,8 +2006,8 @@ function renderTx(){
   let filterMes=0,filterAno=0;
   if(mesSel){const parts=mesSel.split(' ');if(parts.length===2){filterMes=mesMap[parts[0]]||0;filterAno=parseInt(parts[1])||0;}}
   // Fluxo de Caixa = regime de competência → usa saleDate (mês da venda), não due (mês da parcela)
-  // Receitas pela data da venda (competência); despesas pelo vencimento (caixa) — assim cada parcela cai no seu mês
-  const inPeriod=t=>{if(!filterMes||!filterAno)return true;const ds=((t.type==='pagar'?(t.due||t.saleDate):(t.saleDate||t.due))||'');const[ty,tm]=ds.split('-');return parseInt(tm)===filterMes&&parseInt(ty)===filterAno;};
+  // Período pela data de lançamento (saleDate) — receita e despesa aparecem no mês em que foram lançadas
+  const inPeriod=t=>{if(!filterMes||!filterAno)return true;const ds=(t.saleDate||t.due||'');const[ty,tm]=ds.split('-');return parseInt(tm)===filterMes&&parseInt(ty)===filterAno;};
   const today=new Date();today.setHours(0,0,0,0);
   const in30=new Date(today);in30.setDate(in30.getDate()+30);
   // Banner filtro de grupo / busca
