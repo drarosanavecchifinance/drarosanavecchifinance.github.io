@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623013">
+<meta name="build" content="20260623014">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -2103,9 +2103,9 @@ function renderTx(){
     if(fpgSel&&t.fpg!==fpgSel)return false;
     return true;
   };
-  // Receitas: colapsa parcelas (valor total na 1ª). Despesas: cada parcela no seu vencimento.
-  const receber=txs.filter(t=>inPeriod(t)&&(co==='all'||t.co===co)&&t.status==='paid'&&t.type==='receber'&&(!t.parcelaNum||t.parcelaNum===1)&&matchFiltros(t));
-  const pagar=txs.filter(t=>inPeriod(t)&&(co==='all'||t.co===co)&&t.status==='paid'&&t.type==='pagar'&&matchFiltros(t));
+  // Conta tudo do período (pago E pendente). Receitas: colapsa parcelas. Despesas: cada parcela no seu vencimento.
+  const receber=txs.filter(t=>inPeriod(t)&&(co==='all'||t.co===co)&&t.type==='receber'&&(!t.parcelaNum||t.parcelaNum===1)&&matchFiltros(t));
+  const pagar=txs.filter(t=>inPeriod(t)&&(co==='all'||t.co===co)&&t.type==='pagar'&&matchFiltros(t));
   const totalRec=receber.reduce((a,t)=>a+fatVal(t),0);
   const totalPag=pagar.reduce((a,t)=>a+t.val,0);
   const resultado=totalRec-totalPag;
