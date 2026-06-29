@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623021">
+<meta name="build" content="20260623022">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -3838,20 +3838,28 @@ function renderCarteira(){
   }
   var sP=function(a,b){return(a.due||'').localeCompare(b.due||'');};
   var sR=function(a,b){return(b.due||'').localeCompare(a.due||'');};
-  var hoje=pendentes.filter(function(t){return t.due===todayStr;}).sort(sP);
-  var semana=pendentes.filter(function(t){return t.due&&t.due>todayStr&&t.due<=weekEndStr;}).sort(sP);
-  var mes30=pendentes.filter(function(t){return t.due&&t.due>weekEndStr&&t.due<=m30Str;}).sort(sP);
-  var apos=pendentes.filter(function(t){return!t.due||(t.due&&t.due>m30Str);}).sort(sP);
+  // AGENDA usa TODOS os recebíveis da empresa (sem filtro de mês) — para mostrar entradas de meses futuros.
+  // "A receber" = não pagos + cartão/boleto pago cujo dinheiro ainda vai cair (vencimento hoje ou futuro).
+  var aReceber=allRec.filter(function(t){
+    var st=getStatusReal(t);
+    if(st==='cancelado'||st==='estornado')return false;
+    if(st!=='paid')return true;
+    return (t.fpg==='credito'||t.fpg==='boleto')&&t.due&&t.due>=todayStr;
+  });
+  var atrasadosAg=allRec.filter(function(t){return getStatusReal(t)==='atrasado';});
+  var hoje=aReceber.filter(function(t){return t.due===todayStr;}).sort(sP);
+  var semana=aReceber.filter(function(t){return t.due&&t.due>todayStr&&t.due<=weekEndStr;}).sort(sP);
+  var mes30=aReceber.filter(function(t){return t.due&&t.due>weekEndStr&&t.due<=m30Str;}).sort(sP);
+  var apos=aReceber.filter(function(t){return!t.due||t.due>m30Str;}).sort(sP);
   var recSemProc=recebidos.filter(function(t){return!emProc.find(function(e){return e.id===t.id;});});
   var ag=document.getElementById('carteiraAgenda');
   if(ag){
     ag.innerHTML=
-      (atrasados.length?section('Vencidos - Em Atraso','!!',atrasados.sort(sP),''):'') +
+      (atrasadosAg.length?section('Vencidos - Em Atraso','!!',atrasadosAg.sort(sP),''):'') +
       section('Hoje','>>',hoje,'nada hoje')+
       section('Esta Semana','>>',semana,'nada esta semana')+
       section('Proximos 30 dias','>>',mes30,'nada nos proximos 30 dias')+
       section('Apos 30 dias','>>',apos,'sem entradas futuras')+
-      (emProc.length?section('Credito em Processamento','>>',emProc.sort(sR),''):'')+
       (recSemProc.length?section('Recebido no Periodo','OK',recSemProc.sort(sR),''):'');
   }
 }
