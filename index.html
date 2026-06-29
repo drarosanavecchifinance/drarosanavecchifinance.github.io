@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623004">
+<meta name="build" content="20260623005">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -2005,7 +2005,8 @@ function renderTx(){
   let filterMes=0,filterAno=0;
   if(mesSel){const parts=mesSel.split(' ');if(parts.length===2){filterMes=mesMap[parts[0]]||0;filterAno=parseInt(parts[1])||0;}}
   // Fluxo de Caixa = regime de competência → usa saleDate (mês da venda), não due (mês da parcela)
-  const inPeriod=t=>{if(!filterMes||!filterAno)return true;const ds=(t.saleDate||t.due||'');const[ty,tm]=ds.split('-');return parseInt(tm)===filterMes&&parseInt(ty)===filterAno;};
+  // Receitas pela data da venda (competência); despesas pelo vencimento (caixa) — assim cada parcela cai no seu mês
+  const inPeriod=t=>{if(!filterMes||!filterAno)return true;const ds=((t.type==='pagar'?(t.due||t.saleDate):(t.saleDate||t.due))||'');const[ty,tm]=ds.split('-');return parseInt(tm)===filterMes&&parseInt(ty)===filterAno;};
   const today=new Date();today.setHours(0,0,0,0);
   const in30=new Date(today);in30.setDate(in30.getDate()+30);
   // Banner filtro de grupo / busca
@@ -2044,7 +2045,8 @@ function renderTx(){
   // Fluxo de Caixa: colapsa parcelamentos — mostra só parcela 1 (com valor bruto)
   // A Carteira é onde se vê as parcelas individuais
   if(!filterGrupo){
-    list=list.filter(t=>!t.parcelaNum||t.parcelaNum===1);
+    // Receitas: colapsa parcelas (mostra só a 1ª). Despesas: mostra cada parcela separada (cada vencimento).
+    list=list.filter(t=>!t.parcelaNum||t.parcelaNum===1||t.type==='pagar');
   }
   // Ordenação
   if(ftab==='pagar'&&subftab==='avencer'){
@@ -2066,7 +2068,7 @@ function renderTx(){
     const empBg={nf:'rgba(196,128,127,.13)',rv:'rgba(149,82,81,.13)',ct:'rgba(123,158,135,.13)',all:'rgba(92,53,53,.1)'};
     const empCell=`<span style="display:inline-block;background:${empBg[t.co]};color:${cc[t.co]};font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;border:1px solid ${cc[t.co]}33;letter-spacing:.2px">${cnm[t.co]}</span>${crs?`<br><span style="font-size:11px;color:var(--m);font-weight:500">${crs.code}</span>`:''}`;
     const typeIco=t.type==='receber'?'<span style="color:var(--gr);font-size:11px;font-weight:700;margin-right:4px">↓</span>':'<span style="color:var(--re);font-size:11px;font-weight:700;margin-right:4px">↑</span>';
-    let dueCell=fmtDate(t.saleDate||t.due);
+    let dueCell=fmtDate(t.type==='pagar'?(t.due||t.saleDate):(t.saleDate||t.due));
     if(ftab==='pagar'&&subftab==='avencer'){
       const dueD=new Date(t.due+'T00:00:00');
       const diff=Math.round((dueD-today)/(1000*60*60*24));
@@ -2091,11 +2093,11 @@ function renderTx(){
   body.innerHTML=html;
   // Summary cards — only paid, filtered by empresa
   // Colapsa parcelas: só conta parcela 1 com valor bruto (val * parcelaTotal)
-  const allP=txs.filter(t=>inPeriod(t)&&(co==='all'||t.co===co)&&t.status==='paid'&&(!t.parcelaNum||t.parcelaNum===1));
-  const receber=allP.filter(t=>t.type==='receber');
-  const pagar=allP.filter(t=>t.type==='pagar');
+  // Receitas: colapsa parcelas (valor total na 1ª). Despesas: cada parcela no seu vencimento.
+  const receber=txs.filter(t=>inPeriod(t)&&(co==='all'||t.co===co)&&t.status==='paid'&&t.type==='receber'&&(!t.parcelaNum||t.parcelaNum===1));
+  const pagar=txs.filter(t=>inPeriod(t)&&(co==='all'||t.co===co)&&t.status==='paid'&&t.type==='pagar');
   const totalRec=receber.reduce((a,t)=>a+fatVal(t),0);
-  const totalPag=pagar.reduce((a,t)=>a+fatVal(t),0);
+  const totalPag=pagar.reduce((a,t)=>a+t.val,0);
   const resultado=totalRec-totalPag;
   const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
   s('sumRec',fmt(totalRec));
