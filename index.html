@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623019">
+<meta name="build" content="20260623020">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -3608,6 +3608,13 @@ function confirmarMovEstoque(){
   closeM('estoqueMovModal');renderEstoque();saveData();
 }
 
+function toggleCartSec(sid){
+  var b=document.getElementById(sid+'body');var a=document.getElementById(sid+'arrow');
+  if(!b)return;
+  var aberto=b.style.display!=='none';
+  b.style.display=aberto?'none':'';
+  if(a)a.style.transform=aberto?'':'rotate(90deg)';
+}
 function renderCarteira(){
   initCarteiraFilter();
   var selMes=document.getElementById('carteiraFiltMes')?.value;
@@ -3807,17 +3814,25 @@ function renderCarteira(){
       '<button onclick="delTxCart('+t.id+')" title="Excluir" style="background:none;border:none;cursor:pointer;color:var(--t4);font-size:14px;padding:2px 4px;border-radius:5px;flex-shrink:0" onmouseover="this.style.color=\'var(--re)\'" onmouseout="this.style.color=\'var(--t4)\'">&#128465;</button>'+
       '</div>';
   }
+  var _secIdx=0;
   function section(title,icon,items,emptyMsg){
-    if(!items.length)return'<div class="sc" style="margin-bottom:14px"><div style="padding:12px 16px;display:flex;align-items:center;gap:8px"><span style="font-size:16px">'+icon+'</span><span style="font-size:13.5px;font-weight:700;color:var(--t2)">'+title+'</span><span style="margin-left:auto;font-size:12px;color:var(--t3)">'+emptyMsg+'</span></div></div>';
+    var sid='cartsec'+(_secIdx++);
+    var vazio=!items.length;
     var tot=items.reduce(function(s,t){return s+fatVal(t);},0);
     var liqTot=items.reduce(function(s,t){return s+valLiq(t);},0);
     var showLiq=Math.abs(tot-liqTot)>0.01;
-    return'<div class="sc" style="margin-bottom:14px"><div style="padding:12px 16px 10px;display:flex;align-items:center;gap:8px;border-bottom:1.5px solid var(--bdr)">'+
-      '<span style="font-size:16px">'+icon+'</span>'+
-      '<span style="font-size:13.5px;font-weight:700;color:var(--t2)">'+title+'</span>'+
-      '<span style="font-size:12px;color:var(--t3);margin-left:4px">'+items.length+' entrada'+(items.length>1?'s':'')+'</span>'+
-      '<div style="margin-left:auto;text-align:right"><div style="font-size:14px;font-weight:800;color:var(--gr)">'+fmt(tot)+'</div>'+(showLiq?'<div style="font-size:11px;color:var(--t3)">liq. '+fmt(liqTot)+'</div>':'')+'</div></div>'+
-      items.map(txRow).join('')+'</div>';
+    // Cabeçalho clicável (accordion). Vazio: mostra a mensagem e não abre.
+    var resumo=vazio
+      ?'<span style="margin-left:auto;font-size:12px;color:var(--t3)">'+emptyMsg+'</span>'
+      :'<span style="font-size:12px;color:var(--t3);margin-left:4px">'+items.length+' entrada'+(items.length>1?'s':'')+'</span>'+
+       '<div style="margin-left:auto;text-align:right"><div style="font-size:14px;font-weight:800;color:var(--gr)">'+fmt(tot)+'</div>'+(showLiq?'<div style="font-size:11px;color:var(--t3)">liq. '+fmt(liqTot)+'</div>':'')+'</div>';
+    var seta=vazio?'<span style="display:inline-block;width:14px"></span>':'<span id="'+sid+'arrow" style="font-size:12px;color:var(--t3);transition:transform .2s;display:inline-block">&#9654;</span>';
+    var hStyle='padding:12px 16px;display:flex;align-items:center;gap:8px'+(vazio?'':';cursor:pointer');
+    var header='<div '+(vazio?'':'onclick="toggleCartSec(\''+sid+'\')" ')+'style="'+hStyle+'">'+
+      seta+'<span style="font-size:16px">'+icon+'</span>'+
+      '<span style="font-size:13.5px;font-weight:700;color:var(--t2)">'+title+'</span>'+resumo+'</div>';
+    var body=vazio?'':'<div id="'+sid+'body" style="display:none">'+items.map(txRow).join('')+'</div>';
+    return'<div class="sc" style="margin-bottom:14px">'+header+body+'</div>';
   }
   var sP=function(a,b){return(a.due||'').localeCompare(b.due||'');};
   var sR=function(a,b){return(b.due||'').localeCompare(a.due||'');};
