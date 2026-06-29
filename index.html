@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623006">
+<meta name="build" content="20260623007">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -641,8 +641,6 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
       </select>
       <input class="srch" id="fSrch" placeholder="Buscar por descrição ou valor..." oninput="renderTx()" style="min-width:220px">
       <div style="margin-left:auto;display:flex;gap:8px">
-        <button class="bs" onclick="openGruposModal()" title="Gerenciar grupos de parcelamento">🔗 Parcelamentos</button>
-        <button class="bs" id="undoBtn" onclick="undoLastDelete()" title="Desfazer última exclusão" style="display:none">↩ Desfazer</button>
         <button class="bs">📥 Exportar</button>
         <button class="bp" onclick="openAddTx()">+ Novo Lançamento</button>
       </div>
