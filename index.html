@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623023">
+<meta name="build" content="20260623024">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -1087,7 +1087,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
       <div class="fgp" id="cursoFieldWrap"><label class="fl">Curso (opcional)</label><select class="fse" id="fCrs"><option value="">— Nenhum —</option></select></div>
       <div class="fgp" id="fProcWrap" style="display:none"><label class="fl">Procedimento (opcional)</label><select class="fse" id="fProc"><option value="">— Nenhum —</option></select></div>
       <div class="fgp"><label class="fl">Status</label><select class="fse" id="fSt"><option value="paid">Pago</option><option value="pend">Pendente</option><option value="due">Vence Hoje</option><option value="sched">Agendado</option></select></div>
-      <div class="fgp" id="fDuWrap"><label class="fl">Data de Lançamento</label><input class="fi" id="fDu" type="date"></div>
+      <div class="fgp" id="fDuWrap"><label class="fl">Data de Lançamento</label><input class="fi" id="fDu" type="date" onchange="if(typeof renderParcPreview==='function'){const _p=document.getElementById('fParcPreview');if(_p&&_p.style.display!=='none')renderParcPreview();}"></div>
       <div class="fgp" id="fVlWrap"><label class="fl">Valor (R$)</label><input class="fi" id="fVl" type="number" placeholder="0,00" min="0" step="0.01"></div>
       <!-- Painel dividir pagamento (inline) -->
       <div class="fgp fc1" id="fDividirPanel" style="display:none">
@@ -2183,6 +2183,8 @@ function toggleBandeiraField(){
   const pw=document.getElementById('fParcelasWrap');if(pw)pw.style.display=(fpg==='credito'&&!parcNVisible)?'':'none';
   const isRec=document.getElementById('fTy')?.value==='receber';
   const cw=document.getElementById('fCanalWrap');if(cw)cw.style.display=(fpg&&isRec)?'':'none';
+  // Recalcula as datas das parcelas (crédito muda a 1ª para +31 dias)
+  if(typeof renderParcPreview==='function'){const pp=document.getElementById('fParcPreview');if(pp&&pp.style.display!=='none')renderParcPreview();}
 }
 function toggleProcField(){
   const coVal=document.getElementById('fCo')?.value;
@@ -2245,9 +2247,14 @@ function renderParcPreview(){
   const totalVal=parseFloat(document.getElementById('fVl')?.value)||0;
   const parcVal=totalVal>0?Math.round(totalVal/n*100)/100:0;
   const baseDate=document.getElementById('fDu')?.value||new Date().toISOString().slice(0,10);
+  // Cartão de crédito (receita): a 1ª parcela cai 31 dias após a venda
+  const fpgP=document.getElementById('fFpg')?.value;
+  const tyP=document.getElementById('fTy')?.value;
+  let startD=new Date(baseDate+'T12:00:00');
+  if(tyP==='receber'&&fpgP==='credito'){startD.setDate(startD.getDate()+31);}
   let rows='';
   for(let i=0;i<n;i++){
-    let d=new Date(baseDate+'T12:00:00');d.setMonth(d.getMonth()+i);
+    let d=new Date(startD);d.setMonth(d.getMonth()+i);
     const ds=d.toISOString().slice(0,10);
     rows+=`<div class="parc-row-p"><span class="parc-num-tag">${i+1}/${n}</span><input class="fi" type="date" id="parcDt${i}" value="${ds}" style="padding:8px 12px;font-size:13px"><span class="parc-val-tag">R$&nbsp;${parcVal.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>`;
   }
