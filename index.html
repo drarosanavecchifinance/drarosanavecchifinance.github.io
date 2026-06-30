@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623026">
+<meta name="build" content="20260623027">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -1556,7 +1556,7 @@ function markDeleted(type,ids){
 // Exclusões espúrias geradas pelo caos de IDs — Jullya/Lara/Michelli e a venda da Nayara
 // nunca devem ser apagadas. Esta cura roda em todo sync e desfaz a marca, mesmo que um
 // computador antigo tente reapagar.
-const _badTombstones={vendedoras:[1,2,3],txs:[286]};
+const _badTombstones={vendedoras:[1,3],txs:[286]};
 function sanitizeDeleted(){
   for(const type in _badTombstones){
     if(Array.isArray(_deleted[type]))
@@ -1706,7 +1706,7 @@ function updateDashCharts(){
     const _nowV=new Date();const _cmV=_nowV.getFullYear()+'-'+String(_nowV.getMonth()+1).padStart(2,'0');
     const _sdV=t=>t.saleDate||t.due||'';
     txs.filter(t=>(t.co==='nf'||t.co==='rv')&&t.type==='receber'&&t.vendId&&_sdV(t).startsWith(_cmV)).forEach(t=>{const v=fatVal(t);if(totals[t.vendId]!==undefined)totals[t.vendId]+=v;else totals[t.vendId]=v;});
-    const vLabels=vendedoras.map(v=>v.name.split(' ')[0]+' '+v.name.split(' ')[1]);
+    const vLabels=vendedoras.map(v=>{const p=(v.name||'').split(' ');return p[0]+(p[1]?' '+p[1]:'');});
     const vData=vendedoras.map(v=>totals[v.id]||0);
     charts.vend.data.labels=vLabels;
     charts.vend.data.datasets[0].data=vData;
