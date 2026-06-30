@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623027">
+<meta name="build" content="20260623028">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -635,7 +635,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
       </select>
       <select class="fsel" id="fFiltCurso" onchange="renderTx()"><option value="">Todos os cursos</option></select>
       <select class="fsel" id="fFiltVend" onchange="renderTx()"><option value="">Todas vendedoras</option></select>
-      <select class="fsel" id="fFiltCliente" onchange="renderTx()"><option value="">Todos os clientes</option><option value="aluna">Aluna</option><option value="paciente">Paciente</option><option value="modelo">Modelo</option></select>
+      <select class="fsel" id="fFiltCliente" onchange="renderTx()"><option value="">Todos os clientes</option><option value="aluna">Aluna</option><option value="paciente_modelo">Paciente Modelo</option></select>
       <select class="fsel" id="fFiltFpg" onchange="renderTx()">
         <option value="">Toda forma pgto</option>
         <option value="pix">PIX</option><option value="credito">Crédito</option><option value="debito">Débito</option>
@@ -1081,7 +1081,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
       <div class="fgp" id="fTyWrap"><label class="fl">Tipo</label><select class="fse" id="fTy" onchange="checkStu();toggleRec();toggleVendField();toggleProcField();toggleBandeiraField()"><option value="pagar">A Pagar</option><option value="receber">A Receber</option></select></div>
       <div class="fgp" id="fCoWrap"><label class="fl">Empresa</label><select class="fse" id="fCo" onchange="checkStu();toggleCursoField();toggleVendField();toggleProcField()"><option value="nf">NatureFace</option><option value="rv">Rosana Academy</option><option value="ct">Consultório</option></select></div>
       <div class="fgp" id="fVendWrap" style="display:none"><label class="fl">Vendedora</label><select class="fse" id="fVend"><option value="">— Nenhuma —</option></select></div>
-      <div class="fgp" id="fClienteWrap" style="display:none"><label class="fl">Tipo de Cliente</label><select class="fse" id="fClienteTipo"><option value="">— Nenhum —</option><option value="aluna">Aluna</option><option value="paciente">Paciente</option><option value="modelo">Modelo</option></select></div>
+      <div class="fgp" id="fClienteWrap" style="display:none"><label class="fl">Tipo de Cliente</label><select class="fse" id="fClienteTipo"><option value="">— Nenhum —</option><option value="aluna">Aluna</option><option value="paciente_modelo">Paciente Modelo</option></select></div>
       <div class="fgp" id="fFpgWrap" style="display:none"><label class="fl">Forma de Pagamento</label><select class="fse" id="fFpg" onchange="toggleBandeiraField()"><option value="">— Selecione —</option><option value="pix">PIX</option><option value="debito">Débito</option><option value="credito">Crédito</option><option value="boleto">Boleto</option><option value="transferencia">Transferência</option><option value="dinheiro">Dinheiro</option></select></div>
       <div class="fgp" id="fBandeiraWrap" style="display:none"><label class="fl">Bandeira</label><select class="fse" id="fBandeira"><option value="visa">Visa</option><option value="master">Mastercard</option><option value="elo">Elo</option><option value="amex">Amex</option><option value="diners">Diners</option><option value="hipercard">Hipercard</option><option value="outros">Outros</option></select></div>
       <div class="fgp" id="fCanalWrap" style="display:none"><label class="fl">Canal</label><select class="fse" id="fCanal"><option value="online">🌐 Online / Link de Pagamento</option><option value="maquininha">🏪 Maquininha (Loja Física)</option></select></div>
@@ -2040,7 +2040,7 @@ function renderTx(){
     if(catSel&&t.cat!==catSel)return false;
     if(cursoSel&&String(t.courseId||'')!==cursoSel)return false;
     if(vendSel&&String(t.vendId||'')!==vendSel)return false;
-    if(clienteSel&&(t.clienteTipo||'')!==clienteSel)return false;
+    if(clienteSel){const _ct=t.clienteTipo||'';if(clienteSel==='paciente_modelo'){if(_ct!=='paciente_modelo'&&_ct!=='paciente'&&_ct!=='modelo')return false;}else if(_ct!==clienteSel)return false;}
     if(fpgSel&&t.fpg!==fpgSel)return false;
     if(ftab==='pagar'){
       const due=new Date(t.due+'T00:00:00');
@@ -2104,7 +2104,7 @@ function renderTx(){
     if(catSel&&t.cat!==catSel)return false;
     if(cursoSel&&String(t.courseId||'')!==cursoSel)return false;
     if(vendSel&&String(t.vendId||'')!==vendSel)return false;
-    if(clienteSel&&(t.clienteTipo||'')!==clienteSel)return false;
+    if(clienteSel){const _ct=t.clienteTipo||'';if(clienteSel==='paciente_modelo'){if(_ct!=='paciente_modelo'&&_ct!=='paciente'&&_ct!=='modelo')return false;}else if(_ct!==clienteSel)return false;}
     if(fpgSel&&t.fpg!==fpgSel)return false;
     return true;
   };
