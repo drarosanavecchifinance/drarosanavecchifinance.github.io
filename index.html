@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623024">
+<meta name="build" content="20260623025">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -1170,9 +1170,10 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
           <div style="width:3px;height:28px;border-radius:2px;background:var(--m);flex-shrink:0"></div>
           <div class="stuttl">👤 Dados do Aluno — Rosana Academy</div>
         </div>
-        <div class="stusub">Preencha os dados do aluno vinculado a esta receita, ou selecione um já cadastrado.</div>
+        <div class="stusub">Opcional — vincule a um aluno só se esta receita for uma matrícula. Caso contrário, deixe em "Sem aluno".</div>
         <div class="stabs">
-          <button class="stab a" id="btnNS" onclick="tgStu('new')">✦ Novo Aluno</button>
+          <button class="stab a" id="btnNoS" onclick="tgStu('none')">Sem aluno</button>
+          <button class="stab" id="btnNS" onclick="tgStu('new')">✦ Novo Aluno</button>
           <button class="stab" id="btnES" onclick="tgStu('exist')">Selecionar Existente</button>
         </div>
         <div id="stuNew">
@@ -2308,7 +2309,7 @@ function previewExistStu(){
   const mainCrs=document.getElementById('fCrs');
   if(mainCrs&&s.courseId)mainCrs.value=s.courseId;
 }
-function tgStu(mode){stuMode=mode;document.getElementById('stuNew').style.display=mode==='new'?'block':'none';document.getElementById('stuExist').style.display=mode==='exist'?'block':'none';document.getElementById('btnNS').classList.toggle('a',mode==='new');document.getElementById('btnES').classList.toggle('a',mode==='exist');}
+function tgStu(mode){stuMode=mode;document.getElementById('stuNew').style.display=mode==='new'?'block':'none';document.getElementById('stuExist').style.display=mode==='exist'?'block':'none';document.getElementById('btnNS').classList.toggle('a',mode==='new');document.getElementById('btnES').classList.toggle('a',mode==='exist');const bn=document.getElementById('btnNoS');if(bn)bn.classList.toggle('a',mode==='none');}
 
 function openAddTx(){
   editTxId=null;document.getElementById('txMT').textContent='Novo Lançamento';
@@ -2328,7 +2329,7 @@ function openAddTx(){
   const canalRst=document.getElementById('fCanal');if(canalRst)canalRst.value='online';
   const canalWRst=document.getElementById('fCanalWrap');if(canalWRst)canalWRst.style.display='none';
   const parRst=document.getElementById('fParcelas');if(parRst)parRst.value='1';const parwRst=document.getElementById('fParcelasWrap');if(parwRst)parwRst.style.display='none';
-  populateCursoSelects();toggleCursoField();toggleRec();toggleVendField();toggleProcField();checkStu();tgStu('new');
+  populateCursoSelects();toggleCursoField();toggleRec();toggleVendField();toggleProcField();checkStu();tgStu('none');
   ['sNm','sEm','sPh','sCp','sSt','sBa','sCe','sCi'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const sc=document.getElementById('sCode');if(sc)sc.value=genStuCode();
   const ss=document.getElementById('sSe');if(ss)ss.value='SP';
@@ -2443,7 +2444,7 @@ function editTx(id){
   if(linked){tgStu('exist');setTimeout(()=>{const sel=document.getElementById('sExSel');if(sel){sel.value=linked.id;previewExistStu();}
     // previewExistStu sobrepõe o curso com o da aluna — ao editar, mantém o curso da própria venda
     const fc=document.getElementById('fCrs');if(fc)fc.value=t.courseId||'';
-  },60);}else tgStu('new');
+  },60);}else tgStu('none');
   document.getElementById('txModal').classList.add('o');
 }
 function saveTx(){
