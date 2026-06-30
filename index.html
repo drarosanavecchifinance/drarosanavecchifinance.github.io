@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623032">
+<meta name="build" content="20260623033">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -643,7 +643,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
       </select>
       <input class="srch" id="fSrch" placeholder="Buscar por descrição ou valor..." oninput="renderTx()" style="min-width:220px">
       <div style="margin-left:auto;display:flex;gap:8px">
-        <button class="bs">📥 Exportar</button>
+        <button class="bs" onclick="exportarFluxo()">📥 Exportar</button>
         <button class="bp" onclick="openAddTx()">+ Novo Lançamento</button>
       </div>
     </div>
@@ -690,7 +690,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
       <input class="srch" id="alunoSrch" placeholder="Buscar por nome, código ou curso..." oninput="renderAlunos()">
       <select class="fsel" id="aFiltCurso" onchange="renderAlunos()"><option value="">Todos os cursos</option></select>
       <div style="margin-left:auto;display:flex;gap:8px">
-        <button class="bs">📥 Exportar</button>
+        <button class="bs" onclick="exportarAlunos()">📥 Exportar</button>
       </div>
     </div>
     <div class="atbl">
@@ -1997,6 +1997,34 @@ function populateTxFilterSelects(){
   const vs=document.getElementById('fFiltVend');
   if(vs){const cur=vs.value;vs.innerHTML='<option value="">Todas vendedoras</option>'+vendedoras.map(v=>`<option value="${v.id}">${v.name}</option>`).join('');vs.value=cur;}
 }
+function _baixarCSV(nome,linhas){
+  const csv='﻿'+linhas.map(r=>r.map(c=>{const s=String(c==null?'':c);return /[";\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(';')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=nome;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+function exportarFluxo(){
+  const list=window._lastTxFiltered||[];
+  if(!list.length){alert('Nenhum lançamento para exportar com os filtros atuais.');return;}
+  const cnm={nf:'NatureFace',rv:'Rosana Academy',ct:'Consultório'};
+  const fpgL={pix:'PIX',credito:'Crédito',debito:'Débito',boleto:'Boleto',dinheiro:'Dinheiro',transferencia:'Transferência'};
+  const stL={paid:'Pago',pend:'Pendente',due:'Vence hoje',sched:'Agendado'};
+  const cliL={aluna:'Aluna',paciente_modelo:'Paciente Modelo',paciente:'Paciente',modelo:'Modelo'};
+  const rows=[['Data','Descrição','Tipo','Empresa','Curso','Forma Pgto','Parcelas','Vendedora','Tipo Cliente','Valor','Status']];
+  list.forEach(t=>{
+    const crs=t.courseId?courses.find(x=>x.id===t.courseId):null;
+    const v=t.vendId?vendedoras.find(x=>x.id===t.vendId):null;
+    rows.push([fmtDate(t.saleDate||t.due),t.name,t.type==='receber'?'Receita':'Despesa',cnm[t.co]||t.co||'',crs?crs.code+' - '+crs.name:'',fpgL[t.fpg]||t.fpg||'',(t.fpg==='credito'&&t.parcelas>1)?t.parcelas+'x':(t.parcelaTotal?t.parcelaTotal+'x':''),v?v.name:'',cliL[t.clienteTipo]||'',String(t.val).replace('.',','),stL[t.status]||t.status||'']);
+  });
+  _baixarCSV('fluxo-de-caixa-'+new Date().toISOString().slice(0,10)+'.csv',rows);
+}
+function exportarAlunos(){
+  const list=window._lastAlunosFiltered||students;
+  if(!list.length){alert('Nenhum aluno para exportar.');return;}
+  const rows=[['Código','Nome','E-mail','Telefone','CPF','Curso','Cidade','UF','Status','Matrícula']];
+  list.forEach(s=>{const c=s.courseId?courses.find(x=>x.id===s.courseId):null;rows.push([s.code||'',s.name||'',s.email||'',s.phone||'',s.cpf||'',c?c.name:(s.course||''),s.city||'',s.state||'',s.status||'',s.enrolledAt||'']);});
+  _baixarCSV('alunos-'+new Date().toISOString().slice(0,10)+'.csv',rows);
+}
 function renderTx(){
   const body=document.getElementById('txBody');if(!body)return;
   populateTxFilterSelects();
@@ -2068,6 +2096,7 @@ function renderTx(){
   const cnm={nf:'NatureFace',rv:'Academy',ct:'Consultório',all:'Consolidado'};
   const cc={nf:'#C4807F',rv:'#955251',ct:'#7B9E87',all:'#5C3535'};
   let html='';
+  window._lastTxFiltered=list; // guarda a lista atual para exportar
   if(!list.length)html=`<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--t3);font-size:13.5px">Nenhum lançamento encontrado${mesSel?' para '+mesSel:''}.</td></tr>`;
   list.forEach(t=>{
     const crs=t.courseId?courses.find(x=>x.id===t.courseId):null;
@@ -2711,6 +2740,7 @@ function renderAlunos(){
   const q=(document.getElementById('alunoSrch')?.value||'').toLowerCase();
   const cf=document.getElementById('aFiltCurso')?.value||'';
   const list=students.filter(s=>(!q||s.name.toLowerCase().includes(q)||s.code.toLowerCase().includes(q)||s.course.toLowerCase().includes(q))&&(!cf||String(s.courseId)===cf));
+  window._lastAlunosFiltered=list;
   let html='';
   if(!list.length)html='<div class="empty">Nenhum aluno encontrado.</div>';
   list.forEach(s=>{
