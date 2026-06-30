@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623030">
+<meta name="build" content="20260623031">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -2496,11 +2496,9 @@ function saveTx(){
   // Para parcelado, preserva o due original (data de vencimento da parcela); atualiza só saleDate
   const dueVal=(editTxId&&origTx.parcelaNum)?origTx.due:fDuVal;
   const tx={...origTx,id:editTxId||newTxId(),name,type:document.getElementById('fTy').value,cat:existCat,co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,procedureId:procIdRaw?parseInt(procIdRaw):null,vendId:(document.getElementById('fTy').value==='receber'&&vendIdRaw)?parseInt(vendIdRaw):null,fpg:fpgVal,bandeira:bandeiraVal,parcelas:parcelasVal,canal:canalVal,status:document.getElementById('fSt').value,due:dueVal,saleDate:fDuVal,val:parseFloat(document.getElementById('fVl').value)||0,notes:document.getElementById('fNo').value,clienteTipo:(document.getElementById('fTy').value==='receber')?(document.getElementById('fClienteTipo')?.value||''):'',_upd:Date.now()};
-  // Garante parcelaNum/parcelaTotal ao editar transação parcelada
-  if(editTxId&&fpgVal==='credito'&&parcelasVal>1){
-    tx.parcelaNum=origTx.parcelaNum||1;
-    tx.parcelaTotal=parcelasVal;
-  }
+  // Cartão de registro único: o valor JÁ é o total — não pode ter parcelaTotal (senão fatVal multiplica e infla o valor).
+  // Só parcelados de vários registros (com grupoId) mantêm parcelaNum/parcelaTotal.
+  if(editTxId&&!origTx.grupoId){delete tx.parcelaNum;delete tx.parcelaTotal;}
   // Recebível de cartão/boleto cai em saleDate + prazo de compensação (ex.: crédito ~30 dias),
   // não no dia da venda. PIX/dinheiro/transferência são instantâneos (due = data da venda).
   // Parcela editada preserva o due original; parcelamento novo define o due de cada parcela abaixo.
