@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623028">
+<meta name="build" content="20260623029">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -3220,11 +3220,7 @@ document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{if(e.
 const vm={'Quanto faturamos este mês?':'Com base nos dados de julho/2025, o faturamento total atingiu <strong>R$ 284.750</strong>:<br><br>• NatureFace: <strong>R$ 148.200</strong> (52%)<br>• Rosana Academy: <strong>R$ 136.550</strong> (48%)<br><br>Crescimento de <strong>+18,3%</strong> vs junho. 🚀','Qual empresa cresceu mais?':'A <strong>Rosana Academy lidera</strong> com <strong>+22%</strong> em julho, impulsionada por +31% em novas matrículas.<br><br>NatureFace cresceu +16%, com destaque para protocolos premium. 🎯','Preveja o faturamento do próximo mês':'Previsão para <strong>agosto/2025</strong>:<br><br>📊 <strong>R$ 316.000</strong> (±8%)<br>• NatureFace: ~R$ 164.000<br>• Rosana Academy: ~R$ 152.000<br><br>Alta demanda inverno + novo curso. Confiança: 78%','Onde posso reduzir custos?':'<strong>3 oportunidades identificadas:</strong><br><br>1️⃣ <strong>Marketing Digital</strong> — 12% acima do budget<br>2️⃣ <strong>Derma+</strong> — Negociar desconto por volume (-8%)<br>3️⃣ <strong>Licenças</strong> — Consolidar ferramentas (R$ 890/mês)','Qual categoria mais lucrou?':'🏆 <strong>Top 3 por margem em julho:</strong><br><br>1. <strong>Mentorias Premium</strong> — 71% → R$ 38.400<br>2. <strong>Protocolos Avançados</strong> — 58% → R$ 24.100<br>3. <strong>Cursos Certificadores</strong> — 52% → R$ 29.300'};
 
 // VENDEDORAS
-let vendedoras=[
-  {id:1,code:'NFV001',name:'Ana Lima Santos',cpf:'234.567.890-12',email:'ana@natureface.com',phone:'(11) 98765-4321',status:'ativa',birth:'1990-04-12',since:'2024-03-15',street:'Rua Pamplona, 500',bairro:'Jardins',city:'São Paulo',state:'SP',cep:'01405-001',notes:'Top vendedora do mês'},
-  {id:2,code:'NFV002',name:'Carla Mendes Rocha',cpf:'345.678.901-23',email:'carla@natureface.com',phone:'(11) 97654-3210',status:'ativa',birth:'1993-08-25',since:'2024-06-01',street:'Av. Paulista, 2000',bairro:'Bela Vista',city:'São Paulo',state:'SP',cep:'01310-100',notes:''},
-  {id:3,code:'NFV003',name:'Fernanda Costa',cpf:'456.789.012-34',email:'fernanda@natureface.com',phone:'(21) 99876-5432',status:'inativa',birth:'1988-11-03',since:'2023-11-20',street:'Rua das Laranjeiras, 300',bairro:'Laranjeiras',city:'Rio de Janeiro',state:'RJ',cep:'22240-003',notes:'Em licença'},
-];
+let vendedoras=[];
 let vendNid=4,vendNcode=4,editVendId=null;
 
 function genVendCode(){return'NFV'+String(vendNcode).padStart(3,'0');}
