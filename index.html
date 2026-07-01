@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623034">
+<meta name="build" content="20260623035">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -1997,9 +1997,12 @@ function populateTxFilterSelects(){
   const vs=document.getElementById('fFiltVend');
   if(vs){const cur=vs.value;vs.innerHTML='<option value="">Todas vendedoras</option>'+vendedoras.map(v=>`<option value="${v.id}">${v.name}</option>`).join('');vs.value=cur;}
 }
-function _baixarCSV(nome,linhas){
-  const csv='﻿'+linhas.map(r=>r.map(c=>{const s=String(c==null?'':c);return /[";\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(';')).join('\r\n');
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+function _escXls(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function _baixarExcel(nome,linhas){
+  let html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"><style>td,th{border:1px solid #ccc;padding:4px 8px;font-family:Calibri,Arial;font-size:11pt;mso-number-format:"\\@"}th{background:#5C3535;color:#fff;font-weight:bold}</style></head><body><table>';
+  linhas.forEach((r,i)=>{const tag=i===0?'th':'td';html+='<tr>'+r.map(c=>'<'+tag+'>'+_escXls(c)+'</'+tag+'>').join('')+'</tr>';});
+  html+='</table></body></html>';
+  const blob=new Blob(['﻿'+html],{type:'application/vnd.ms-excel;charset=utf-8;'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download=nome;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
@@ -2016,14 +2019,14 @@ function exportarFluxo(){
     const v=t.vendId?vendedoras.find(x=>x.id===t.vendId):null;
     rows.push([fmtDate(t.saleDate||t.due),t.name,t.type==='receber'?'Receita':'Despesa',cnm[t.co]||t.co||'',crs?crs.code+' - '+crs.name:'',fpgL[t.fpg]||t.fpg||'',(t.fpg==='credito'&&t.parcelas>1)?t.parcelas+'x':(t.parcelaTotal?t.parcelaTotal+'x':''),v?v.name:'',cliL[t.clienteTipo]||'',String(t.val).replace('.',','),stL[t.status]||t.status||'']);
   });
-  _baixarCSV('fluxo-de-caixa-'+new Date().toISOString().slice(0,10)+'.csv',rows);
+  _baixarExcel('fluxo-de-caixa-'+new Date().toISOString().slice(0,10)+'.xls',rows);
 }
 function exportarAlunos(){
   const list=window._lastAlunosFiltered||students;
   if(!list.length){alert('Nenhum aluno para exportar.');return;}
   const rows=[['Código','Nome','E-mail','Telefone','CPF','Curso','Cidade','UF','Status','Matrícula']];
   list.forEach(s=>{const c=s.courseId?courses.find(x=>x.id===s.courseId):null;rows.push([s.code||'',s.name||'',s.email||'',s.phone||'',s.cpf||'',c?c.name:(s.course||''),s.city||'',s.state||'',s.status||'',s.enrolledAt||'']);});
-  _baixarCSV('alunos-'+new Date().toISOString().slice(0,10)+'.csv',rows);
+  _baixarExcel('alunos-'+new Date().toISOString().slice(0,10)+'.xls',rows);
 }
 function renderTx(){
   const body=document.getElementById('txBody');if(!body)return;
