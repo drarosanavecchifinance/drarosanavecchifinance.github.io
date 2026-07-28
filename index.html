@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260623035">
+<meta name="build" content="20260728001">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -2055,14 +2055,18 @@ function renderTx(){
   }
   // Todos e Contas a Receber mostram todos os status; Pagar/Pagas mostra só paid
   const showAllStatus=ftab==='todos'||ftab==='receber'||(ftab==='pagar'&&(subftab==='apagar'||subftab==='avencer'||subftab==='todas'));
+  // Predicado da busca por texto — usado na lista E nos cards de resumo
+  const matchSrch=t=>{
+    const matchName=t.name&&t.name.toLowerCase().includes(srch);
+    const matchVal=String(t.val).includes(srch)||t.val.toLocaleString('pt-BR',{minimumFractionDigits:2}).includes(srch);
+    const matchGrupo=t.grupoId&&t.grupoId.toLowerCase().includes(srch);
+    return matchName||matchVal||matchGrupo;
+  };
   let list=txs.filter(t=>{
     // Busca por texto: ignora filtros de empresa/mês/tab quando há busca ativa
     if(srch){
       if(co!=='all'&&t.co!==co)return false; // busca respeita a empresa ativa
-      const matchName=t.name&&t.name.toLowerCase().includes(srch);
-      const matchVal=String(t.val).includes(srch)||t.val.toLocaleString('pt-BR',{minimumFractionDigits:2}).includes(srch);
-      const matchGrupo=t.grupoId&&t.grupoId.toLowerCase().includes(srch);
-      return matchName||matchVal||matchGrupo;
+      return matchSrch(t);
     }
     if(filterGrupo){return t.grupoId===filterGrupo;}
     if(co!=='all'&&t.co!==co)return false;
@@ -2145,8 +2149,12 @@ function renderTx(){
     return true;
   };
   // Conta tudo do período (pago E pendente). fatVal entende os 2 formatos de parcelado (registro único × vários registros)
-  const receber=txs.filter(t=>inPeriod(t)&&(co==='all'||t.co===co)&&t.type==='receber'&&matchFiltros(t));
-  const pagar=txs.filter(t=>inPeriod(t)&&(co==='all'||t.co===co)&&t.type==='pagar'&&matchFiltros(t));
+  // Com busca ativa, os cards somam exatamente o que a busca encontrou (todos os períodos, empresa ativa)
+  const cardBase=srch
+    ? (t=>(co==='all'||t.co===co)&&matchSrch(t))
+    : (t=>inPeriod(t)&&(co==='all'||t.co===co)&&matchFiltros(t));
+  const receber=txs.filter(t=>cardBase(t)&&t.type==='receber');
+  const pagar=txs.filter(t=>cardBase(t)&&t.type==='pagar');
   const totalRec=receber.reduce((a,t)=>a+fatVal(t),0);
   const totalPag=pagar.reduce((a,t)=>a+fatVal(t),0);
   const resultado=totalRec-totalPag;
