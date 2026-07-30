@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0"><!-- v20260610c -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="20260728001">
+<meta name="build" content="20260730001">
 <title>Dra Rosana Finance</title><!-- v20260610b -->
 <script>
 // Auto-atualização: detecta versão nova e recarrega sozinho, sem precisar de ?v= na mão
@@ -643,6 +643,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
       </select>
       <input class="srch" id="fSrch" placeholder="Buscar por descrição ou valor..." oninput="renderTx()" style="min-width:220px">
       <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="bs" onclick="openTrashModal()">🗑 Lixeira</button>
         <button class="bs" onclick="exportarFluxo()">📥 Exportar</button>
         <button class="bp" onclick="openAddTx()">+ Novo Lançamento</button>
       </div>
@@ -1352,6 +1353,17 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape')authCloseLogin(); }
   </div>
 </div>
 
+<!-- MODAL LIXEIRA -->
+<div class="ov" id="trashModal">
+  <div class="mo" style="width:680px;max-width:96vw">
+    <button class="mcl" onclick="closeM('trashModal')">×</button>
+    <div class="mttl">🗑 Lixeira</div>
+    <div class="msub">Lançamentos apagados — clique em Restaurar para trazer de volta</div>
+    <div id="trashBody" style="max-height:60vh;overflow-y:auto;margin-top:14px"></div>
+    <div class="mft"><button class="bp" onclick="closeM('trashModal')">Fechar</button></div>
+  </div>
+</div>
+
 <!-- MODAL EVENTO -->
 <div class="ov" id="evModal">
   <div class="mo">
@@ -1552,6 +1564,21 @@ function markDeleted(type,ids){
   if(!_deleted[type])_deleted[type]=[];
   const arr=Array.isArray(ids)?ids:[ids];
   arr.forEach(id=>{if(id!=null&&!_deleted[type].includes(id))_deleted[type].push(id);});
+}
+// Lixeira — guarda o conteúdo completo dos lançamentos apagados (sincronizada na nuvem)
+let _trash=[];
+function trashAdd(items){
+  const arr=Array.isArray(items)?items:[items];
+  const delAt=new Date().toISOString();
+  arr.forEach(t=>{if(t&&t.id!=null)_trash.unshift({tx:JSON.parse(JSON.stringify(t)),delAt});});
+  _trash=_trash.slice(0,50);
+}
+function mergeTrash(local,remote){
+  const map=new Map();
+  [...(Array.isArray(remote)?remote:[]),...(Array.isArray(local)?local:[])].forEach(e=>{
+    if(e&&e.tx&&e.tx.id!=null){const prev=map.get(e.tx.id);if(!prev||(e.delAt||'')>(prev.delAt||''))map.set(e.tx.id,e);}
+  });
+  return Array.from(map.values()).sort((a,b)=>(b.delAt||'').localeCompare(a.delAt||'')).slice(0,50);
 }
 // Exclusões espúrias geradas pelo caos de IDs — Jullya/Lara/Michelli e a venda da Nayara
 // nunca devem ser apagadas. Esta cura roda em todo sync e desfaz a marca, mesmo que um
@@ -2665,12 +2692,14 @@ function delTx(id){
     const grp=txs.filter(x=>x.grupoId===t.grupoId);
     if(!confirm('Excluir todas as '+grp.length+' parcelas deste grupo?'))return;
     snapshotBeforeDelete();
+    trashAdd(grp);
     markDeleted('txs',grp.map(x=>x.id));
     txs=txs.filter(x=>x.grupoId!==t.grupoId);
     renderTx();saveData();return;
   }
   if(!confirm('Excluir este lançamento?'))return;
   snapshotBeforeDelete();
+  trashAdd(t);
   markDeleted('txs',id);
   txs=txs.filter(x=>x.id!==id);renderTx();saveData();
 }
@@ -2680,14 +2709,55 @@ function delTxCart(id){
     const grp=txs.filter(x=>x.grupoId===t.grupoId);
     if(!confirm('Excluir todas as '+grp.length+' parcelas deste grupo?'))return;
     snapshotBeforeDelete();
+    trashAdd(grp);
     markDeleted('txs',grp.map(x=>x.id));
     txs=txs.filter(x=>x.grupoId!==t.grupoId);
     renderCarteira();saveData();return;
   }
   if(!confirm('Excluir este lançamento?'))return;
   snapshotBeforeDelete();
+  trashAdd(t);
   markDeleted('txs',id);
   txs=txs.filter(x=>x.id!==id);renderCarteira();saveData();
+}
+function openTrashModal(){
+  const body=document.getElementById('trashBody');if(!body)return;
+  const fmtV=v=>'R$ '+(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const coName={nf:'NatureFace',rv:'Rosana Academy',ct:'Consultório'};
+  const items=_trash.filter(e=>!txs.some(t=>t.id===e.tx.id));
+  if(!items.length){
+    body.innerHTML='<div style="text-align:center;padding:28px;color:var(--t3);font-size:13.5px">Nada na lixeira. A partir de agora, tudo que for apagado fica guardado aqui.</div>';
+  }else{
+    const seen=new Set();let html='';
+    items.forEach(e=>{
+      const t=e.tx;
+      if(t.grupoId){if(seen.has(t.grupoId))return;seen.add(t.grupoId);}
+      const grp=t.grupoId?items.filter(x=>x.tx.grupoId===t.grupoId):[e];
+      const total=t.grupoId?grp.reduce((a,x)=>a+(x.tx.val||0),0):(t.val||0);
+      const dl=new Date(e.delAt).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+      html+=`<div style="display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--bdr)">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.type==='pagar'?'<span style="color:var(--re)">↑</span>':'<span style="color:var(--gr)">↓</span>'} ${t.name||'—'}${t.grupoId?` <span style="font-size:11px;color:var(--gdd)">(${grp.length} parcelas)</span>`:''}</div>
+          <div style="font-size:11.5px;color:var(--t3)">${coName[t.co]||''}${t.due?' · data '+fmtDate(t.due):''} · apagado em ${dl}</div>
+        </div>
+        <div style="font-family:var(--num);font-weight:800;font-size:14px;color:${t.type==='pagar'?'var(--re)':'var(--gr)'}">${fmtV(total)}</div>
+        <button class="bs" style="font-size:12px;padding:7px 12px;flex-shrink:0" onclick="restoreTrash(${t.id})">↩ Restaurar</button>
+      </div>`;
+    });
+    body.innerHTML=html;
+  }
+  document.getElementById('trashModal').classList.add('o');
+}
+function restoreTrash(id){
+  const entry=_trash.find(e=>e.tx.id===id);if(!entry)return;
+  const toRestore=entry.tx.grupoId?_trash.filter(e=>e.tx.grupoId===entry.tx.grupoId).map(e=>e.tx):[entry.tx];
+  if(!confirm('Restaurar '+(toRestore.length>1?toRestore.length+' parcelas':'este lançamento')+'?'))return;
+  const ids=new Set(toRestore.map(t=>t.id));
+  _deleted.txs=(_deleted.txs||[]).filter(x=>!ids.has(x));
+  toRestore.forEach(t=>{if(!txs.some(x=>x.id===t.id))txs.push(t);});
+  _trash=_trash.filter(e=>!ids.has(e.tx.id));
+  renderTx();renderCarteira();saveData();
+  openTrashModal();
 }
 function openGruposModal(){
   const body=document.getElementById('gruposBody');if(!body)return;
@@ -2734,9 +2804,12 @@ function openGruposModal(){
   document.getElementById('gruposModal').classList.add('o');
 }
 function delGrupoAll(gid){
-  const cnt=txs.filter(t=>t.grupoId===gid).length;
-  if(!confirm('Excluir todas as '+cnt+' parcelas do grupo '+gid+'?\n\nUso o botão "↩ Desfazer" no Financeiro se precisar recuperar.'))return;
+  const grpAll=txs.filter(t=>t.grupoId===gid);
+  const cnt=grpAll.length;
+  if(!confirm('Excluir todas as '+cnt+' parcelas do grupo '+gid+'?\n\nUse a 🗑 Lixeira no Financeiro se precisar recuperar.'))return;
   snapshotBeforeDelete();
+  trashAdd(grpAll);
+  markDeleted('txs',grpAll.map(t=>t.id));
   txs=txs.filter(t=>t.grupoId!==gid);
   // Re-render modal se ainda aberto
   const m=document.getElementById('gruposModal');
@@ -4231,7 +4304,7 @@ function mergeDeleted(local,remote){
 async function saveData(){
   let localPayload={
     txs,courses,students,vendedoras,evs,estoque,patients,procedures,taxas,taxasMaq,taxas_version:_TAXAS_VER,_yampiParserV:7,
-    _sessionId,_deleted,
+    _sessionId,_deleted,_trash,
     ids:{txNid,cursoNid,cursoNcode,stuNid,stuNcode,vendNid,vendNcode,evNextId,grupoNid,patientNid,patientNcode,procedureNid,procedureNcode,estoqueNid}
   };
   // Busca o que está no Supabase agora e mescla — evita que dois computadores se sobrescrevam
@@ -4243,6 +4316,7 @@ async function saveData(){
       if(remote){
         _deleted=mergeDeleted(_deleted,remote._deleted);
         sanitizeDeleted();
+        _trash=mergeTrash(_trash,remote._trash).filter(e=>!txs.some(t=>t.id===e.tx.id)||( _deleted.txs||[]).includes(e.tx.id));
         const mergedTxs=mergeArrById(txs,remote.txs,_deleted.txs);
         const mergedCourses=mergeArrById(courses,remote.courses,_deleted.courses);
         const mergedStudents=mergeArrById(students,remote.students,_deleted.students);
@@ -4256,7 +4330,7 @@ async function saveData(){
         patients=mergedPatients;procedures=mergedProcedures;estoque=mergedEstoque;evs=mergedEvs;
         localPayload={
           ...localPayload,
-          txs,courses,students,vendedoras,patients,procedures,estoque,evs,_deleted,
+          txs,courses,students,vendedoras,patients,procedures,estoque,evs,_deleted,_trash,
         };
         refreshCurrentPage();
       }
@@ -4427,6 +4501,7 @@ function mergeAndApply(remote){
 function applyData(d){
   if(d._deleted)_deleted=mergeDeleted(_deleted,d._deleted);
   sanitizeDeleted();
+  if(Array.isArray(d._trash))_trash=mergeTrash(_trash,d._trash);
   if(d.txs&&d.txs.length){
     txs=d.txs;
     // Restaura saleDate de transações Yampi que perderam o campo ao serem editadas
