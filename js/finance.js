@@ -304,6 +304,13 @@ NF.finance = (() => {
   // o recebimento se define no lançamento (forma imediata/entrada cai no caixa na hora).
   async function viewCarteira(negocio, body) {
     const cart = await NF.data.list('carteira', { negocio });
+    const hoje = NF.util.hoje();
+    // Baixa automática: parcela de cartão cai sozinha na data — ao abrir a
+    // carteira, o que já venceu vira 'recebido' (na data prevista) e sai da lista.
+    for (const p of cart.filter(p => p.status !== 'recebido' && p.data_prevista <= hoje)) {
+      await NF.data.update('carteira', p.id, { status: 'recebido', data_recebido: p.data_prevista });
+      p.status = 'recebido'; p.data_recebido = p.data_prevista;
+    }
     // Carteira = só o que AINDA VAI ENTRAR. O que já caiu vive nas Receitas/Resumo.
     const aReceber = cart.filter(p => p.status !== 'recebido');
     aReceber.sort((a, b) => a.data_prevista.localeCompare(b.data_prevista));
@@ -314,7 +321,6 @@ NF.finance = (() => {
         el('strong', {}, NF.util.brl(totalLiq)), el('span', { class: 'nf-mini-sub' }, `${aReceber.length} parcela(s)`))));
 
     // Previsão por mês (só meses com valor a cair).
-    const hoje = NF.util.hoje();
     const porMes = {};
     aReceber.forEach(p => { const m = NF.util.mesDe(p.data_prevista); porMes[m] = (porMes[m] || 0) + p.valor_parcela_liquido; });
     const meses = Object.keys(porMes).sort();
