@@ -8,6 +8,8 @@ const NFf = window.NF || (window.NF = {});
 
 NF.finance = (() => {
   const el = NF.ui.el;
+  // Pedidos da loja aparecem só com o código (sem o prefixo "Pedido Yampi").
+  const soCodigo = v => (v || '').replace(/Pedido Yampi\s*/g, '');
 
   // Agrega os números de um negócio num período (mês corrente por padrão).
   async function resumo(negocio, mesRef) {
@@ -352,7 +354,7 @@ NF.finance = (() => {
     body.append(NF.ui.table([
       { key: 'proxima', label: 'Próx. venc.', fmt: NF.util.dataBR },
       { key: 'cliente', label: 'Cliente' },
-      { key: 'descricao', label: 'Descrição', fmt: v => v || '—' },
+      { key: 'descricao', label: 'Descrição', fmt: v => soCodigo(v) || '—' },
       { key: 'parcelas', label: 'Parcelas', fmt: (_, r) => r.n > 1 ? `${r.n}× ${NF.util.brl(r.valor_parcela)}` : '1×' },
       { key: 'total', label: 'A receber (líq.)', fmt: v => `<span class="nf-num">${NF.util.brl(v)}</span>` },
       { key: 'status', label: 'Status', fmt: (_, r) => `<span class="nf-badge ${r.status}">${r.status}</span>` },
@@ -365,7 +367,7 @@ NF.finance = (() => {
       body.append(NF.ui.table([
         { key: 'data_recebido', label: 'Recebido em', fmt: NF.util.dataBR },
         { key: 'cliente', label: 'Cliente' },
-        { key: 'descricao', label: 'Descrição', fmt: v => v || '—' },
+        { key: 'descricao', label: 'Descrição', fmt: v => soCodigo(v) || '—' },
         { key: 'parcela_num', label: 'Parcela', fmt: (_, r) => `${r.parcela_num}/${r.total_parcelas}` },
         { key: 'valor_parcela_liquido', label: 'Valor (líq.)', fmt: v => `<span class="nf-num">${NF.util.brl(v)}</span>` },
       ], recebidas));
@@ -485,7 +487,7 @@ NF.finance = (() => {
       cardMini('Receitas no período', total, 'pos')));
     body.append(NF.ui.table([
       { key: 'data', label: 'Data', fmt: v => NF.util.dataBR(v) },
-      { key: 'descricao', label: 'Descrição' },
+      { key: 'descricao', label: 'Descrição', fmt: v => soCodigo(v) || '—' },
       { key: 'categoria', label: 'Forma pgto' },
       ...(negocio === 'academy' ? [{ key: 'curso_id', label: 'Curso', fmt: v => (cMap[v] || '—') }] : []),
       { key: 'vendedora_id', label: 'Vendedora', fmt: v => (vMap[v] || '—') },
