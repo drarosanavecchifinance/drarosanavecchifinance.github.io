@@ -396,7 +396,8 @@ NF.finance = (() => {
     const avulsas = lancs.filter(l => !(l.categoria || '').startsWith('Recebimento') && l.categoria !== 'Pedido Yampi');
     const daVenda = vendas.map(v => ({
       _venda: true, id: v.id, data: v.data_venda,
-      descricao: v.descricao || v.cliente || 'Venda',
+      // Mostra o NOME DA CLIENTE; sem nome, cai no código do pedido.
+      descricao: v.cliente || v.descricao || 'Venda',
       categoria: ((fMap[v.forma_pagamento_id]?.nome || '') + (v.num_parcelas > 1 ? ` ${v.num_parcelas}x` : '')).trim() || '—',
       curso_id: v.curso_id, vendedora_id: v.vendedora_id, valor: v.valor_bruto,
     }));
