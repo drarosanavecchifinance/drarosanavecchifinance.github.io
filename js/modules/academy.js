@@ -119,7 +119,7 @@ NF.modules.academy = (() => {
     });
   }
 
-  async function viewCursos(body) {
+  async function viewCursos(body, filtro) {
     const [cursos, vendas, lanc] = await Promise.all([
       NF.data.list('cursos', { negocio: NEG }),
       NF.data.list('vendas', { negocio: NEG }),
@@ -136,8 +136,20 @@ NF.modules.academy = (() => {
       return `<span class="nf-num ${cls}">${NF.util.brl(res)}</span>`;
     };
 
+    // Filtro por tipo: Protocolo NatureFace × PFI (Formação Internacional).
+    const ehPFI = c => /pfi|formação|internacional|boston/i.test(c.titulo || '');
+    const filtrados = filtro === 'pfi' ? cursos.filter(ehPFI)
+      : filtro === 'protocolo' ? cursos.filter(c => !ehPFI(c)) : cursos;
+    const btnFiltro = (id, lbl) => el('button', {
+      class: 'btn' + (filtro === id ? '' : ' ghost'),
+      onclick: () => viewCursos(NF.ui.clear(body), filtro === id ? null : id),
+    }, lbl);
+
     body.append(el('div', { class: 'nf-row-head' },
-      el('h4', {}, 'Cursos'),
+      el('div', { style: 'display:flex; align-items:center; gap:10px; flex-wrap:wrap;' },
+        el('h4', {}, 'Cursos'),
+        btnFiltro('protocolo', 'Protocolo NatureFace'),
+        btnFiltro('pfi', 'PFI')),
       el('button', { class: 'btn', onclick: () => NF.ui.modal({
         title: 'Novo curso',
         campos: [
@@ -153,7 +165,7 @@ NF.modules.academy = (() => {
     const stat = (lbl, val, cls) => el('div', {},
       el('span', {}, lbl), el('strong', { class: cls || '' }, NF.util.brl(val)));
     const grid = el('div', { class: 'nf-curso-grid' });
-    cursos.forEach(c => {
+    filtrados.forEach(c => {
       const rec = receita[c.id] || 0, des = despesa[c.id] || 0, res = rec - des;
       grid.append(el('div', { class: 'nf-curso-card' },
         el('h4', {}, c.titulo),
@@ -165,7 +177,7 @@ NF.modules.academy = (() => {
           el('button', { class: 'btn', onclick: () => cursoDashboard(NF.ui.clear(body), c) }, 'Abrir'),
           el('button', { class: 'btn danger', onclick: async () => { await NF.data.remove('cursos', c.id); NF.ui.toast('Excluído'); viewCursos(NF.ui.clear(body)); } }, 'Excluir'))));
     });
-    if (!cursos.length) grid.append(el('p', { class: 'nf-hint' }, 'Nenhum curso cadastrado ainda.'));
+    if (!filtrados.length) grid.append(el('p', { class: 'nf-hint' }, filtro ? 'Nenhum curso nesse filtro.' : 'Nenhum curso cadastrado ainda.'));
     body.append(grid);
   }
 
