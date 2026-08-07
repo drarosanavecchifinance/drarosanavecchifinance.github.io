@@ -23,7 +23,6 @@ NF.modules.nature = (() => {
     body.append(el('p', { class: 'nf-hint' }, `${pedidos.length} pedido(s) · total ${NF.util.brl(total)} — entram automático quando a compra é aprovada.`));
     body.append(NF.ui.table([
       { key: 'data_pedido', label: 'Data', fmt: (v, r) => NF.util.dataBR(v || r.created_at) },
-      { key: 'origem', label: 'Origem', fmt: v => v || 'yampi' },
       { key: 'cliente_nome', label: 'Cliente', fmt: v => v || '—' },
       { key: 'valor_total', label: 'Valor', fmt: v => NF.util.brl(v) },
       { key: 'status', label: 'Status', fmt: v => `<span class="nf-badge ${v === 'aprovado' ? 'recebido' : 'previsto'}">${v}</span>` },
