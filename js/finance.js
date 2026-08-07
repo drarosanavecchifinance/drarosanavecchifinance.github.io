@@ -304,24 +304,19 @@ NF.finance = (() => {
   // o recebimento se define no lançamento (forma imediata/entrada cai no caixa na hora).
   async function viewCarteira(negocio, body) {
     const cart = await NF.data.list('carteira', { negocio });
-    const aReceber = cart.filter(p => p.status !== 'recebido');   // a previsão
-    const recebidas = cart.filter(p => p.status === 'recebido');  // já caiu (PIX no dia; parcelas baixadas)
+    // Carteira = só o que AINDA VAI ENTRAR. O que já caiu vive nas Receitas/Resumo.
+    const aReceber = cart.filter(p => p.status !== 'recebido');
     aReceber.sort((a, b) => a.data_prevista.localeCompare(b.data_prevista));
     const totalLiq = aReceber.reduce((s, p) => s + p.valor_parcela_liquido, 0);
-    const totalReceb = recebidas.reduce((s, p) => s + p.valor_parcela_liquido, 0);
 
-    // Cards: a receber x já recebido (líquidos).
     body.append(el('div', { class: 'nf-mini-grid' },
       el('div', { class: 'nf-mini accent' }, el('span', { class: 'lbl' }, 'A receber (líquido)'),
-        el('strong', {}, NF.util.brl(totalLiq)), el('span', { class: 'nf-mini-sub' }, `${aReceber.length} parcela(s)`)),
-      el('div', { class: 'nf-mini pos' }, el('span', { class: 'lbl' }, 'Recebido (líquido)'),
-        el('strong', {}, NF.util.brl(totalReceb)), el('span', { class: 'nf-mini-sub' }, `${recebidas.length} parcela(s)`))));
+        el('strong', {}, NF.util.brl(totalLiq)), el('span', { class: 'nf-mini-sub' }, `${aReceber.length} parcela(s)`))));
 
-    // Fluxo por mês: o que já caiu (pela data recebida) + o que ainda cai (previsto).
+    // Previsão por mês (só meses com valor a cair).
     const hoje = NF.util.hoje();
-    const porMes = { [NF.util.mesDe(hoje)]: 0 };
+    const porMes = {};
     aReceber.forEach(p => { const m = NF.util.mesDe(p.data_prevista); porMes[m] = (porMes[m] || 0) + p.valor_parcela_liquido; });
-    recebidas.forEach(p => { const m = NF.util.mesDe(p.data_recebido || p.data_prevista); porMes[m] = (porMes[m] || 0) + p.valor_parcela_liquido; });
     const meses = Object.keys(porMes).sort();
     if (meses.length) {
       body.append(el('h4', { class: 'nf-sub-h' }, 'Previsão por mês'));
@@ -360,18 +355,6 @@ NF.finance = (() => {
       { key: 'status', label: 'Status', fmt: (_, r) => `<span class="nf-badge ${r.status}">${r.status}</span>` },
     ], linhas));
 
-    // Já recebidas — PIX entra no dia da venda; parcelas de cartão quando caem.
-    if (recebidas.length) {
-      recebidas.sort((a, b) => (b.data_recebido || '').localeCompare(a.data_recebido || ''));
-      body.append(el('h4', { class: 'nf-sub-h' }, 'Recebidas'));
-      body.append(NF.ui.table([
-        { key: 'data_recebido', label: 'Recebido em', fmt: NF.util.dataBR },
-        { key: 'cliente', label: 'Cliente' },
-        { key: 'descricao', label: 'Descrição', fmt: v => soCodigo(v) || '—' },
-        { key: 'parcela_num', label: 'Parcela', fmt: (_, r) => `${r.parcela_num}/${r.total_parcelas}` },
-        { key: 'valor_parcela_liquido', label: 'Valor (líq.)', fmt: v => `<span class="nf-num">${NF.util.brl(v)}</span>` },
-      ], recebidas));
-    }
   }
 
   // ---- RECEITAS (faturamento do mês; gera a carteira conforme o meio de pagamento) ----
