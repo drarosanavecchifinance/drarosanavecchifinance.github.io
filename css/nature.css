@@ -1,0 +1,6 @@
+/* nature.css — sotaque visual da aba NatureFace (escopo isolado).
+   Identidade branco & dourado: o hero base (charcoal + dourado) já vale;
+   aqui só um leve reforço do brilho dourado no canto do hero desta empresa. */
+.nf-hero.nature::after {
+  background: radial-gradient(120% 90% at 85% 10%, rgba(176,141,63,.24), transparent 55%);
+}
