@@ -348,12 +348,13 @@ NF.finance = (() => {
     const linhas = Object.values(grupos).map(ps => {
       ps.sort((a, b) => a.data_prevista.localeCompare(b.data_prevista));
       const total = ps.reduce((s, p) => s + p.valor_parcela_liquido, 0);
+      const totalBruto = ps.reduce((s, p) => s + p.valor_parcela_bruto, 0);
       const atrasado = ps.some(p => p.data_prevista < hoje);
       return {
         cliente: ps[0].cliente, descricao: ps[0].descricao,
         n: ps.length, total_parcelas: ps[0].total_parcelas,
         valor_parcela: ps[0].valor_parcela_liquido,
-        proxima: ps[0].data_prevista, total, status: atrasado ? 'atrasado' : 'previsto',
+        proxima: ps[0].data_prevista, total, totalBruto, status: atrasado ? 'atrasado' : 'previsto',
       };
     }).sort((a, b) => a.proxima.localeCompare(b.proxima));
 
@@ -363,6 +364,7 @@ NF.finance = (() => {
       { key: 'cliente', label: 'Cliente' },
       { key: 'descricao', label: 'Descrição', fmt: v => soCodigo(v) || '—' },
       { key: 'parcelas', label: 'Parcelas', fmt: (_, r) => r.n > 1 ? `${r.n}× ${NF.util.brl(r.valor_parcela)}` : '1×' },
+      { key: 'totalBruto', label: 'Bruto', fmt: v => NF.util.brl(v) },
       { key: 'total', label: 'A receber (líq.)', fmt: v => `<span class="nf-num">${NF.util.brl(v)}</span>` },
       { key: 'status', label: 'Status', fmt: (_, r) => `<span class="nf-badge ${r.status}">${r.status}</span>` },
     ], linhas));
