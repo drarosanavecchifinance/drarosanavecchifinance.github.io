@@ -562,10 +562,21 @@ NF.finance = (() => {
 
     const reload = () => viewDespesas(negocio, NF.ui.clear(body), mes, filtroStatus);
 
-    // Filtro de mês (o mês atual sempre aparece)
+    // Filtro de mês (o mês atual sempre aparece) + busca por texto.
+    // A busca filtra as linhas da lista na hora (descrição/categoria/valor),
+    // sem recarregar; para procurar em tudo, escolha "Todos os meses".
+    const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    let tabela;
+    const buscaInput = el('input', { class: 'nf-filter', type: 'search', placeholder: '🔍 Buscar despesa…',
+      oninput: () => {
+        const q = norm(buscaInput.value);
+        if (tabela) [...tabela.querySelectorAll('tbody tr')].forEach(tr => {
+          tr.style.display = !q || norm(tr.textContent).includes(q) ? '' : 'none';
+        });
+      } });
     body.append(el('div', { class: 'nf-row-head' },
       filtroMes(todasDesp.map(d => ({ v: vencOf(d) })), 'v', mes, m => viewDespesas(negocio, NF.ui.clear(body), m, filtroStatus)),
-      el('span', {})));
+      buscaInput));
 
     // Painel de contas a pagar — clicáveis: filtram a lista abaixo.
     const card = (lbl, arr, cls, key) => el('div', {
@@ -654,7 +665,7 @@ NF.finance = (() => {
       if (vencOf(d) < hoje) return '<span class="nf-badge atrasado">vencida</span>';
       return '<span class="nf-badge previsto">a vencer</span>';
     };
-    body.append(NF.ui.table([
+    tabela = NF.ui.table([
       { key: 'vencimento', label: 'Vencimento', fmt: (_, r) => NF.util.dataBR(vencOf(r)) },
       { key: 'descricao', label: 'Descrição' },
       { key: 'categoria', label: 'Categoria' },
@@ -667,7 +678,8 @@ NF.finance = (() => {
         : NF.ui.iconBtn('Pagar', '', async () => { await NF.data.update('lancamentos', r.id, { pago: true, data_pagamento: NF.util.hoje() }); NF.ui.toast('Marcada como paga'); reload(); }),
       NF.ui.iconBtn('Editar', 'ghost', () => abrirFormDespesa(r)),
       NF.ui.iconBtn('Excluir', 'danger', async () => { await NF.data.remove('lancamentos', r.id); NF.ui.toast('Excluída'); reload(); }),
-    ].filter(Boolean)));
+    ].filter(Boolean));
+    body.append(tabela);
   }
 
   // ---- VENDEDORAS (cadastro compartilhado) ----
