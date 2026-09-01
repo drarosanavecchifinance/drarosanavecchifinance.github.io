@@ -544,7 +544,7 @@ NF.finance = (() => {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   };
 
-  async function viewDespesas(negocio, body, mesSel, filtroStatus) {
+  async function viewDespesas(negocio, body, mesSel, filtroStatus, cursoSel) {
     const todasDesp = (await NF.data.list('lancamentos', { negocio })).filter(l => l.tipo === 'despesa');
     const cursos = negocio === 'academy' ? await NF.data.list('cursos', { negocio }) : [];
     const cMap = Object.fromEntries(cursos.map(c => [c.id, c.titulo]));
@@ -552,7 +552,9 @@ NF.finance = (() => {
     const mesAtual = NF.util.mesDe(hoje);
     const mes = mesSel || mesAtual;                    // default: mês atual
     // Despesas do mês selecionado (por vencimento). 'todos' = todas.
-    const desp = mes === 'todos' ? todasDesp : todasDesp.filter(d => NF.util.mesDe(vencOf(d)) === mes);
+    // Com curso selecionado, painel e lista mostram só as despesas dele.
+    const doMes = mes === 'todos' ? todasDesp : todasDesp.filter(d => NF.util.mesDe(vencOf(d)) === mes);
+    const desp = cursoSel ? doMes.filter(d => d.curso_id === cursoSel) : doMes;
     const pend = desp.filter(d => !isPago(d));
     const aVencer = pend.filter(d => vencOf(d) >= hoje);
     const vencidas = pend.filter(d => vencOf(d) < hoje);
@@ -560,7 +562,7 @@ NF.finance = (() => {
     const pagoMes = desp.filter(d => isPago(d));
     const sum = arr => arr.reduce((s, d) => s + d.valor, 0);
 
-    const reload = () => viewDespesas(negocio, NF.ui.clear(body), mes, filtroStatus);
+    const reload = () => viewDespesas(negocio, NF.ui.clear(body), mes, filtroStatus, cursoSel);
 
     // Filtro de mês (o mês atual sempre aparece) + busca por texto.
     // A busca filtra as linhas da lista na hora (descrição/categoria/valor),
@@ -574,14 +576,25 @@ NF.finance = (() => {
           tr.style.display = !q || norm(tr.textContent).includes(q) ? '' : 'none';
         });
       } });
+    // Filtro por curso (Academy): recalcula painel e lista para o curso escolhido.
+    let selCurso = null;
+    if (cursos.length) {
+      selCurso = el('select', { class: 'nf-filter',
+        onchange: e => viewDespesas(negocio, NF.ui.clear(body), mes, filtroStatus, e.target.value || null) },
+        el('option', { value: '' }, 'Todos os cursos'),
+        ...cursos.map(c => el('option', { value: c.id }, c.titulo)));
+      selCurso.value = cursoSel || '';
+    }
     body.append(el('div', { class: 'nf-row-head' },
-      filtroMes(todasDesp.map(d => ({ v: vencOf(d) })), 'v', mes, m => viewDespesas(negocio, NF.ui.clear(body), m, filtroStatus)),
+      el('div', { style: 'display:flex; align-items:center; gap:10px; flex-wrap:wrap;' },
+        filtroMes(todasDesp.map(d => ({ v: vencOf(d) })), 'v', mes, m => viewDespesas(negocio, NF.ui.clear(body), m, filtroStatus, cursoSel)),
+        selCurso),
       buscaInput));
 
     // Painel de contas a pagar — clicáveis: filtram a lista abaixo.
     const card = (lbl, arr, cls, key) => el('div', {
       class: `nf-mini ${cls} nf-mini-click${filtroStatus === key ? ' active' : ''}`,
-      onclick: () => viewDespesas(negocio, NF.ui.clear(body), mes, filtroStatus === key ? null : key),
+      onclick: () => viewDespesas(negocio, NF.ui.clear(body), mes, filtroStatus === key ? null : key, cursoSel),
     }, el('span', { class: 'lbl' }, lbl), el('strong', {}, NF.util.brl(sum(arr))), el('span', { class: 'nf-mini-sub' }, `${arr.length} conta(s)`));
     body.append(el('div', { class: 'nf-mini-grid' },
       card('A vencer', aVencer, 'warn', 'a_vencer'),
@@ -600,7 +613,7 @@ NF.finance = (() => {
     body.append(el('div', { class: 'nf-row-head' },
       el('div', { style: 'display:flex; align-items:center; gap:12px; flex-wrap:wrap;' },
         el('h4', {}, filtroStatus ? `${LABELS[filtroStatus]} (${lista.length})` : 'Contas / despesas'),
-        filtroStatus ? el('button', { class: 'btn ghost tiny', onclick: () => viewDespesas(negocio, NF.ui.clear(body), mes, null) }, 'Ver todas') : null),
+        filtroStatus ? el('button', { class: 'btn ghost tiny', onclick: () => viewDespesas(negocio, NF.ui.clear(body), mes, null, cursoSel) }, 'Ver todas') : null),
       el('button', { class: 'btn', onclick: () => abrirFormDespesa() }, '+ Nova despesa')));
 
     // Formulário compartilhado: Nova despesa (r=null) e Editar (r=lançamento existente).
