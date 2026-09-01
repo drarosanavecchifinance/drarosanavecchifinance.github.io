@@ -8,8 +8,10 @@ NF.export = (() => {
     XLSX.utils.book_append_sheet(wb, ws, nome.slice(0, 31)); // limite de nome de aba do Excel
   }
 
-  async function negocio(neg) {
+  // aba: aba aberta no financeiro — em 'despesas', exporta SÓ as despesas.
+  async function negocio(neg, aba) {
     if (typeof XLSX === 'undefined') { NF.ui.toast('Biblioteca de Excel não carregou', 'err'); return; }
+    const soDespesas = aba === 'despesas';
     const [vendas, carteira, lanc, formas, vendedoras] = await Promise.all([
       NF.data.list('vendas', { negocio: neg }),
       NF.data.list('carteira', { negocio: neg }),
@@ -24,7 +26,7 @@ NF.export = (() => {
     const wb = XLSX.utils.book_new();
 
     // Vendas (competência, bruto)
-    add(wb, 'Vendas', vendas
+    if (!soDespesas) add(wb, 'Vendas', vendas
       .sort((a, b) => b.data_venda.localeCompare(a.data_venda))
       .map(v => ({
         Data: NF.util.dataBR(v.data_venda), Cliente: v.cliente, Descrição: v.descricao || '',
@@ -34,7 +36,7 @@ NF.export = (() => {
       })));
 
     // Carteira a receber (projeção, líquido)
-    add(wb, 'A Receber', carteira
+    if (!soDespesas) add(wb, 'A Receber', carteira
       .filter(p => p.status !== 'recebido')
       .sort((a, b) => a.data_prevista.localeCompare(b.data_prevista))
       .map(p => ({
@@ -55,7 +57,7 @@ NF.export = (() => {
       })));
 
     // Extras por empresa
-    if (neg === 'academy') {
+    if (!soDespesas && neg === 'academy') {
       const alunas = await NF.data.list('alunas', { negocio: neg });
       const aberto = {}, atraso = {};
       carteira.forEach(p => {
@@ -77,7 +79,7 @@ NF.export = (() => {
         'Resultado (R$)': (rec[c.id] || 0) - (des[c.id] || 0),
       })));
     }
-    if (neg === 'naturefac') {
+    if (!soDespesas && neg === 'naturefac') {
       const produtos = await NF.data.list('produtos', { negocio: neg });
       add(wb, 'Estoque', produtos.map(p => ({
         Produto: p.nome, Categoria: p.categoria || '', 'Custo (R$)': p.custo, 'Preço (R$)': p.preco_venda,
@@ -86,8 +88,8 @@ NF.export = (() => {
     }
 
     const nome = NF_CONFIG.NEGOCIOS[neg].nome;
-    XLSX.writeFile(wb, `NatureFace-${nome}-${NF.util.hoje()}.xlsx`);
-    NF.ui.toast('Excel exportado');
+    XLSX.writeFile(wb, `NatureFace-${nome}-${soDespesas ? 'Despesas-' : ''}${NF.util.hoje()}.xlsx`);
+    NF.ui.toast(soDespesas ? 'Despesas exportadas' : 'Excel exportado');
   }
 
   return { negocio };

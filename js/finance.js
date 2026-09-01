@@ -70,6 +70,7 @@ NF.finance = (() => {
 
     async function go(id) {
       state.tab = id;
+      NF.finance.abaAtiva = id;   // o Exportar usa isso: na aba Despesas, exporta só despesas
       [...nav.children].forEach(b => b.classList.toggle('active', b.dataset.id === id));
       NF.ui.clear(body);
       const ex = extras.find(e => e.id === id);

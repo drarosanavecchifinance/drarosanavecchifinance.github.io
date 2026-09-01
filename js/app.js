@@ -80,7 +80,7 @@ const NFapp = window.NF || (window.NF = {});
     const finBox = el('section', { class: 'nf-fin', style: `--accent:${cfg.accent}` });
     finBox.append(el('div', { class: 'nf-fin-head' },
       el('h2', {}, `${cfg.nome} — Financeiro`),
-      el('button', { class: 'btn ghost', style: 'margin-left:auto;', onclick: () => NF.export.negocio(negocio) }, '⬇ Exportar Excel')));
+      el('button', { class: 'btn ghost', style: 'margin-left:auto;', onclick: () => NF.export.negocio(negocio, NF.finance.abaAtiva) }, '⬇ Exportar Excel')));
     mount.append(finBox);
     const finBody = el('div', {});
     finBox.append(finBody);
