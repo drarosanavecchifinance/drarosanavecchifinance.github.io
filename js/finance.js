@@ -642,7 +642,7 @@ NF.finance = (() => {
           { name: 'categoria', label: 'Categoria', value: semMetodo(r?.categoria) },
           { name: 'metodo', label: 'Método de pagamento', type: 'select',
             value: metodoDe(r?.categoria),
-            options: [{ value: '', label: '—' }, ...METODOS.map(m => ({ value: m, label: m + (m === 'Boleto' ? ' (vai para o DDA)' : '') }))] },
+            options: [{ value: '', label: '—' }, ...METODOS.map(m => ({ value: m, label: m }))] },
           ...(cursos.length ? [{ name: 'curso_id', label: 'Curso (opcional)', type: 'select', value: r?.curso_id || '',
             options: [{ value: '', label: '—' }, ...cursos.map(c => ({ value: c.id, label: c.titulo }))] }] : []),
           { name: 'valor', label: 'Valor', type: 'number', step: '0.01', required: true, value: r?.valor ?? '' },
