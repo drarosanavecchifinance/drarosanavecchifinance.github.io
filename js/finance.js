@@ -542,6 +542,16 @@ NF.finance = (() => {
   // Restante no mês (tudo em aberto com vencimento no mês atual).
   const vencOf = d => d.vencimento || d.data;          // fallback p/ despesas antigas
   const isPago = d => d.pago === true;
+  // Método de pagamento da despesa: anotado na categoria como sufixo "(Método)".
+  // Boleto faz a despesa aparecer automaticamente no DDA.
+  const METODOS = ['PIX', 'Cartão crédito', 'Cartão débito', 'Boleto', 'Dinheiro'];
+  const metodoDe = c => {
+    if (/boleto/i.test(c || '')) return 'Boleto';
+    return METODOS.find(m => (c || '').toLowerCase().includes(m.toLowerCase())) || '';
+  };
+  const semMetodo = c => (c || '')
+    .replace(/\s*\((PIX|Cartão crédito|Cartão débito|Boleto|Dinheiro)\)\s*$/i, '')
+    .replace(/^Boleto \(DDA\)$/i, '').trim();
   // Soma meses a uma data ISO mantendo o dia (dia 31 em mês curto -> último dia do mês).
   const addMeses = (iso, n) => {
     const [y, m, dia] = iso.split('-').map(Number);
@@ -629,10 +639,10 @@ NF.finance = (() => {
         title: editando ? 'Editar despesa' : 'Nova despesa',
         campos: [
           { name: 'descricao', label: 'Descrição', required: true, value: r?.descricao || '' },
-          { name: 'categoria', label: 'Categoria', value: r?.categoria || '' },
-          { name: 'boleto', label: 'É boleto? (aparece no DDA)', type: 'select',
-            value: /boleto/i.test(r?.categoria || '') ? 'sim' : 'nao',
-            options: [{ value: 'nao', label: 'Não' }, { value: 'sim', label: 'Sim' }] },
+          { name: 'categoria', label: 'Categoria', value: semMetodo(r?.categoria) },
+          { name: 'metodo', label: 'Método de pagamento', type: 'select',
+            value: metodoDe(r?.categoria),
+            options: [{ value: '', label: '—' }, ...METODOS.map(m => ({ value: m, label: m + (m === 'Boleto' ? ' (vai para o DDA)' : '') }))] },
           ...(cursos.length ? [{ name: 'curso_id', label: 'Curso (opcional)', type: 'select', value: r?.curso_id || '',
             options: [{ value: '', label: '—' }, ...cursos.map(c => ({ value: c.id, label: c.titulo }))] }] : []),
           { name: 'valor', label: 'Valor', type: 'number', step: '0.01', required: true, value: r?.valor ?? '' },
@@ -647,10 +657,10 @@ NF.finance = (() => {
         submitLabel: editando ? 'Salvar' : 'Lançar',
         onSubmit: async (d) => {
           const pago = d.pago === 'sim';
-          // "É boleto?" marca a categoria para a despesa aparecer (ou sair) do DDA.
-          let cat = (d.categoria || '').trim();
-          if (d.boleto === 'sim' && !/boleto/i.test(cat)) cat = cat ? `${cat} (Boleto)` : 'Boleto (DDA)';
-          if (d.boleto === 'nao') cat = cat.replace(/\s*\(Boleto\)$/i, '').replace(/^Boleto \(DDA\)$/i, '');
+          // Método de pagamento vira sufixo da categoria; Boleto = entra no DDA.
+          let cat = semMetodo(d.categoria);
+          if (d.metodo === 'Boleto') cat = cat ? `${cat} (Boleto)` : 'Boleto (DDA)';
+          else if (d.metodo) cat = cat ? `${cat} (${d.metodo})` : d.metodo;
           d.categoria = cat;
           // Anexo (link do Drive): só envia o campo quando usado, para não exigir
           // a coluna no banco de quem ainda não a criou.
