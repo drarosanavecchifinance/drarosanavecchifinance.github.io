@@ -642,6 +642,7 @@ NF.finance = (() => {
           ...(editando ? [] : [{ name: 'venc2', label: 'Vencimento da 2ª parcela (opcional — se vazio, 1 mês após a 1ª)', type: 'date', value: '' }]),
           { name: 'pago', label: 'Situação', type: 'select', value: r && isPago(r) ? 'sim' : 'nao', options: [
             { value: 'nao', label: 'Em aberto' }, { value: 'sim', label: 'Já paga' }] },
+          { name: 'comprovante_url', label: 'Comprovante/arquivo (link do Google Drive, opcional)', value: r?.comprovante_url || '' },
         ],
         submitLabel: editando ? 'Salvar' : 'Lançar',
         onSubmit: async (d) => {
@@ -651,6 +652,10 @@ NF.finance = (() => {
           if (d.boleto === 'sim' && !/boleto/i.test(cat)) cat = cat ? `${cat} (Boleto)` : 'Boleto (DDA)';
           if (d.boleto === 'nao') cat = cat.replace(/\s*\(Boleto\)$/i, '').replace(/^Boleto \(DDA\)$/i, '');
           d.categoria = cat;
+          // Anexo (link do Drive): só envia o campo quando usado, para não exigir
+          // a coluna no banco de quem ainda não a criou.
+          const anexo = (d.comprovante_url || '').trim();
+          const anexoCampos = (anexo || (editando && r.comprovante_url)) ? { comprovante_url: anexo || null } : {};
           const nParc = editando ? 1 : Math.max(1, parseInt(d.parcelas || '1', 10));
           if (nParc > 1) {
             // Parcelado: divide o valor total em N lançamentos com vencimentos mensais.
@@ -668,7 +673,7 @@ NF.finance = (() => {
                 negocio, tipo: 'despesa', descricao: `${d.descricao} (${i}/${nParc})`,
                 categoria: d.categoria, valor, curso_id: d.curso_id || null,
                 vencimento: venc, data: venc, pago: pagoParc,
-                data_pagamento: pagoParc ? hoje : null,
+                data_pagamento: pagoParc ? hoje : null, ...anexoCampos,
               });
             }
             NF.ui.toast(`Despesa lançada em ${nParc}x`);
@@ -678,7 +683,7 @@ NF.finance = (() => {
             descricao: d.descricao, categoria: d.categoria, valor: d.valor,
             curso_id: d.curso_id || null, vencimento: d.vencimento, data: d.vencimento, pago,
             // ao marcar como paga mantém a data original de pagamento se já existia, senão hoje.
-            data_pagamento: pago ? (r?.data_pagamento || hoje) : null,
+            data_pagamento: pago ? (r?.data_pagamento || hoje) : null, ...anexoCampos,
           };
           if (editando) { await NF.data.update('lancamentos', r.id, campos); NF.ui.toast('Despesa atualizada'); }
           else { await NF.data.insert('lancamentos', { negocio, tipo: 'despesa', ...campos }); NF.ui.toast('Despesa lançada'); }
@@ -698,6 +703,7 @@ NF.finance = (() => {
       { key: 'categoria', label: 'Categoria' },
       ...(negocio === 'academy' ? [{ key: 'curso_id', label: 'Curso', fmt: v => (cMap[v] || '—') }] : []),
       { key: 'valor', label: 'Valor', fmt: v => NF.util.brl(v) },
+      { key: 'comprovante_url', label: 'Anexo', fmt: v => v ? `<a href="${v}" target="_blank" rel="noopener">📎 abrir</a>` : '—' },
       { key: 'status', label: 'Status', fmt: (_, r) => statusBadge(r) },
     ], lista, (r) => [
       isPago(r)

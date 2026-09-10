@@ -63,13 +63,17 @@ NF.dda = (() => {
           { name: 'vencimento', label: 'Vencimento', type: 'date', required: true, value: r ? venc(r) : hoje },
           { name: 'pago', label: 'Situação', type: 'select', value: r?.pago === true ? 'sim' : 'nao',
             options: [{ value: 'nao', label: 'Em aberto' }, { value: 'sim', label: 'Pago' }] },
+          { name: 'comprovante_url', label: 'Boleto/arquivo (link do Google Drive, opcional)', value: r?.comprovante_url || '' },
         ],
         submitLabel: editando ? 'Salvar' : 'Adicionar',
         onSubmit: async (d) => {
           const pago = d.pago === 'sim';
-          const campos = { negocio: d.negocio, descricao: d.descricao, valor: d.valor, categoria: CAT,
+          const anexo = (d.comprovante_url || '').trim();
+          const anexoCampos = (anexo || (editando && r.comprovante_url)) ? { comprovante_url: anexo || null } : {};
+          const campos = { negocio: d.negocio, descricao: d.descricao, valor: d.valor,
+            categoria: editando ? r.categoria : CAT,
             vencimento: d.vencimento, data: d.vencimento, pago,
-            data_pagamento: pago ? (r?.data_pagamento || hoje) : null };
+            data_pagamento: pago ? (r?.data_pagamento || hoje) : null, ...anexoCampos };
           if (editando) { await NF.data.update('lancamentos', r.id, campos); NF.ui.toast('Boleto atualizado'); }
           else { await NF.data.insert('lancamentos', { tipo: 'despesa', ...campos }); NF.ui.toast('Boleto adicionado'); }
           reload();
@@ -87,6 +91,7 @@ NF.dda = (() => {
       { key: 'negocio', label: 'Empresa', fmt: v => nomeNeg(v) },
       { key: 'descricao', label: 'Beneficiário' },
       { key: 'valor', label: 'Valor', fmt: v => NF.util.brl(v) },
+      { key: 'comprovante_url', label: 'Anexo', fmt: v => v ? `<a href="${v}" target="_blank" rel="noopener">📎 abrir</a>` : '—' },
       { key: 'status', label: 'Status', fmt: (_, r) => r.pago === true
           ? '<span class="nf-badge recebido">pago</span>'
           : (venc(r) < hoje ? '<span class="nf-badge atrasado">vencido</span>'
