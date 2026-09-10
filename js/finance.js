@@ -651,7 +651,8 @@ NF.finance = (() => {
           { name: 'vencimento', label: editando ? 'Vencimento' : 'Vencimento (da 1ª parcela)', type: 'date', required: true, value: r ? vencOf(r) : hoje },
           { name: 'pago', label: 'Situação', type: 'select', value: r && isPago(r) ? 'sim' : 'nao', options: [
             { value: 'nao', label: 'Em aberto' }, { value: 'sim', label: 'Já paga' }] },
-          { name: 'comprovante_url', label: 'Comprovante/arquivo (link do Google Drive, opcional)', value: r?.comprovante_url || '' },
+          { name: 'arquivo', label: 'Anexar arquivo (PDF/imagem, opcional)', type: 'file' },
+          { name: 'comprovante_url', label: 'Ou link (Google Drive, opcional)', value: r?.comprovante_url || '' },
         ],
         submitLabel: editando ? 'Salvar' : 'Lançar',
         onSubmit: async (d) => {
@@ -661,9 +662,12 @@ NF.finance = (() => {
           if (d.metodo === 'Boleto') cat = cat ? `${cat} (Boleto)` : 'Boleto (DDA)';
           else if (d.metodo) cat = cat ? `${cat} (${d.metodo})` : d.metodo;
           d.categoria = cat;
-          // Anexo (link do Drive): só envia o campo quando usado, para não exigir
-          // a coluna no banco de quem ainda não a criou.
-          const anexo = (d.comprovante_url || '').trim();
+          // Anexo: arquivo enviado ao Storage tem prioridade; senão vale o link colado.
+          let anexo = (d.comprovante_url || '').trim();
+          if (d.arquivo) {
+            const url = await NF.data.uploadComprovante(d.arquivo, negocio);
+            if (url) anexo = url;
+          }
           const anexoCampos = (anexo || (editando && r.comprovante_url)) ? { comprovante_url: anexo || null } : {};
           const nParc = editando ? 1 : Math.max(1, parseInt(d.parcelas || '1', 10));
           if (nParc > 1) {

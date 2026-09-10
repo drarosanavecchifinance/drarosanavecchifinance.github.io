@@ -173,8 +173,18 @@ NF2.data = (() => {
     return NF.util.round2(valor - restante); // quanto foi efetivamente aplicado
   }
 
+  // Sobe um arquivo (comprovante/boleto) para o Storage e devolve o link público.
+  async function uploadComprovante(file, negocio) {
+    const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
+    const path = `${negocio || 'geral'}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await sb().storage.from('comprovantes').upload(path, file);
+    if (error) { console.error('[upload]', error.message); NF.ui.toast('Erro ao enviar o arquivo', 'err'); return null; }
+    return sb().storage.from('comprovantes').getPublicUrl(path).data.publicUrl;
+  }
+
   return {
     list, insert, update, remove,
     registrarVenda, atualizarVenda, receberParcela, estornarParcela, receberDaAluna,
+    uploadComprovante,
   };
 })();

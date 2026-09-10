@@ -62,7 +62,8 @@ NF.ui = {
       e.preventDefault();
       const data = {};
       for (const [k, inp] of Object.entries(inputs)) {
-        data[k] = inp.type === 'number' ? (inp.value === '' ? null : Number(inp.value)) : inp.value;
+        if (inp.type === 'file') data[k] = (inp.files && inp.files[0]) || null;
+        else data[k] = inp.type === 'number' ? (inp.value === '' ? null : Number(inp.value)) : inp.value;
       }
       await onSubmit(data);
       overlay.remove();

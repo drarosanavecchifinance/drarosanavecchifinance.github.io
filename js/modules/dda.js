@@ -61,11 +61,16 @@ NF.dda = (() => {
           { name: 'descricao', label: 'Beneficiário / descrição', required: true, value: r?.descricao || '' },
           { name: 'valor', label: 'Valor', type: 'number', step: '0.01', required: true, value: r?.valor ?? '' },
           { name: 'vencimento', label: 'Vencimento', type: 'date', required: true, value: r ? venc(r) : hoje },
-          { name: 'comprovante_url', label: 'Boleto/arquivo (link do Google Drive, opcional)', value: r?.comprovante_url || '' },
+          { name: 'arquivo', label: 'Anexar o boleto (PDF/imagem, opcional)', type: 'file' },
+          { name: 'comprovante_url', label: 'Ou link (Google Drive, opcional)', value: r?.comprovante_url || '' },
         ],
         submitLabel: editando ? 'Salvar' : 'Adicionar',
         onSubmit: async (d) => {
-          const anexo = (d.comprovante_url || '').trim();
+          let anexo = (d.comprovante_url || '').trim();
+          if (d.arquivo) {
+            const url = await NF.data.uploadComprovante(d.arquivo, d.negocio);
+            if (url) anexo = url;
+          }
           const anexoCampos = (anexo || (editando && r.comprovante_url)) ? { comprovante_url: anexo || null } : {};
           const campos = { negocio: d.negocio, descricao: d.descricao, valor: d.valor,
             categoria: editando ? r.categoria : CAT,
