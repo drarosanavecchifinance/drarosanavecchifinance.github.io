@@ -27,10 +27,11 @@ NF.dda = (() => {
     const hoje = NF.util.hoje();
     const nomeNeg = n => NF_CONFIG.NEGOCIOS[n]?.nome || n;
     const venc = d => d.vencimento || d.data;
+    // O DDA é a fila do que está EM ABERTO: pagou, deu baixa e sai daqui
+    // (o registro segue como despesa paga na aba Despesas da empresa).
     const abertos = boletos.filter(b => b.pago !== true);
     const aVencer = abertos.filter(b => venc(b) >= hoje);
     const vencidos = abertos.filter(b => venc(b) < hoje);
-    const pagos = boletos.filter(b => b.pago === true);
     const sum = a => a.reduce((s, b) => s + b.valor, 0);
     const reload = () => view(body, filtroNeg);
 
@@ -45,8 +46,7 @@ NF.dda = (() => {
       el('span', { class: 'nf-mini-sub' }, `${arr.length} boleto(s)`));
     body.append(el('div', { class: 'nf-mini-grid' },
       card('A vencer', aVencer, 'warn'),
-      card('Vencidos', vencidos, 'neg'),
-      card('Pagos', pagos, 'pos')));
+      card('Vencidos', vencidos, 'neg')));
     if (vencidos.length) body.append(el('div', { class: 'nf-alert' },
       `⚠ ${vencidos.length} boleto(s) vencido(s) somando ${NF.util.brl(sum(vencidos))} em aberto.`));
 
@@ -61,19 +61,15 @@ NF.dda = (() => {
           { name: 'descricao', label: 'Beneficiário / descrição', required: true, value: r?.descricao || '' },
           { name: 'valor', label: 'Valor', type: 'number', step: '0.01', required: true, value: r?.valor ?? '' },
           { name: 'vencimento', label: 'Vencimento', type: 'date', required: true, value: r ? venc(r) : hoje },
-          { name: 'pago', label: 'Situação', type: 'select', value: r?.pago === true ? 'sim' : 'nao',
-            options: [{ value: 'nao', label: 'Em aberto' }, { value: 'sim', label: 'Pago' }] },
           { name: 'comprovante_url', label: 'Boleto/arquivo (link do Google Drive, opcional)', value: r?.comprovante_url || '' },
         ],
         submitLabel: editando ? 'Salvar' : 'Adicionar',
         onSubmit: async (d) => {
-          const pago = d.pago === 'sim';
           const anexo = (d.comprovante_url || '').trim();
           const anexoCampos = (anexo || (editando && r.comprovante_url)) ? { comprovante_url: anexo || null } : {};
           const campos = { negocio: d.negocio, descricao: d.descricao, valor: d.valor,
             categoria: editando ? r.categoria : CAT,
-            vencimento: d.vencimento, data: d.vencimento, pago,
-            data_pagamento: pago ? (r?.data_pagamento || hoje) : null, ...anexoCampos };
+            vencimento: d.vencimento, data: d.vencimento, pago: false, data_pagamento: null, ...anexoCampos };
           if (editando) { await NF.data.update('lancamentos', r.id, campos); NF.ui.toast('Boleto atualizado'); }
           else { await NF.data.insert('lancamentos', { tipo: 'despesa', ...campos }); NF.ui.toast('Boleto adicionado'); }
           reload();
@@ -85,23 +81,22 @@ NF.dda = (() => {
       el('h4', {}, 'Boletos'),
       el('button', { class: 'btn', onclick: () => abrirForm() }, '+ Novo boleto')));
 
-    boletos.sort((a, b) => venc(b).localeCompare(venc(a)));   // mais recente primeiro
+    abertos.sort((a, b) => venc(a).localeCompare(venc(b)));   // vence primeiro em cima
     body.append(NF.ui.table([
       { key: 'vencimento', label: 'Vencimento', fmt: (_, r) => NF.util.dataBR(venc(r)) },
       { key: 'negocio', label: 'Empresa', fmt: v => nomeNeg(v) },
       { key: 'descricao', label: 'Beneficiário' },
       { key: 'valor', label: 'Valor', fmt: v => NF.util.brl(v) },
       { key: 'comprovante_url', label: 'Anexo', fmt: v => v ? `<a href="${v}" target="_blank" rel="noopener">📎 abrir</a>` : '—' },
-      { key: 'status', label: 'Status', fmt: (_, r) => r.pago === true
-          ? '<span class="nf-badge recebido">pago</span>'
-          : (venc(r) < hoje ? '<span class="nf-badge atrasado">vencido</span>'
-                            : '<span class="nf-badge previsto">a vencer</span>') },
-    ], boletos, (r) => [
-      r.pago === true ? null
-        : NF.ui.iconBtn('Pagar', '', async () => { await NF.data.update('lancamentos', r.id, { pago: true, data_pagamento: NF.util.hoje() }); NF.ui.toast('Boleto pago'); reload(); }),
+      { key: 'status', label: 'Status', fmt: (_, r) =>
+          venc(r) < hoje ? '<span class="nf-badge atrasado">vencido</span>'
+                         : '<span class="nf-badge previsto">a vencer</span>' },
+    ], abertos, (r) => [
+      // Pagar = baixa: sai do DDA e fica como despesa paga na empresa.
+      NF.ui.iconBtn('Pagar', '', async () => { await NF.data.update('lancamentos', r.id, { pago: true, data_pagamento: NF.util.hoje() }); NF.ui.toast('Boleto pago — baixado do DDA'); reload(); }),
       NF.ui.iconBtn('Editar', 'ghost', () => abrirForm(r)),
       NF.ui.iconBtn('Excluir', 'danger', async () => { await NF.data.remove('lancamentos', r.id); NF.ui.toast('Excluído'); reload(); }),
-    ].filter(Boolean)));
+    ]));
   }
 
   return { render };
