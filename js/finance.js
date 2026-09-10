@@ -630,6 +630,9 @@ NF.finance = (() => {
         campos: [
           { name: 'descricao', label: 'Descrição', required: true, value: r?.descricao || '' },
           { name: 'categoria', label: 'Categoria', value: r?.categoria || '' },
+          { name: 'boleto', label: 'É boleto? (aparece no DDA)', type: 'select',
+            value: /boleto/i.test(r?.categoria || '') ? 'sim' : 'nao',
+            options: [{ value: 'nao', label: 'Não' }, { value: 'sim', label: 'Sim' }] },
           ...(cursos.length ? [{ name: 'curso_id', label: 'Curso (opcional)', type: 'select', value: r?.curso_id || '',
             options: [{ value: '', label: '—' }, ...cursos.map(c => ({ value: c.id, label: c.titulo }))] }] : []),
           { name: 'valor', label: 'Valor', type: 'number', step: '0.01', required: true, value: r?.valor ?? '' },
@@ -643,6 +646,11 @@ NF.finance = (() => {
         submitLabel: editando ? 'Salvar' : 'Lançar',
         onSubmit: async (d) => {
           const pago = d.pago === 'sim';
+          // "É boleto?" marca a categoria para a despesa aparecer (ou sair) do DDA.
+          let cat = (d.categoria || '').trim();
+          if (d.boleto === 'sim' && !/boleto/i.test(cat)) cat = cat ? `${cat} (Boleto)` : 'Boleto (DDA)';
+          if (d.boleto === 'nao') cat = cat.replace(/\s*\(Boleto\)$/i, '').replace(/^Boleto \(DDA\)$/i, '');
+          d.categoria = cat;
           const nParc = editando ? 1 : Math.max(1, parseInt(d.parcelas || '1', 10));
           if (nParc > 1) {
             // Parcelado: divide o valor total em N lançamentos com vencimentos mensais.

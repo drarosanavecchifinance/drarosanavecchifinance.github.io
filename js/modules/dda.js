@@ -18,7 +18,10 @@ NF.dda = (() => {
 
   async function view(body, filtroNeg) {
     NF.ui.clear(body);
-    const todos = (await NF.data.list('lancamentos', { categoria: CAT })).filter(l => l.tipo === 'despesa');
+    // Entram no DDA: boletos cadastrados aqui E qualquer despesa marcada como
+    // boleto (categoria contendo "boleto") lançada na aba Despesas das empresas.
+    const todos = (await NF.data.list('lancamentos'))
+      .filter(l => l.tipo === 'despesa' && /boleto/i.test(l.categoria || ''));
     // Filtro por empresa: cartões e lista mostram só os boletos da escolhida.
     const boletos = filtroNeg ? todos.filter(b => b.negocio === filtroNeg) : todos;
     const hoje = NF.util.hoje();
