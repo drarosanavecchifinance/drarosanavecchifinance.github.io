@@ -16,9 +16,11 @@ NF.dda = (() => {
     await view(body);
   }
 
-  async function view(body) {
+  async function view(body, filtroNeg) {
     NF.ui.clear(body);
-    const boletos = (await NF.data.list('lancamentos', { categoria: CAT })).filter(l => l.tipo === 'despesa');
+    const todos = (await NF.data.list('lancamentos', { categoria: CAT })).filter(l => l.tipo === 'despesa');
+    // Filtro por empresa: cartões e lista mostram só os boletos da escolhida.
+    const boletos = filtroNeg ? todos.filter(b => b.negocio === filtroNeg) : todos;
     const hoje = NF.util.hoje();
     const nomeNeg = n => NF_CONFIG.NEGOCIOS[n]?.nome || n;
     const venc = d => d.vencimento || d.data;
@@ -27,7 +29,13 @@ NF.dda = (() => {
     const vencidos = abertos.filter(b => venc(b) < hoje);
     const pagos = boletos.filter(b => b.pago === true);
     const sum = a => a.reduce((s, b) => s + b.valor, 0);
-    const reload = () => view(body);
+    const reload = () => view(body, filtroNeg);
+
+    body.append(el('div', { class: 'nf-scope', style: 'margin-bottom:14px;' },
+      el('span', {}, 'Empresa:'),
+      ...[{ id: null, nome: 'Todas' }, ...Object.values(NF_CONFIG.NEGOCIOS)].map(o =>
+        el('button', { class: 'chip' + ((filtroNeg || null) === o.id ? ' active' : ''),
+          onclick: () => view(body, o.id) }, o.nome))));
 
     const card = (lbl, arr, cls) => el('div', { class: `nf-mini ${cls}` },
       el('span', { class: 'lbl' }, lbl), el('strong', {}, NF.util.brl(sum(arr))),
