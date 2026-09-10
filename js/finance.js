@@ -649,7 +649,6 @@ NF.finance = (() => {
           ...(editando ? [] : [{ name: 'parcelas', label: 'Parcelas (divide o valor total)', type: 'select', value: '1',
             options: Array.from({ length: 12 }, (_, i) => ({ value: String(i + 1), label: i === 0 ? 'À vista (1x)' : `${i + 1}x` })) }]),
           { name: 'vencimento', label: editando ? 'Vencimento' : 'Vencimento (da 1ª parcela)', type: 'date', required: true, value: r ? vencOf(r) : hoje },
-          ...(editando ? [] : [{ name: 'venc2', label: 'Vencimento da 2ª parcela (opcional — se vazio, 1 mês após a 1ª)', type: 'date', value: '' }]),
           { name: 'pago', label: 'Situação', type: 'select', value: r && isPago(r) ? 'sim' : 'nao', options: [
             { value: 'nao', label: 'Em aberto' }, { value: 'sim', label: 'Já paga' }] },
           { name: 'comprovante_url', label: 'Comprovante/arquivo (link do Google Drive, opcional)', value: r?.comprovante_url || '' },
@@ -668,26 +667,36 @@ NF.finance = (() => {
           const anexoCampos = (anexo || (editando && r.comprovante_url)) ? { comprovante_url: anexo || null } : {};
           const nParc = editando ? 1 : Math.max(1, parseInt(d.parcelas || '1', 10));
           if (nParc > 1) {
-            // Parcelado: divide o valor total em N lançamentos com vencimentos mensais.
-            // A 1ª parcela vence em `vencimento`; a 2ª em `venc2` (ou 1 mês após a 1ª)
-            // e as seguintes de mês em mês a partir da 2ª.
+            // Parcelado: antes de lançar, abre a tela com TODOS os vencimentos
+            // (pré-preenchidos de mês em mês a partir da 1ª) para conferir/ajustar.
             // A situação escolhida vale só para a 1ª parcela; as demais ficam em aberto.
             const total = parseFloat(d.valor);
             const base = NF.util.round2(total / nParc);
-            const venc2 = d.venc2 || addMeses(d.vencimento, 1);
-            for (let i = 1; i <= nParc; i++) {
-              const valor = i === nParc ? NF.util.round2(total - base * (nParc - 1)) : base;
-              const venc = i === 1 ? d.vencimento : addMeses(venc2, i - 2);
-              const pagoParc = pago && i === 1;
-              await NF.data.insert('lancamentos', {
-                negocio, tipo: 'despesa', descricao: `${d.descricao} (${i}/${nParc})`,
-                categoria: d.categoria, valor, curso_id: d.curso_id || null,
-                vencimento: venc, data: venc, pago: pagoParc,
-                data_pagamento: pagoParc ? hoje : null, ...anexoCampos,
-              });
-            }
-            NF.ui.toast(`Despesa lançada em ${nParc}x`);
-            return reload();
+            const valorDa = i => i === nParc ? NF.util.round2(total - base * (nParc - 1)) : base;
+            NF.ui.modal({
+              title: `Vencimentos das ${nParc} parcelas`,
+              campos: Array.from({ length: nParc }, (_, k) => ({
+                name: 'venc_' + (k + 1), type: 'date', required: true,
+                label: `Parcela ${k + 1}/${nParc} — ${NF.util.brl(valorDa(k + 1))}`,
+                value: addMeses(d.vencimento, k),
+              })),
+              submitLabel: `Lançar ${nParc} parcelas`,
+              onSubmit: async (dd) => {
+                for (let i = 1; i <= nParc; i++) {
+                  const venc = dd['venc_' + i];
+                  const pagoParc = pago && i === 1;
+                  await NF.data.insert('lancamentos', {
+                    negocio, tipo: 'despesa', descricao: `${d.descricao} (${i}/${nParc})`,
+                    categoria: d.categoria, valor: valorDa(i), curso_id: d.curso_id || null,
+                    vencimento: venc, data: venc, pago: pagoParc,
+                    data_pagamento: pagoParc ? hoje : null, ...anexoCampos,
+                  });
+                }
+                NF.ui.toast(`Despesa lançada em ${nParc}x`);
+                reload();
+              },
+            });
+            return;
           }
           const campos = {
             descricao: d.descricao, categoria: d.categoria, valor: d.valor,
