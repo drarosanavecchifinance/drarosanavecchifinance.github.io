@@ -211,3 +211,11 @@ a { color: inherit; text-decoration: none; }
   .nf-fin, .nf-block { padding: 24px 20px; }
   .tab { margin: 0 4px; }
 }
+
+/* Visualizador de anexos (pop-up central) */
+.nf-viewer { background: var(--surface); border-radius: var(--radius-lg); width: min(920px, 94vw);
+  height: min(86vh, 940px); display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: 0 30px 80px rgba(23,22,15,.35); }
+.nf-viewer-head { display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 10px 14px; border-bottom: 1.5px solid var(--bdr); }
+.nf-viewer-frame { border: 0; width: 100%; flex: 1; background: #f6f4ee; }

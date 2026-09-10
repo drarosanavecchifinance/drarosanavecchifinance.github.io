@@ -74,6 +74,23 @@ NF.ui = {
     return overlay;
   },
 
+  // Visualizador de anexo: abre o arquivo num pop-up central, sem sair da página.
+  viewer(url) {
+    // Links do Google Drive só embutem na versão /preview.
+    let src = url;
+    const m = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+    if (m) src = `https://drive.google.com/file/d/${m[1]}/preview`;
+    const overlay = NF.ui.el('div', { class: 'nf-modal-overlay' });
+    const box = NF.ui.el('div', { class: 'nf-viewer' },
+      NF.ui.el('div', { class: 'nf-viewer-head' },
+        NF.ui.el('a', { href: url, target: '_blank', rel: 'noopener', class: 'btn ghost tiny' }, 'Abrir em nova aba ↗'),
+        NF.ui.el('button', { class: 'btn tiny', onclick: () => overlay.remove() }, 'Fechar ✕')),
+      NF.ui.el('iframe', { src, class: 'nf-viewer-frame' }));
+    overlay.append(box);
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+    document.body.append(overlay);
+  },
+
   async confirm(msg) { return window.confirm(msg); },
 
   // Busca CEP na ViaCEP e preenche inputs.endereco/cidade/estado (se existirem).

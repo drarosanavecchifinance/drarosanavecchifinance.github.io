@@ -92,7 +92,7 @@ NF.dda = (() => {
       { key: 'negocio', label: 'Empresa', fmt: v => nomeNeg(v) },
       { key: 'descricao', label: 'Beneficiário' },
       { key: 'valor', label: 'Valor', fmt: v => NF.util.brl(v) },
-      { key: 'comprovante_url', label: 'Anexo', fmt: v => v ? `<a href="${v}" target="_blank" rel="noopener">📎 abrir</a>` : '—' },
+      { key: 'comprovante_url', label: 'Anexo', fmt: v => v ? `<a href="#" onclick="NF.ui.viewer('${String(v).replace(/'/g, '%27')}');return false">📎 abrir</a>` : '—' },
       { key: 'status', label: 'Status', fmt: (_, r) =>
           venc(r) < hoje ? '<span class="nf-badge atrasado">vencido</span>'
                          : '<span class="nf-badge previsto">a vencer</span>' },

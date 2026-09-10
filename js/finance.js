@@ -726,7 +726,7 @@ NF.finance = (() => {
       { key: 'categoria', label: 'Categoria' },
       ...(negocio === 'academy' ? [{ key: 'curso_id', label: 'Curso', fmt: v => (cMap[v] || '—') }] : []),
       { key: 'valor', label: 'Valor', fmt: v => NF.util.brl(v) },
-      { key: 'comprovante_url', label: 'Anexo', fmt: v => v ? `<a href="${v}" target="_blank" rel="noopener">📎 abrir</a>` : '—' },
+      { key: 'comprovante_url', label: 'Anexo', fmt: v => v ? `<a href="#" onclick="NF.ui.viewer('${String(v).replace(/'/g, '%27')}');return false">📎 abrir</a>` : '—' },
       { key: 'status', label: 'Status', fmt: (_, r) => statusBadge(r) },
     ], lista, (r) => [
       isPago(r)
