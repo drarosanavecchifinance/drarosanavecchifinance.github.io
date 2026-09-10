@@ -119,6 +119,11 @@ NF.finance = (() => {
         cardMini('Saldo do mês', r.saldoCaixa, r.saldoCaixa >= 0 ? 'pos' : 'neg'),
       ),
     );
+
+    // Gráficos da empresa (os mesmos do dashboard, no escopo deste negócio).
+    const graficos = el('div', {});
+    body.append(graficos);
+    NF.dashboard.grafs(graficos, negocio);
   }
 
   // Monta o seletor de mês (competência): meses com registro + faixa fixa de

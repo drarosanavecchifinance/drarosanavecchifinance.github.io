@@ -22,6 +22,76 @@ NF.dashboard = (() => {
   const CORES = ['#b08d3f', '#7d7360', '#a88b54', '#4a463f', '#c2a24e', '#8a6d2b', '#d8c48a'];
   const GOLD = '#b08d3f', TAUPE = '#7d7360', VERDE = '#3f7d5a', VERMELHO = '#b25444';
 
+  // Os 4 gráficos-base (fluxo, vendedoras, projeção da carteira, categorias) —
+  // usados no dashboard e embutidos no Resumo de cada empresa.
+  function montarGraficos(grid, { lanc, cart, vendas, vendedoras }, { detalhesEm = null } = {}) {
+    const canvasBox = (titulo) => {
+      const box = el('div', { class: 'nf-chart-box' }, el('h4', {}, titulo));
+      const cv = el('canvas'); box.append(cv); grid.append(box); return cv;
+    };
+
+    // 1) Fluxo de caixa: recebido x despesa por mês (últimos 6)
+    const meses = ultimosMeses(MESES_ATRAS);
+    const receb = meses.map(m => cart.filter(c => c.status === 'recebido' && NF.util.mesDe(c.data_recebido) === m).reduce((s, c) => s + c.valor_parcela_liquido, 0));
+    const desp = meses.map(m => lanc.filter(l => l.tipo === 'despesa' && NF.util.mesDe(l.data) === m).reduce((s, l) => s + l.valor, 0));
+    charts.push(new Chart(canvasBox('Fluxo de caixa (recebido × despesas)'), {
+      type: 'bar',
+      data: { labels: meses.map(NF.util.mesLabel), datasets: [
+        { label: 'Recebido', data: receb, backgroundColor: VERDE },
+        { label: 'Despesas', data: desp, backgroundColor: VERMELHO },
+      ] },
+      options: baseOpts(),
+    }));
+
+    // 2) Vendas por vendedora
+    const vMap = Object.fromEntries(vendedoras.map(v => [v.id, v.nome]));
+    const porV = {};
+    vendas.forEach(v => { const n = vMap[v.vendedora_id] || 'Sem vendedora'; porV[n] = (porV[n] || 0) + v.valor_bruto; });
+    const cvVend = canvasBox('Vendas por vendedora');
+    charts.push(new Chart(cvVend, {
+      type: 'bar',
+      data: { labels: Object.keys(porV), datasets: [{ label: 'Vendido (bruto)', data: Object.values(porV), backgroundColor: GOLD }] },
+      // horizontal: o dinheiro fica no eixo X; o Y mostra os nomes das vendedoras.
+      options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+        plugins: { legend: { position: 'bottom' } }, scales: { x: { ticks: { callback: v => 'R$ ' + v } } } },
+    }));
+    if (detalhesEm) cvVend.closest('.nf-chart-box').append(
+      el('button', { class: 'btn ghost tiny', style: 'margin-top:14px;', onclick: () => vendedorasDetalhe(detalhesEm) }, 'Ver detalhado por empresa →'));
+
+    // 3) Carteira (projeção do que cai nos próximos meses)
+    const fut = proximosMeses(MESES_ATRAS);
+    const proj = fut.map(m => cart.filter(c => c.status !== 'recebido' && NF.util.mesDe(c.data_prevista) === m).reduce((s, c) => s + c.valor_parcela_liquido, 0));
+    const cvCart = canvasBox('Carteira — projeção de recebimento (líquido)');
+    charts.push(new Chart(cvCart, {
+      type: 'line',
+      data: { labels: fut.map(NF.util.mesLabel), datasets: [{ label: 'A receber', data: proj, borderColor: GOLD, backgroundColor: 'rgba(176,141,63,.12)', pointBackgroundColor: GOLD, fill: true, tension: .3 }] },
+      options: baseOpts(),
+    }));
+    if (detalhesEm) cvCart.closest('.nf-chart-box').append(
+      el('button', { class: 'btn ghost tiny', style: 'margin-top:14px;', onclick: () => carteiraDetalhe(detalhesEm) }, 'Ver detalhado por mês/empresa →'));
+
+    // 4) Despesas por categoria
+    const porCat = {};
+    lanc.filter(l => l.tipo === 'despesa').forEach(l => { const c = l.categoria || 'Outros'; porCat[c] = (porCat[c] || 0) + l.valor; });
+    charts.push(new Chart(canvasBox('Despesas por categoria'), {
+      type: 'doughnut',
+      data: { labels: Object.keys(porCat), datasets: [{ data: Object.values(porCat), backgroundColor: CORES }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } },
+    }));
+  }
+
+  // Gráficos embutidos no Resumo de uma empresa (sem cabeçalho nem cards).
+  async function grafs(mount, negocio) {
+    killCharts();
+    const [lanc, cart, vendas, vendedoras] = await Promise.all([
+      NF.data.list('lancamentos', { negocio }), NF.data.list('carteira', { negocio }),
+      NF.data.list('vendas', { negocio }), NF.data.list('vendedoras'),
+    ]);
+    const grid = el('div', { class: 'nf-charts' });
+    mount.append(grid);
+    montarGraficos(grid, { lanc, cart, vendas, vendedoras });
+  }
+
   async function render(mount, scope = 'consolidado') {
     killCharts();
     NF.ui.clear(mount);
@@ -66,59 +136,11 @@ NF.dashboard = (() => {
     // --- Grid de gráficos ---
     const grid = el('div', { class: 'nf-charts' });
     mount.append(grid);
+    montarGraficos(grid, { lanc, cart, vendas, vendedoras }, { detalhesEm: mount });
     const canvasBox = (titulo) => {
       const box = el('div', { class: 'nf-chart-box' }, el('h4', {}, titulo));
       const cv = el('canvas'); box.append(cv); grid.append(box); return cv;
     };
-
-    // 1) Fluxo de caixa: recebido x despesa por mês (últimos 6)
-    const meses = ultimosMeses(MESES_ATRAS);
-    const receb = meses.map(m => cart.filter(c => c.status === 'recebido' && NF.util.mesDe(c.data_recebido) === m).reduce((s, c) => s + c.valor_parcela_liquido, 0));
-    const desp = meses.map(m => lanc.filter(l => l.tipo === 'despesa' && NF.util.mesDe(l.data) === m).reduce((s, l) => s + l.valor, 0));
-    charts.push(new Chart(canvasBox('Fluxo de caixa (recebido × despesas)'), {
-      type: 'bar',
-      data: { labels: meses.map(NF.util.mesLabel), datasets: [
-        { label: 'Recebido', data: receb, backgroundColor: VERDE },
-        { label: 'Despesas', data: desp, backgroundColor: VERMELHO },
-      ] },
-      options: baseOpts(),
-    }));
-
-    // 2) Vendas por vendedora (com botão pra ver detalhado por empresa)
-    const vMap = Object.fromEntries(vendedoras.map(v => [v.id, v.nome]));
-    const porV = {};
-    vendas.forEach(v => { const n = vMap[v.vendedora_id] || 'Sem vendedora'; porV[n] = (porV[n] || 0) + v.valor_bruto; });
-    const cvVend = canvasBox('Vendas por vendedora');
-    charts.push(new Chart(cvVend, {
-      type: 'bar',
-      data: { labels: Object.keys(porV), datasets: [{ label: 'Vendido (bruto)', data: Object.values(porV), backgroundColor: GOLD }] },
-      // horizontal: o dinheiro fica no eixo X; o Y mostra os nomes das vendedoras.
-      options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y',
-        plugins: { legend: { position: 'bottom' } }, scales: { x: { ticks: { callback: v => 'R$ ' + v } } } },
-    }));
-    cvVend.closest('.nf-chart-box').append(
-      el('button', { class: 'btn ghost tiny', style: 'margin-top:14px;', onclick: () => vendedorasDetalhe(mount) }, 'Ver detalhado por empresa →'));
-
-    // 3) Faturamento × Carteira (projeção do que cai nos próximos meses)
-    const fut = proximosMeses(MESES_ATRAS);
-    const proj = fut.map(m => cart.filter(c => c.status !== 'recebido' && NF.util.mesDe(c.data_prevista) === m).reduce((s, c) => s + c.valor_parcela_liquido, 0));
-    const cvCart = canvasBox('Carteira — projeção de recebimento (líquido)');
-    charts.push(new Chart(cvCart, {
-      type: 'line',
-      data: { labels: fut.map(NF.util.mesLabel), datasets: [{ label: 'A receber', data: proj, borderColor: GOLD, backgroundColor: 'rgba(176,141,63,.12)', pointBackgroundColor: GOLD, fill: true, tension: .3 }] },
-      options: baseOpts(),
-    }));
-    cvCart.closest('.nf-chart-box').append(
-      el('button', { class: 'btn ghost tiny', style: 'margin-top:14px;', onclick: () => carteiraDetalhe(mount) }, 'Ver detalhado por mês/empresa →'));
-
-    // 4) Despesas por categoria
-    const porCat = {};
-    lanc.filter(l => l.tipo === 'despesa').forEach(l => { const c = l.categoria || 'Outros'; porCat[c] = (porCat[c] || 0) + l.valor; });
-    charts.push(new Chart(canvasBox('Despesas por categoria'), {
-      type: 'doughnut',
-      data: { labels: Object.keys(porCat), datasets: [{ data: Object.values(porCat), backgroundColor: CORES }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } },
-    }));
 
     // 5) Faturamento por negócio (só no consolidado)
     if (scope === 'consolidado') {
@@ -232,5 +254,5 @@ NF.dashboard = (() => {
     };
   }
 
-  return { render, killCharts };
+  return { render, killCharts, grafs };
 })();
