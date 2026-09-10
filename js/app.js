@@ -5,7 +5,7 @@ const NFapp = window.NF || (window.NF = {});
   const el = NF.ui.el;
   const app = () => document.getElementById('app');
 
-  const ROTAS = ['nature', 'academy', 'clinica', 'dashboard'];
+  const ROTAS = ['nature', 'academy', 'clinica', 'dashboard', 'dda'];
   function rotaAtual() {
     const h = location.hash.replace('#/', '');
     return ROTAS.includes(h) ? h : 'nature';
@@ -26,6 +26,8 @@ const NFapp = window.NF || (window.NF = {});
           const cfg = NF_CONFIG.NEGOCIOS[n === 'nature' ? 'naturefac' : n];
           return el('a', { class: 'tab' + (rota === n ? ' active' : ''), href: '#/' + n, style: `--accent:${cfg.accent}` }, cfg.nome);
         }),
+        // Central de boletos (todas as empresas)
+        el('a', { class: 'tab' + (rota === 'dda' ? ' active' : ''), href: '#/dda' }, 'DDA'),
       ),
       // Botão de login só quando a autenticação está ligada.
       NF_CONFIG.AUTH_DISABLED ? null : el('div', { class: 'nav-right' },
@@ -70,6 +72,11 @@ const NFapp = window.NF || (window.NF = {});
     if (rota === 'dashboard') {
       if (!logged) return gate(mount, 'O dashboard consolidado é só para administradores.');
       return NF.dashboard.render(mount, 'consolidado');
+    }
+
+    if (rota === 'dda') {
+      if (!logged) return gate(mount, 'Entre para ver os boletos (DDA).');
+      return NF.dda.render(mount);
     }
 
     const negocio = rota === 'nature' ? 'naturefac' : rota;
