@@ -36,6 +36,31 @@ const NFapp = window.NF || (window.NF = {});
           : el('button', { class: 'btn', onclick: abrirLogin }, 'Entrar')),
     );
     header.append(nav);
+    // Aviso de contas a pagar (vencidas / vencendo) — fica no header, visível em toda tela.
+    if (logged) { const aviso = el('div', { class: 'nf-aviso-wrap' }); header.append(aviso); avisosVencimento(aviso); }
+  }
+
+  // Avisos de vencimento: contas/boletos EM ABERTO vencidos, vencendo hoje ou nos
+  // próximos 3 dias (todas as empresas). Clique leva ao DDA.
+  async function avisosVencimento(mount) {
+    try {
+      const desp = (await NF.data.list('lancamentos')).filter(l => l.tipo === 'despesa' && l.pago !== true);
+      if (!desp.length) return;
+      const hoje = NF.util.hoje(), limite = NF.util.addDias(hoje, 3);
+      const venc = d => d.vencimento || d.data;
+      const vencidas = desp.filter(d => venc(d) < hoje);
+      const doDia = desp.filter(d => venc(d) === hoje);
+      const proximas = desp.filter(d => venc(d) > hoje && venc(d) <= limite);
+      if (!vencidas.length && !doDia.length && !proximas.length) return;
+      const sum = a => a.reduce((s, d) => s + d.valor, 0);
+      const partes = [];
+      if (vencidas.length) partes.push(`${vencidas.length} vencida(s) — ${NF.util.brl(sum(vencidas))}`);
+      if (doDia.length) partes.push(`${doDia.length} vence(m) HOJE — ${NF.util.brl(sum(doDia))}`);
+      if (proximas.length) partes.push(`${proximas.length} nos próximos 3 dias — ${NF.util.brl(sum(proximas))}`);
+      mount.append(el('div', { class: 'nf-alert', style: 'cursor:pointer; margin:0 auto 12px; max-width:1100px;',
+        onclick: () => { location.hash = '#/dda'; } },
+        `⚠ Contas a pagar: ${partes.join(' · ')} — clique para abrir o DDA`));
+    } catch (e) { console.error('[avisos]', e); }
   }
 
   // ---------- LOGIN ----------

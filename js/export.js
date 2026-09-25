@@ -92,5 +92,53 @@ NF.export = (() => {
     NF.ui.toast(soDespesas ? 'Despesas exportadas' : 'Excel exportado');
   }
 
-  return { negocio };
+  // Fechamento do mês: Excel consolidado das 3 empresas (Resumo + Receitas + Despesas).
+  async function fechamento(mes) {
+    if (typeof XLSX === 'undefined') { NF.ui.toast('Biblioteca de Excel não carregou', 'err'); return; }
+    mes = mes || NF.util.mesDe(NF.util.hoje());
+    const negocios = Object.keys(NF_CONFIG.NEGOCIOS);
+    const nome = n => NF_CONFIG.NEGOCIOS[n].nome;
+    const [lanc, cart, vendas] = await Promise.all([
+      NF.data.list('lancamentos'), NF.data.list('carteira'), NF.data.list('vendas'),
+    ]);
+    const r2 = NF.util.round2;
+    // Receita = faturamento: vendas (Yampi) + avulsas ('Pedido Yampi'/'Recebimento…' duplicariam)
+    const ehDup = l => (l.categoria || '').startsWith('Recebimento') || l.categoria === 'Pedido Yampi';
+    const vencOf = d => d.vencimento || d.data;
+    const wb = XLSX.utils.book_new();
+
+    // Aba 1 — Resumo por empresa
+    let tR = 0, tD = 0, tC = 0;
+    const resumo = negocios.map(n => {
+      const rec = vendas.filter(v => v.negocio === n && NF.util.mesDe(v.data_venda) === mes).reduce((s, v) => s + v.valor_bruto, 0)
+        + lanc.filter(l => l.negocio === n && l.tipo === 'receita' && !ehDup(l) && NF.util.mesDe(l.data) === mes).reduce((s, l) => s + l.valor, 0);
+      const des = lanc.filter(l => l.negocio === n && l.tipo === 'despesa' && NF.util.mesDe(vencOf(l)) === mes).reduce((s, l) => s + l.valor, 0);
+      const car = cart.filter(c => c.negocio === n && c.status !== 'recebido').reduce((s, c) => s + c.valor_parcela_liquido, 0);
+      tR += rec; tD += des; tC += car;
+      return { Empresa: nome(n), 'Receitas (R$)': r2(rec), 'Despesas (R$)': r2(des), 'Saldo (R$)': r2(rec - des), 'Carteira a receber (R$)': r2(car) };
+    });
+    resumo.push({ Empresa: 'TOTAL', 'Receitas (R$)': r2(tR), 'Despesas (R$)': r2(tD), 'Saldo (R$)': r2(tR - tD), 'Carteira a receber (R$)': r2(tC) });
+    add(wb, 'Resumo', resumo);
+
+    // Aba 2 — Receitas do mês (todas as empresas)
+    const recRows = [
+      ...vendas.filter(v => NF.util.mesDe(v.data_venda) === mes)
+        .map(v => ({ _d: v.data_venda, Data: NF.util.dataBR(v.data_venda), Empresa: nome(v.negocio), Descrição: v.cliente || v.descricao || '', 'Valor (R$)': v.valor_bruto })),
+      ...lanc.filter(l => l.tipo === 'receita' && !ehDup(l) && NF.util.mesDe(l.data) === mes)
+        .map(l => ({ _d: l.data, Data: NF.util.dataBR(l.data), Empresa: nome(l.negocio), Descrição: l.descricao || '', 'Valor (R$)': l.valor })),
+    ].sort((a, b) => a._d.localeCompare(b._d)).map(({ _d, ...r }) => r);
+    add(wb, 'Receitas', recRows);
+
+    // Aba 3 — Despesas do mês (todas as empresas)
+    add(wb, 'Despesas', lanc
+      .filter(l => l.tipo === 'despesa' && NF.util.mesDe(vencOf(l)) === mes)
+      .sort((a, b) => vencOf(a).localeCompare(vencOf(b)))
+      .map(d => ({ Vencimento: NF.util.dataBR(vencOf(d)), Empresa: nome(d.negocio), Descrição: d.descricao || '',
+        Categoria: d.categoria || '', 'Valor (R$)': d.valor, Situação: d.pago === true ? 'Paga' : (vencOf(d) < NF.util.hoje() ? 'Vencida' : 'A vencer') })));
+
+    XLSX.writeFile(wb, `NatureFace-Fechamento-${mes}.xlsx`);
+    NF.ui.toast('Fechamento do mês exportado');
+  }
+
+  return { negocio, fechamento };
 })();

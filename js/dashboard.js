@@ -111,7 +111,13 @@ NF.dashboard = (() => {
       el('span', {}, 'Negócio:'),
       ...[{ id: 'consolidado', nome: 'Consolidado' }, ...negocios.map(n => NF_CONFIG.NEGOCIOS[n])].map(o =>
         el('button', { class: 'chip' + (scope === o.id ? ' active' : ''), onclick: () => render(mount, o.id) }, o.nome)));
-    mount.append(el('div', { class: 'nf-dash-head' }, el('h2', {}, 'Dashboard & Análises'), filtro));
+    mount.append(el('div', { class: 'nf-dash-head' }, el('h2', {}, 'Dashboard & Análises'), filtro,
+      el('button', { class: 'btn ghost', onclick: () => NF.ui.modal({
+        title: 'Fechamento do mês',
+        campos: [{ name: 'mes', label: 'Mês', type: 'month', required: true, value: NF.util.mesDe(NF.util.hoje()) }],
+        submitLabel: 'Gerar Excel',
+        onSubmit: d => NF.export.fechamento(d.mes),
+      }) }, '📄 Fechamento do mês')));
 
     // --- Cards do topo (mês corrente somando o escopo) ---
     const mesAtual = NF.util.mesDe(NF.util.hoje());
