@@ -551,7 +551,8 @@ NF.finance = (() => {
   };
   const semMetodo = c => (c || '')
     .replace(/\s*\((PIX|Cartão crédito|Cartão débito|Boleto|Dinheiro)\)\s*$/i, '')
-    .replace(/^Boleto \(DDA\)$/i, '').trim();
+    .replace(/^Boleto \(DDA\)$/i, '')
+    .replace(/^(PIX|Cartão crédito|Cartão débito|Boleto|Dinheiro)$/i, '').trim();
   // Soma meses a uma data ISO mantendo o dia (dia 31 em mês curto -> último dia do mês).
   const addMeses = (iso, n) => {
     const [y, m, dia] = iso.split('-').map(Number);
@@ -574,7 +575,7 @@ NF.finance = (() => {
     const pend = desp.filter(d => !isPago(d));
     const aVencer = pend.filter(d => vencOf(d) >= hoje);
     const vencidas = pend.filter(d => vencOf(d) < hoje);
-    const restanteMes = pend;
+    const totalPeriodo = desp;   // todas as despesas do período (pagas + em aberto)
     const pagoMes = desp.filter(d => isPago(d));
     const sum = arr => arr.reduce((s, d) => s + d.valor, 0);
 
@@ -615,15 +616,15 @@ NF.finance = (() => {
     body.append(el('div', { class: 'nf-mini-grid' },
       card('A vencer', aVencer, 'warn', 'a_vencer'),
       card('Vencidas', vencidas, 'neg', 'vencidas'),
-      card('Restante no mês', restanteMes, 'accent', 'restante'),
+      card('Total', totalPeriodo, 'accent', 'total'),
       card('Pago no mês', pagoMes, 'pos', 'pago'),
     ));
     if (vencidas.length) body.append(el('div', { class: 'nf-alert' },
       `⚠ ${vencidas.length} conta(s) vencida(s) somando ${NF.util.brl(sum(vencidas))} em aberto.`));
 
     // Lista (filtrada pelo card clicado; ordenada por vencimento mais próximo)
-    const SUBSETS = { a_vencer: aVencer, vencidas, restante: restanteMes, pago: pagoMes };
-    const LABELS = { a_vencer: 'A vencer', vencidas: 'Vencidas', restante: 'Restante no mês', pago: 'Pago no mês' };
+    const SUBSETS = { a_vencer: aVencer, vencidas, total: totalPeriodo, pago: pagoMes };
+    const LABELS = { a_vencer: 'A vencer', vencidas: 'Vencidas', total: 'Total', pago: 'Pago no mês' };
     const lista = (filtroStatus && SUBSETS[filtroStatus]) ? SUBSETS[filtroStatus] : desp;
     lista.sort((a, b) => vencOf(b).localeCompare(vencOf(a)));   // mais recente primeiro
     body.append(el('div', { class: 'nf-row-head' },
