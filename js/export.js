@@ -45,8 +45,14 @@ NF.export = (() => {
         Status: NF.util.statusParcela(p),
       })));
 
-    // Despesas / contas a pagar
-    const desp = lanc.filter(l => l.tipo === 'despesa');
+    // Despesas / contas a pagar — na aba Despesas, exporta EXATAMENTE o que está
+    // filtrado na tela (mês, curso, cartão de status e busca).
+    const fd = soDespesas ? NF.finance.filtroDespesas : null;
+    let desp = fd ? fd.rows.slice() : lanc.filter(l => l.tipo === 'despesa');
+    if (fd && fd.busca) {
+      const norm = s => (s || '').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+      desp = desp.filter(d => norm(`${NF.util.dataBR(d.vencimento || d.data)} ${d.descricao || ''} ${d.categoria || ''} ${cMap[d.curso_id] || ''} ${d.valor}`).includes(fd.busca));
+    }
     add(wb, 'Despesas', desp
       .sort((a, b) => (b.vencimento || b.data).localeCompare(a.vencimento || a.data))
       .map(d => ({
@@ -89,7 +95,7 @@ NF.export = (() => {
 
     const nome = NF_CONFIG.NEGOCIOS[neg].nome;
     XLSX.writeFile(wb, `NatureFace-${nome}-${soDespesas ? 'Despesas-' : ''}${NF.util.hoje()}.xlsx`);
-    NF.ui.toast(soDespesas ? 'Despesas exportadas' : 'Excel exportado');
+    NF.ui.toast(soDespesas ? `${desp.length} despesa(s) exportada(s)` : 'Excel exportado');
   }
 
   // Fechamento do mês: Excel consolidado das 3 empresas (Resumo + Receitas + Despesas).

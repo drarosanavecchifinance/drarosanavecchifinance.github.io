@@ -71,6 +71,7 @@ NF.finance = (() => {
     async function go(id) {
       state.tab = id;
       NF.finance.abaAtiva = id;   // o Exportar usa isso: na aba Despesas, exporta só despesas
+      if (id !== 'despesas') NF.finance.filtroDespesas = null;   // limpa o filtro registrado
       [...nav.children].forEach(b => b.classList.toggle('active', b.dataset.id === id));
       NF.ui.clear(body);
       const ex = extras.find(e => e.id === id);
@@ -589,6 +590,7 @@ NF.finance = (() => {
     const buscaInput = el('input', { class: 'nf-filter', type: 'search', placeholder: '🔍 Buscar despesa…',
       oninput: () => {
         const q = norm(buscaInput.value);
+        if (NF.finance.filtroDespesas) NF.finance.filtroDespesas.busca = q;   // o Exportar respeita a busca
         if (tabela) [...tabela.querySelectorAll('tbody tr')].forEach(tr => {
           tr.style.display = !q || norm(tr.textContent).includes(q) ? '' : 'none';
         });
@@ -627,6 +629,8 @@ NF.finance = (() => {
     const LABELS = { a_vencer: 'A vencer', vencidas: 'Vencidas', total: 'Total', pago: 'Pago no mês' };
     const lista = (filtroStatus && SUBSETS[filtroStatus]) ? SUBSETS[filtroStatus] : desp;
     lista.sort((a, b) => vencOf(b).localeCompare(vencOf(a)));   // mais recente primeiro
+    // Registra o que está na tela (mês + curso + cartão de status) para o Exportar.
+    NF.finance.filtroDespesas = { rows: lista.slice(), busca: norm(buscaInput.value || '') };
     body.append(el('div', { class: 'nf-row-head' },
       el('div', { style: 'display:flex; align-items:center; gap:12px; flex-wrap:wrap;' },
         el('h4', {}, filtroStatus ? `${LABELS[filtroStatus]} (${lista.length})` : 'Contas / despesas'),
