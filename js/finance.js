@@ -53,7 +53,8 @@ NF.finance = (() => {
   async function render(negocio, mount, extras = []) {
     NF.ui.clear(mount);
     const state = { tab: 'resumo' };
-    const tabs = [
+    const soDespesas = NF_CONFIG.NEGOCIOS[negocio]?.soDespesas;
+    const tabs = soDespesas ? [{ id: 'despesas', label: 'Despesas' }] : [
       { id: 'resumo', label: 'Resumo' },
       // A aba Vendas foi descontinuada: as entradas ficam na aba Receitas,
       // que gera a carteira conforme o meio de pagamento.
@@ -87,7 +88,7 @@ NF.finance = (() => {
       const b = el('button', { class: 'nf-subtab', 'data-id': t.id, onclick: () => go(t.id) }, t.label);
       nav.append(b);
     });
-    go('resumo');
+    go(soDespesas ? 'despesas' : 'resumo');
   }
 
   // ---- RESUMO ----

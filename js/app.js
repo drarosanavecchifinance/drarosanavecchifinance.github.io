@@ -5,7 +5,7 @@ const NFapp = window.NF || (window.NF = {});
   const el = NF.ui.el;
   const app = () => document.getElementById('app');
 
-  const ROTAS = ['nature', 'academy', 'clinica', 'dashboard', 'dda'];
+  const ROTAS = ['nature', 'academy', 'clinica', 'blefaro', 'dashboard', 'dda'];
   function rotaAtual() {
     const h = location.hash.replace('#/', '');
     return ROTAS.includes(h) ? h : 'nature';
@@ -22,7 +22,7 @@ const NFapp = window.NF || (window.NF = {});
       el('div', { class: 'tabs' },
         // Dashboard em primeiro
         logged ? el('a', { class: 'tab dash' + (rota === 'dashboard' ? ' active' : ''), href: '#/dashboard' }, 'Dashboard') : null,
-        ...['nature', 'academy', 'clinica'].map(n => {
+        ...['nature', 'academy', 'clinica', 'blefaro'].map(n => {
           const cfg = NF_CONFIG.NEGOCIOS[n === 'nature' ? 'naturefac' : n];
           return el('a', { class: 'tab' + (rota === n ? ' active' : ''), href: '#/' + n, style: `--accent:${cfg.accent}` }, cfg.nome);
         }),

@@ -170,7 +170,7 @@ NF.dashboard = (() => {
   async function vendedorasDetalhe(mount) {
     killCharts();
     NF.ui.clear(mount);
-    const negocios = Object.keys(NF_CONFIG.NEGOCIOS);
+    const negocios = Object.keys(NF_CONFIG.NEGOCIOS).filter(n => !NF_CONFIG.NEGOCIOS[n].soDespesas);
     const [vendas, vendedoras] = await Promise.all([NF.data.list('vendas'), NF.data.list('vendedoras')]);
     const vMap = Object.fromEntries(vendedoras.map(v => [v.id, v.nome]));
 
@@ -215,7 +215,7 @@ NF.dashboard = (() => {
   async function carteiraDetalhe(mount) {
     killCharts();
     NF.ui.clear(mount);
-    const negocios = Object.keys(NF_CONFIG.NEGOCIOS);
+    const negocios = Object.keys(NF_CONFIG.NEGOCIOS).filter(n => !NF_CONFIG.NEGOCIOS[n].soDespesas);
     const cart = (await NF.data.list('carteira')).filter(c => c.status !== 'recebido');
 
     // matriz mês -> { negocio: total líquido }
