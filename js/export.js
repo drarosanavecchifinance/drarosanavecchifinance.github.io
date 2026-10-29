@@ -57,7 +57,7 @@ NF.export = (() => {
       .sort((a, b) => (b.vencimento || b.data).localeCompare(a.vencimento || a.data))
       .map(d => ({
         Vencimento: NF.util.dataBR(d.vencimento || d.data), Descrição: d.descricao || '',
-        Categoria: d.categoria || '', ...(neg === 'academy' ? { Curso: cMap[d.curso_id] || '' } : {}),
+        Categoria: d.categoria || '', ...(neg === 'academy' ? { Curso: d.curso_id ? (cMap[d.curso_id] || '') : 'Extra' } : {}),
         'Valor (R$)': d.valor,
         Situação: d.pago === true ? 'Paga' : ((d.vencimento || d.data) < NF.util.hoje() ? 'Vencida' : 'A vencer'),
       })));

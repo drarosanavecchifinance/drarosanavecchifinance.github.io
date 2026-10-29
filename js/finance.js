@@ -571,9 +571,13 @@ NF.finance = (() => {
     const mesAtual = NF.util.mesDe(hoje);
     const mes = mesSel || mesAtual;                    // default: mês atual
     // Despesas do mês selecionado (por vencimento). 'todos' = todas.
-    // Com curso selecionado, painel e lista mostram só as despesas dele.
+    // Academy: cursoSel = null (todas) | 'curso' (de curso, qualquer curso) |
+    // 'extra' (sem curso) | id de um curso. Painel e lista seguem o filtro.
     const doMes = mes === 'todos' ? todasDesp : todasDesp.filter(d => NF.util.mesDe(vencOf(d)) === mes);
-    const desp = cursoSel ? doMes.filter(d => d.curso_id === cursoSel) : doMes;
+    const desp = !cursoSel ? doMes
+      : cursoSel === 'extra' ? doMes.filter(d => !d.curso_id)
+      : cursoSel === 'curso' ? doMes.filter(d => d.curso_id)
+      : doMes.filter(d => d.curso_id === cursoSel);
     const pend = desp.filter(d => !isPago(d));
     const aVencer = pend.filter(d => vencOf(d) >= hoje);
     const vencidas = pend.filter(d => vencOf(d) < hoje);
@@ -596,19 +600,25 @@ NF.finance = (() => {
           tr.style.display = !q || norm(tr.textContent).includes(q) ? '' : 'none';
         });
       } });
-    // Filtro por curso (Academy): recalcula painel e lista para o curso escolhido.
-    let selCurso = null;
-    if (cursos.length) {
-      selCurso = el('select', { class: 'nf-filter',
-        onchange: e => viewDespesas(negocio, NF.ui.clear(body), mes, filtroStatus, e.target.value || null) },
-        el('option', { value: '' }, 'Todos os cursos'),
-        ...cursos.map(c => el('option', { value: c.id }, c.titulo)));
-      selCurso.value = cursoSel || '';
+    // Academy: chips Todas · De curso · Extras; em "De curso", escolhe o curso.
+    let selCurso = null, chipsTipo = null;
+    if (negocio === 'academy') {
+      const tipo = !cursoSel ? null : cursoSel === 'extra' ? 'extra' : 'curso';
+      const irPara = v => viewDespesas(negocio, NF.ui.clear(body), mes, filtroStatus, v);
+      chipsTipo = el('div', { class: 'nf-scope' },
+        ...[[null, 'Todas'], ['curso', 'De curso'], ['extra', 'Extras']].map(([v, lbl]) =>
+          el('button', { class: 'chip' + (tipo === v ? ' active' : ''), onclick: () => irPara(v) }, lbl)));
+      if (tipo === 'curso' && cursos.length) {
+        selCurso = el('select', { class: 'nf-filter', onchange: e => irPara(e.target.value || 'curso') },
+          el('option', { value: 'curso' }, 'Todos os cursos'),
+          ...cursos.map(c => el('option', { value: c.id }, c.titulo)));
+        selCurso.value = cursoSel;
+      }
     }
     body.append(el('div', { class: 'nf-row-head' },
       el('div', { style: 'display:flex; align-items:center; gap:10px; flex-wrap:wrap;' },
         filtroMes(todasDesp.map(d => ({ v: vencOf(d) })), 'v', mes, m => viewDespesas(negocio, NF.ui.clear(body), m, filtroStatus, cursoSel)),
-        selCurso),
+        chipsTipo, selCurso),
       buscaInput));
 
     // Painel de contas a pagar — clicáveis: filtram a lista abaixo.
@@ -634,7 +644,8 @@ NF.finance = (() => {
     NF.finance.filtroDespesas = { rows: lista.slice(), busca: norm(buscaInput.value || '') };
     body.append(el('div', { class: 'nf-row-head' },
       el('div', { style: 'display:flex; align-items:center; gap:12px; flex-wrap:wrap;' },
-        el('h4', {}, filtroStatus ? `${LABELS[filtroStatus]} (${lista.length})` : 'Contas / despesas'),
+        el('h4', {}, filtroStatus ? `${LABELS[filtroStatus]} (${lista.length})`
+          : cursoSel === 'extra' ? 'Despesas extras' : cursoSel ? 'Despesas de curso' : 'Contas / despesas'),
         filtroStatus ? el('button', { class: 'btn ghost tiny', onclick: () => viewDespesas(negocio, NF.ui.clear(body), mes, null, cursoSel) }, 'Ver todas') : null),
       el('button', { class: 'btn', onclick: () => abrirFormDespesa() }, '+ Nova despesa')));
 
@@ -669,8 +680,12 @@ NF.finance = (() => {
           { name: 'metodo', label: 'Método de pagamento', type: 'select',
             value: metodoDe(r?.categoria),
             options: [{ value: '', label: '—' }, ...METODOS.map(m => ({ value: m, label: m }))] },
-          ...(cursos.length ? [{ name: 'curso_id', label: 'Curso (opcional)', type: 'select', value: r?.curso_id || '',
-            options: [{ value: '', label: '—' }, ...cursos.map(c => ({ value: c.id, label: c.titulo }))] }] : []),
+          // Academy: vínculo ao curso = despesa de curso; sem curso = despesa extra.
+          ...(negocio === 'academy' ? [{ name: 'curso_id', label: 'Tipo / curso', type: 'select',
+            // nova despesa já vem no curso do filtro aberto (ou extra)
+            value: r ? (r.curso_id || '') : (cursoSel && cursoSel !== 'extra' && cursoSel !== 'curso' ? cursoSel : ''),
+            options: [{ value: '', label: 'Despesa extra (sem curso)' },
+              ...cursos.map(c => ({ value: c.id, label: 'Curso: ' + c.titulo }))] }] : []),
           { name: 'valor', label: 'Valor', type: 'number', step: '0.01', required: true, value: r?.valor ?? '' },
           ...(editando ? [] : [{ name: 'parcelas', label: 'Parcelas (divide o valor total)', type: 'select', value: '1',
             options: Array.from({ length: 12 }, (_, i) => ({ value: String(i + 1), label: i === 0 ? 'À vista (1x)' : `${i + 1}x` })),
@@ -740,7 +755,7 @@ NF.finance = (() => {
       { key: 'vencimento', label: 'Vencimento', fmt: (_, r) => NF.util.dataBR(vencOf(r)) },
       { key: 'descricao', label: 'Descrição' },
       { key: 'categoria', label: 'Categoria' },
-      ...(negocio === 'academy' ? [{ key: 'curso_id', label: 'Curso', fmt: v => (cMap[v] || '—') }] : []),
+      ...(negocio === 'academy' ? [{ key: 'curso_id', label: 'Curso', fmt: v => v ? (cMap[v] || '—') : 'Extra' }] : []),
       { key: 'valor', label: 'Valor', fmt: v => NF.util.brl(v) },
       { key: 'comprovante_url', label: 'Anexo', fmt: v => v ? `<a href="#" onclick="NF.ui.viewer('${String(v).replace(/'/g, '%27')}');return false">📎 abrir</a>` : '—' },
       { key: 'status', label: 'Status', fmt: (_, r) => statusBadge(r) },
