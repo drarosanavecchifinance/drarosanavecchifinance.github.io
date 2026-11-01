@@ -73,6 +73,7 @@ NF.finance = (() => {
       state.tab = id;
       NF.finance.abaAtiva = id;   // o Exportar usa isso: na aba Despesas, exporta só despesas
       if (id !== 'despesas') NF.finance.filtroDespesas = null;   // limpa o filtro registrado
+      NF.finance.cursoAberto = null;   // Academy: curso aberto na aba Cursos (o Exportar usa)
       [...nav.children].forEach(b => b.classList.toggle('active', b.dataset.id === id));
       NF.ui.clear(body);
       const ex = extras.find(e => e.id === id);

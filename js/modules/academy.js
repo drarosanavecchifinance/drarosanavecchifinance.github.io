@@ -120,6 +120,7 @@ NF.modules.academy = (() => {
   }
 
   async function viewCursos(body, filtro) {
+    NF.finance.cursoAberto = null;
     const [cursos, vendas, lanc] = await Promise.all([
       NF.data.list('cursos', { negocio: NEG }),
       NF.data.list('vendas', { negocio: NEG }),
@@ -183,6 +184,7 @@ NF.modules.academy = (() => {
 
   // ---- Dashboard de um curso: receita (vendas anexadas) × despesas (anexadas) ----
   async function cursoDashboard(body, curso) {
+    NF.finance.cursoAberto = curso;   // o Exportar passa a gerar só a planilha deste curso
     const [vendas, lanc] = await Promise.all([
       NF.data.list('vendas', { negocio: NEG }),
       NF.data.list('lancamentos', { negocio: NEG }),

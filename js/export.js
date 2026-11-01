@@ -11,6 +11,8 @@ NF.export = (() => {
   // aba: aba aberta no financeiro — em 'despesas', exporta SÓ as despesas.
   async function negocio(neg, aba) {
     if (typeof XLSX === 'undefined') { NF.ui.toast('Biblioteca de Excel não carregou', 'err'); return; }
+    // Academy com um curso aberto (Cursos → Abrir): exporta só aquele curso.
+    if (neg === 'academy' && aba === 'cursos' && NF.finance.cursoAberto) return curso(NF.finance.cursoAberto);
     const soDespesas = aba === 'despesas';
     const [vendas, carteira, lanc, formas, vendedoras] = await Promise.all([
       NF.data.list('vendas', { negocio: neg }),
@@ -96,6 +98,34 @@ NF.export = (() => {
     const nome = NF_CONFIG.NEGOCIOS[neg].nome;
     XLSX.writeFile(wb, `NatureFace-${nome}-${soDespesas ? 'Despesas-' : ''}${NF.util.hoje()}.xlsx`);
     NF.ui.toast(soDespesas ? `${desp.length} despesa(s) exportada(s)` : 'Excel exportado');
+  }
+
+  // Planilha de um curso: Resumo + Receitas (vendas e entradas anexadas) + Despesas.
+  async function curso(c) {
+    const [vendas, lanc] = await Promise.all([
+      NF.data.list('vendas', { negocio: 'academy' }),
+      NF.data.list('lancamentos', { negocio: 'academy' }),
+    ]);
+    const vs = vendas.filter(v => v.curso_id === c.id);
+    const rs = lanc.filter(l => l.tipo === 'receita' && l.curso_id === c.id);
+    const ds = lanc.filter(l => l.tipo === 'despesa' && l.curso_id === c.id);
+    const receita = vs.reduce((s, v) => s + v.valor_bruto, 0) + rs.reduce((s, l) => s + l.valor, 0);
+    const despesa = ds.reduce((s, l) => s + l.valor, 0);
+    const wb = XLSX.utils.book_new();
+    add(wb, 'Resumo', [{ Curso: c.titulo, 'Receita (R$)': receita, 'Despesas (R$)': despesa, 'Resultado (R$)': NF.util.round2(receita - despesa) }]);
+    add(wb, 'Receitas', [
+      ...vs.map(v => ({ data: v.data_venda, Cliente: v.cliente, Descrição: v.descricao || '', 'Valor (R$)': v.valor_bruto })),
+      ...rs.map(l => ({ data: l.data, Cliente: '', Descrição: l.descricao || '', 'Valor (R$)': l.valor })),
+    ].sort((a, b) => b.data.localeCompare(a.data)).map(({ data, ...r }) => ({ Data: NF.util.dataBR(data), ...r })));
+    add(wb, 'Despesas', ds
+      .sort((a, b) => (b.vencimento || b.data).localeCompare(a.vencimento || a.data))
+      .map(d => ({
+        Vencimento: NF.util.dataBR(d.vencimento || d.data), Descrição: d.descricao || '', Categoria: d.categoria || '',
+        'Valor (R$)': d.valor,
+        Situação: d.pago === true ? 'Paga' : ((d.vencimento || d.data) < NF.util.hoje() ? 'Vencida' : 'A vencer'),
+      })));
+    XLSX.writeFile(wb, `NatureFace-Academy-${c.titulo.replace(/[\\/:*?"<>|]/g, '-')}-${NF.util.hoje()}.xlsx`);
+    NF.ui.toast(`Curso exportado (${ds.length} despesa(s))`);
   }
 
   // Fechamento do mês: Excel consolidado das 3 empresas (Resumo + Receitas + Despesas).
