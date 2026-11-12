@@ -99,7 +99,10 @@ a { color: inherit; text-decoration: none; }
 .nf-mini .lbl, .nf-card .lbl { display: block; color: var(--muted); font-size: .68rem; letter-spacing: .14em;
   text-transform: uppercase; margin-bottom: 10px; }
 .nf-mini strong, .nf-card strong { font-family: var(--sans); font-weight: 500; font-size: 1.6rem;
-  letter-spacing: 0; font-variant-numeric: tabular-nums; }
+  letter-spacing: 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* Fileira do topo do dashboard: 3 cartões (Vendas, Despesas, Saldo) lado a lado; empilha no celular. */
+.nf-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.nf-cards .nf-card strong { font-size: clamp(1.15rem, 2.2vw, 1.6rem); }
 .nf-mini-sub { display: block; margin-top: 6px; color: var(--muted); font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; }
 .nf-sub-h { margin: 26px 0 10px; font-size: .74rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-soft); font-weight: 500; }
 .nf-num { font-variant-numeric: tabular-nums; }
@@ -210,6 +213,7 @@ a { color: inherit; text-decoration: none; }
   #app { padding: 26px 18px 60px; }
   .nf-fin, .nf-block { padding: 24px 20px; }
   .tab { margin: 0 4px; }
+  .nf-cards { grid-template-columns: 1fr; }
 }
 
 /* Visualizador de anexos (pop-up central) */

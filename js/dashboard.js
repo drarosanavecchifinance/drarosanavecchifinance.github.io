@@ -19,10 +19,9 @@ NF.dashboard = (() => {
   }
 
   // Paleta premium branco & dourado.
-  const CORES = ['#b08d3f', '#7d7360', '#a88b54', '#4a463f', '#c2a24e', '#8a6d2b', '#d8c48a'];
   const GOLD = '#b08d3f', TAUPE = '#7d7360', VERDE = '#3f7d5a', VERMELHO = '#b25444';
 
-  // Os 4 gráficos-base (fluxo, vendedoras, projeção da carteira, categorias) —
+  // Os 3 gráficos-base (fluxo, vendedoras, projeção da carteira) —
   // usados no dashboard e embutidos no Resumo de cada empresa.
   function montarGraficos(grid, { lanc, cart, vendas, vendedoras }, { detalhesEm = null } = {}) {
     const canvasBox = (titulo) => {
@@ -69,15 +68,6 @@ NF.dashboard = (() => {
     }));
     if (detalhesEm) cvCart.closest('.nf-chart-box').append(
       el('button', { class: 'btn ghost tiny', style: 'margin-top:14px;', onclick: () => carteiraDetalhe(detalhesEm) }, 'Ver detalhado por mês/empresa →'));
-
-    // 4) Despesas por categoria
-    const porCat = {};
-    lanc.filter(l => l.tipo === 'despesa').forEach(l => { const c = l.categoria || 'Outros'; porCat[c] = (porCat[c] || 0) + l.valor; });
-    charts.push(new Chart(canvasBox('Despesas por categoria'), {
-      type: 'doughnut',
-      data: { labels: Object.keys(porCat), datasets: [{ data: Object.values(porCat), backgroundColor: CORES }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } },
-    }));
   }
 
   // Gráficos embutidos no Resumo de uma empresa (sem cabeçalho nem cards).
@@ -121,19 +111,13 @@ NF.dashboard = (() => {
 
     // --- Cards do topo (mês corrente somando o escopo) ---
     const mesAtual = NF.util.mesDe(NF.util.hoje());
-    let vendasMes = 0, recebMes = 0, carteira = 0, despMes = 0, nVendas = 0;
+    let vendasMes = 0, despMes = 0, nVendas = 0;
     vendas.forEach(v => { if (NF.util.mesDe(v.data_venda) === mesAtual) { vendasMes += v.valor_bruto; nVendas++; } });
-    cart.forEach(c => {
-      if (c.status === 'recebido' && NF.util.mesDe(c.data_recebido) === mesAtual) recebMes += c.valor_parcela_liquido;
-      if (c.status !== 'recebido') carteira += c.valor_parcela_liquido;
-    });
     lanc.forEach(l => { if (l.tipo === 'despesa' && NF.util.mesDe(l.data) === mesAtual) despMes += l.valor; });
 
     const card = (l, v, cls) => el('div', { class: `nf-card ${cls || ''}` }, el('span', { class: 'lbl' }, l), el('strong', {}, NF.util.brl(v)));
     mount.append(el('div', { class: 'nf-cards' },
       card('Vendas do mês', vendasMes, 'accent'),
-      card('Recebido no mês', recebMes, ''),
-      card('Carteira (a receber)', carteira, 'warn'),
       card('Despesas do mês', despMes, 'neg'),
       card('Saldo do mês', vendasMes - despMes, (vendasMes - despMes) >= 0 ? 'pos' : 'neg'),
     ));
