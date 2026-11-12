@@ -12,13 +12,14 @@ window.NF_CONFIG = {
   // Com dados na nuvem, o login é obrigatório (RLS só libera autenticado).
   AUTH_DISABLED: false,
 
-  // Enum fixo dos 3 negócios (bate com a coluna `negocio`).
+  // Negócios (o id bate com a coluna `negocio` no banco).
   NEGOCIOS: {
     naturefac: { id: 'naturefac', nome: 'NatureFace', accent: '#b08d3f', extras: ['estoque'] },
     academy:   { id: 'academy',   nome: 'Academy',    accent: '#c2a24e', extras: ['alunas'] },
     clinica:   { id: 'clinica',   nome: 'Clínica',    accent: '#a88b54', extras: [] },
     // Bléfaro Sem Cortes: só controle de despesas (sem receitas/carteira/vendedoras).
     blefaro:   { id: 'blefaro',   nome: 'Bléfaro Sem Cortes', accent: '#9c8455', extras: [], soDespesas: true },
+    adeusmanchas: { id: 'adeusmanchas', nome: 'Adeus Manchas', accent: '#8f7a4e', extras: [] },
   },
 
   DIAS_ENTRE_PARCELAS: 31,
