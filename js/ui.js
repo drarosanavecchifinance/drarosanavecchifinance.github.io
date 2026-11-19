@@ -60,13 +60,25 @@ NF.ui = {
     form.append(actions);
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      // Trava o botão enquanto salva: clique duplo não lança duas vezes.
+      if (form.dataset.salvando) return;
+      form.dataset.salvando = '1';
+      const btnSalvar = form.querySelector('button[type="submit"]');
+      const rotulo = btnSalvar.textContent;
+      btnSalvar.disabled = true; btnSalvar.textContent = 'Salvando…';
       const data = {};
       for (const [k, inp] of Object.entries(inputs)) {
         if (inp.type === 'file') data[k] = (inp.files && inp.files[0]) || null;
         else data[k] = inp.type === 'number' ? (inp.value === '' ? null : Number(inp.value)) : inp.value;
       }
-      await onSubmit(data);
-      overlay.remove();
+      try {
+        await onSubmit(data);
+        overlay.remove();
+      } catch (err) {
+        console.error('[modal]', err);
+        NF.ui.toast('Erro ao salvar', 'err');
+        delete form.dataset.salvando; btnSalvar.disabled = false; btnSalvar.textContent = rotulo;
+      }
     });
     overlay.append(form);
     overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });

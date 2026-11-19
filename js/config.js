@@ -20,8 +20,8 @@ window.NF_CONFIG = {
     // Bléfaro Sem Cortes: despesas + receitas que entram sozinhas pela Greenn
     // (webhook -> tabela nf_greenn_vendas). Sem carteira/vendedoras.
     blefaro:   { id: 'blefaro',   nome: 'Bléfaro Sem Cortes', accent: '#9c8455', extras: [], soDespesas: true, receitasGreenn: true },
-    // Adeus Manchas: mesmo modelo do Bléfaro (só despesas, dados separados por `negocio`).
-    adeusmanchas: { id: 'adeusmanchas', nome: 'Adeus Manchas', accent: '#8f7a4e', extras: [], soDespesas: true },
+    // Adeus Manchas: mesmo modelo do Bléfaro (despesas + receitas da Greenn, dados separados por `negocio`).
+    adeusmanchas: { id: 'adeusmanchas', nome: 'Adeus Manchas', accent: '#8f7a4e', extras: [], soDespesas: true, receitasGreenn: true },
   },
 
   DIAS_ENTRE_PARCELAS: 31,

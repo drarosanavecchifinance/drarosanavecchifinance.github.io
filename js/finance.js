@@ -95,7 +95,7 @@ NF.finance = (() => {
       const b = el('button', { class: 'nf-subtab', 'data-id': t.id, onclick: () => go(t.id) }, t.label);
       nav.append(b);
     });
-    go(soDespesas ? 'despesas' : 'resumo');
+    go(soDespesas ? (greenn ? 'receitas_greenn' : 'despesas') : 'resumo');
   }
 
   // ---- RESUMO ----
