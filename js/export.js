@@ -109,8 +109,6 @@ NF.export = (() => {
       Data: NF.util.dataBR(r.data), Cliente: r.cliente || r.cliente_email || '',
       Produto: r.produto || '', Oferta: r.oferta || '',
       'Bruto (R$)': Number(r.valor_bruto) || 0,
-      'Taxa (R$)': r.taxa == null ? '' : Number(r.taxa),
-      'Líquido (R$)': r.valor_liquido == null ? '' : Number(r.valor_liquido),
       Status: r.status === 'pago' ? 'Pago' : 'Estornado', 'ID Greenn': r.transacao_id,
     })).filter(l => !f.busca || norm(Object.values(l).join(' ')).includes(f.busca));
     const wb = XLSX.utils.book_new();

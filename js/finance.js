@@ -791,7 +791,6 @@ NF.finance = (() => {
     const pagas = rows.filter(r => r.status === 'pago');
     const estornadas = rows.filter(r => r.status === 'estornado');
     const sum = (arr, k) => NF.util.round2(arr.reduce((s, r) => s + (Number(r[k]) || 0), 0));
-    const semTaxa = pagas.some(r => r.valor_liquido == null);
     const reload = (m, p) => viewReceitasGreenn(negocio, NF.ui.clear(body), m, p);
     const txt = v => el('span', {}, v == null || v === '' ? '—' : String(v));
     const brlOu = v => v == null ? txt('—') : txt(NF.util.brl(Number(v)));
@@ -817,24 +816,20 @@ NF.finance = (() => {
         el('div', { class: 'nf-filter-wrap' }, el('span', { class: 'nf-filter-lbl' }, 'Produto'), selProd)),
       buscaInput));
 
+    // Regra da usuária: receitas sempre pelo valor BRUTO; sem taxa/líquido por enquanto.
     const card = (lbl, valor, cls, sub) => el('div', { class: `nf-mini ${cls}` },
-      el('span', { class: 'lbl' }, lbl), el('strong', {}, NF.util.brl(valor)), el('span', { class: 'nf-mini-sub' }, sub));
+      el('span', { class: 'lbl' }, lbl), el('strong', {}, NF.util.brl(valor)), sub ? el('span', { class: 'nf-mini-sub' }, sub) : null);
     body.append(el('div', { class: 'nf-mini-grid' },
       card('Vendido (bruto)', sum(pagas, 'valor_bruto'), 'accent', `${pagas.length} venda(s)`),
-      card('Taxas Greenn', sum(pagas, 'taxa'), 'warn', semTaxa ? 'algumas sem taxa informada' : 'descontadas'),
-      card('Líquido', sum(pagas, 'valor_liquido'), 'pos', semTaxa ? 'só onde a Greenn informou' : 'a receber/recebido'),
-      card('Estornado', sum(estornadas, 'valor_bruto'), 'neg', `${estornadas.length} reembolso(s)/chargeback(s)`),
+      card('Estornado', sum(estornadas, 'valor_bruto'), 'neg'),
     ));
 
     // Totais por produto/origem (separa a venda direta das outras).
     const porProd = {};
     rows.forEach(r => {
       const k = origemDe(r);
-      const t = porProd[k] || (porProd[k] = { origem: k, n: 0, bruto: 0, liquido: 0, estornado: 0 });
-      if (r.status === 'pago') {
-        t.n++; t.bruto += Number(r.valor_bruto) || 0;
-        if (r.valor_liquido == null) t.semLiq = true; else t.liquido += Number(r.valor_liquido) || 0;
-      }
+      const t = porProd[k] || (porProd[k] = { origem: k, n: 0, bruto: 0, estornado: 0 });
+      if (r.status === 'pago') { t.n++; t.bruto += Number(r.valor_bruto) || 0; }
       else t.estornado += Number(r.valor_bruto) || 0;
     });
     const linhasProd = Object.values(porProd).sort((a, b) => b.bruto - a.bruto);
@@ -844,7 +839,6 @@ NF.finance = (() => {
         { key: 'origem', label: 'Produto / Origem', fmt: v => txt(v) },
         { key: 'n', label: 'Vendas', fmt: v => txt(v) },
         { key: 'bruto', label: 'Bruto', fmt: v => txt(NF.util.brl(v)) },
-        { key: 'liquido', label: 'Líquido', fmt: (v, r) => txt(r.semLiq && !v ? '—' : NF.util.brl(v) + (r.semLiq ? ' *' : '')) },
         { key: 'estornado', label: 'Estornado', fmt: v => txt(NF.util.brl(v)) },
       ], linhasProd)));
     }
@@ -859,8 +853,6 @@ NF.finance = (() => {
       { key: 'cliente', label: 'Cliente', fmt: (v, r) => txt(v || r.cliente_email) },
       { key: 'produto', label: 'Produto / Origem', fmt: (_, r) => txt(origemDe(r)) },
       { key: 'valor_bruto', label: 'Bruto', fmt: v => brlOu(v) },
-      { key: 'taxa', label: 'Taxa', fmt: v => brlOu(v) },
-      { key: 'valor_liquido', label: 'Líquido', fmt: v => brlOu(v) },
       { key: 'status', label: 'Status', fmt: v => el('span', { class: 'nf-badge ' + (v === 'pago' ? 'recebido' : 'atrasado') }, v === 'pago' ? 'pago' : 'estornado') },
     ], lista);
     body.append(el('div', { style: 'overflow-x:auto;' }, tabela));
