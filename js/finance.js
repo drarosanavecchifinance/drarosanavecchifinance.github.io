@@ -54,7 +54,11 @@ NF.finance = (() => {
     NF.ui.clear(mount);
     const state = { tab: 'resumo' };
     const soDespesas = NF_CONFIG.NEGOCIOS[negocio]?.soDespesas;
-    const tabs = soDespesas ? [{ id: 'despesas', label: 'Despesas' }] : [
+    const greenn = NF_CONFIG.NEGOCIOS[negocio]?.receitasGreenn;
+    const tabs = soDespesas ? [
+      ...(greenn ? [{ id: 'receitas_greenn', label: 'Receitas' }] : []),
+      { id: 'despesas', label: 'Despesas' },
+    ] : [
       { id: 'resumo', label: 'Resumo' },
       // A aba Vendas foi descontinuada: as entradas ficam na aba Receitas,
       // que gera a carteira conforme o meio de pagamento.
@@ -73,6 +77,7 @@ NF.finance = (() => {
       state.tab = id;
       NF.finance.abaAtiva = id;   // o Exportar usa isso: na aba Despesas, exporta só despesas
       if (id !== 'despesas') NF.finance.filtroDespesas = null;   // limpa o filtro registrado
+      if (id !== 'receitas_greenn') NF.finance.filtroGreenn = null;
       NF.finance.cursoAberto = null;   // Academy: curso aberto na aba Cursos (o Exportar usa)
       [...nav.children].forEach(b => b.classList.toggle('active', b.dataset.id === id));
       NF.ui.clear(body);
@@ -83,6 +88,7 @@ NF.finance = (() => {
       if (id === 'carteira') return viewCarteira(negocio, body);
       if (id === 'receitas') return viewReceitas(negocio, body);
       if (id === 'despesas') return viewDespesas(negocio, body);
+      if (id === 'receitas_greenn') return viewReceitasGreenn(negocio, body);
       if (id === 'vendedoras') return viewVendedoras(negocio, body);
     }
     tabs.forEach(t => {
@@ -771,6 +777,95 @@ NF.finance = (() => {
   }
 
   // ---- VENDEDORAS (cadastro compartilhado) ----
+  // ---- RECEITAS GREENN (Bléfaro) ----
+  // Vendas que entram sozinhas pelo webhook da Greenn (tabela nf_greenn_vendas).
+  // Só leitura aqui: quem grava é a função greenn-webhook. Estorno = reembolso/chargeback.
+  // Textos vindos da Greenn entram como TEXTO (nós DOM), nunca como HTML.
+  async function viewReceitasGreenn(negocio, body, mesSel, prodSel) {
+    const todas = await NF.data.list('greenn_vendas', { negocio });
+    const mes = mesSel || NF.util.mesDe(NF.util.hoje());
+    const prodDe = r => r.produto || 'Sem produto';
+    const origemDe = r => r.oferta && r.oferta !== r.produto ? `${prodDe(r)} · ${r.oferta}` : prodDe(r);
+    const doMes = mes === 'todos' ? todas : todas.filter(r => NF.util.mesDe(r.data) === mes);
+    const rows = prodSel ? doMes.filter(r => prodDe(r) === prodSel) : doMes;
+    const pagas = rows.filter(r => r.status === 'pago');
+    const estornadas = rows.filter(r => r.status === 'estornado');
+    const sum = (arr, k) => NF.util.round2(arr.reduce((s, r) => s + (Number(r[k]) || 0), 0));
+    const semTaxa = pagas.some(r => r.valor_liquido == null);
+    const reload = (m, p) => viewReceitasGreenn(negocio, NF.ui.clear(body), m, p);
+    const txt = v => el('span', {}, v == null || v === '' ? '—' : String(v));
+    const brlOu = v => v == null ? txt('—') : txt(NF.util.brl(Number(v)));
+
+    // Filtro de mês + produto + busca (igual às Despesas).
+    const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    let tabela;
+    const buscaInput = el('input', { class: 'nf-filter', type: 'search', placeholder: '🔍 Buscar receita…',
+      oninput: () => {
+        const q = norm(buscaInput.value);
+        if (NF.finance.filtroGreenn) NF.finance.filtroGreenn.busca = q;
+        if (tabela) [...tabela.querySelectorAll('tbody tr')].forEach(tr => {
+          tr.style.display = !q || norm(tr.textContent).includes(q) ? '' : 'none';
+        });
+      } });
+    const produtos = [...new Set(todas.map(prodDe))].sort();
+    const selProd = el('select', { class: 'nf-filter', onchange: e => reload(mes, e.target.value || null) },
+      el('option', { value: '' }, 'Todos os produtos'), ...produtos.map(p => el('option', { value: p }, p)));
+    selProd.value = prodSel || '';
+    body.append(el('div', { class: 'nf-row-head' },
+      el('div', { style: 'display:flex; align-items:center; gap:10px; flex-wrap:wrap;' },
+        filtroMes(todas.map(r => ({ v: r.data })), 'v', mes, m => reload(m, prodSel)),
+        el('div', { class: 'nf-filter-wrap' }, el('span', { class: 'nf-filter-lbl' }, 'Produto'), selProd)),
+      buscaInput));
+
+    const card = (lbl, valor, cls, sub) => el('div', { class: `nf-mini ${cls}` },
+      el('span', { class: 'lbl' }, lbl), el('strong', {}, NF.util.brl(valor)), el('span', { class: 'nf-mini-sub' }, sub));
+    body.append(el('div', { class: 'nf-mini-grid' },
+      card('Vendido (bruto)', sum(pagas, 'valor_bruto'), 'accent', `${pagas.length} venda(s)`),
+      card('Taxas Greenn', sum(pagas, 'taxa'), 'warn', semTaxa ? 'algumas sem taxa informada' : 'descontadas'),
+      card('Líquido', sum(pagas, 'valor_liquido'), 'pos', semTaxa ? 'só onde a Greenn informou' : 'a receber/recebido'),
+      card('Estornado', sum(estornadas, 'valor_bruto'), 'neg', `${estornadas.length} reembolso(s)/chargeback(s)`),
+    ));
+
+    // Totais por produto/origem (separa a venda direta das outras).
+    const porProd = {};
+    rows.forEach(r => {
+      const k = origemDe(r);
+      const t = porProd[k] || (porProd[k] = { origem: k, n: 0, bruto: 0, liquido: 0, estornado: 0 });
+      if (r.status === 'pago') {
+        t.n++; t.bruto += Number(r.valor_bruto) || 0;
+        if (r.valor_liquido == null) t.semLiq = true; else t.liquido += Number(r.valor_liquido) || 0;
+      }
+      else t.estornado += Number(r.valor_bruto) || 0;
+    });
+    const linhasProd = Object.values(porProd).sort((a, b) => b.bruto - a.bruto);
+    if (linhasProd.length > 1) {
+      body.append(el('div', { class: 'nf-row-head' }, el('h4', {}, 'Totais por produto / origem')));
+      body.append(el('div', { style: 'overflow-x:auto;' }, NF.ui.table([
+        { key: 'origem', label: 'Produto / Origem', fmt: v => txt(v) },
+        { key: 'n', label: 'Vendas', fmt: v => txt(v) },
+        { key: 'bruto', label: 'Bruto', fmt: v => txt(NF.util.brl(v)) },
+        { key: 'liquido', label: 'Líquido', fmt: (v, r) => txt(r.semLiq && !v ? '—' : NF.util.brl(v) + (r.semLiq ? ' *' : '')) },
+        { key: 'estornado', label: 'Estornado', fmt: v => txt(NF.util.brl(v)) },
+      ], linhasProd)));
+    }
+
+    const lista = rows.slice().sort((a, b) => (b.data || '').localeCompare(a.data || ''));
+    NF.finance.filtroGreenn = { rows: lista.slice(), busca: norm(buscaInput.value || '') };
+    body.append(el('div', { class: 'nf-row-head' },
+      el('h4', {}, `Receitas (${lista.length})`),
+      el('span', { class: 'nf-hint', style: 'margin:0;' }, 'Entram sozinhas pela Greenn (venda paga). Reembolso/chargeback viram estorno.')));
+    tabela = NF.ui.table([
+      { key: 'data', label: 'Data', fmt: v => txt(NF.util.dataBR(v)) },
+      { key: 'cliente', label: 'Cliente', fmt: (v, r) => txt(v || r.cliente_email) },
+      { key: 'produto', label: 'Produto / Origem', fmt: (_, r) => txt(origemDe(r)) },
+      { key: 'valor_bruto', label: 'Bruto', fmt: v => brlOu(v) },
+      { key: 'taxa', label: 'Taxa', fmt: v => brlOu(v) },
+      { key: 'valor_liquido', label: 'Líquido', fmt: v => brlOu(v) },
+      { key: 'status', label: 'Status', fmt: v => el('span', { class: 'nf-badge ' + (v === 'pago' ? 'recebido' : 'atrasado') }, v === 'pago' ? 'pago' : 'estornado') },
+    ], lista);
+    body.append(el('div', { style: 'overflow-x:auto;' }, tabela));
+  }
+
   async function viewVendedoras(negocio, body) {
     const vendedoras = await NF.data.list('vendedoras');
     body.append(el('div', { class: 'nf-row-head' },

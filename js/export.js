@@ -13,6 +13,7 @@ NF.export = (() => {
     if (typeof XLSX === 'undefined') { NF.ui.toast('Biblioteca de Excel não carregou', 'err'); return; }
     // Academy com um curso aberto (Cursos → Abrir): exporta só aquele curso.
     if (neg === 'academy' && aba === 'cursos' && NF.finance.cursoAberto) return curso(NF.finance.cursoAberto);
+    if (aba === 'receitas_greenn') return receitasGreenn(neg);
     const soDespesas = aba === 'despesas';
     const [vendas, carteira, lanc, formas, vendedoras] = await Promise.all([
       NF.data.list('vendas', { negocio: neg }),
@@ -100,6 +101,24 @@ NF.export = (() => {
     NF.ui.toast(soDespesas ? `${desp.length} despesa(s) exportada(s)` : 'Excel exportado');
   }
 
+  // Receitas da Greenn (Bléfaro): exporta o que está na tela (mês + produto + busca).
+  function receitasGreenn(neg) {
+    const f = NF.finance.filtroGreenn || { rows: [], busca: '' };
+    const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const linhas = f.rows.map(r => ({
+      Data: NF.util.dataBR(r.data), Cliente: r.cliente || r.cliente_email || '',
+      Produto: r.produto || '', Oferta: r.oferta || '',
+      'Bruto (R$)': Number(r.valor_bruto) || 0,
+      'Taxa (R$)': r.taxa == null ? '' : Number(r.taxa),
+      'Líquido (R$)': r.valor_liquido == null ? '' : Number(r.valor_liquido),
+      Status: r.status === 'pago' ? 'Pago' : 'Estornado', 'ID Greenn': r.transacao_id,
+    })).filter(l => !f.busca || norm(Object.values(l).join(' ')).includes(f.busca));
+    const wb = XLSX.utils.book_new();
+    add(wb, 'Receitas', linhas);
+    XLSX.writeFile(wb, `NatureFace-${NF_CONFIG.NEGOCIOS[neg].nome}-Receitas-${NF.util.hoje()}.xlsx`);
+    NF.ui.toast(`${linhas.length} receita(s) exportada(s)`);
+  }
+
   // Planilha de um curso: Resumo + Receitas (vendas e entradas anexadas) + Despesas.
   async function curso(c) {
     const [vendas, lanc] = await Promise.all([
@@ -134,9 +153,13 @@ NF.export = (() => {
     mes = mes || NF.util.mesDe(NF.util.hoje());
     const negocios = Object.keys(NF_CONFIG.NEGOCIOS);
     const nome = n => NF_CONFIG.NEGOCIOS[n].nome;
-    const [lanc, cart, vendas] = await Promise.all([
-      NF.data.list('lancamentos'), NF.data.list('carteira'), NF.data.list('vendas'),
+    const [lanc, cart, vendasNf, greenn] = await Promise.all([
+      NF.data.list('lancamentos'), NF.data.list('carteira'), NF.data.list('vendas'), NF.data.list('greenn_vendas'),
     ]);
+    // Receitas da Greenn (pagas) entram como vendas, no valor bruto.
+    const vendas = [...vendasNf, ...greenn.filter(g => g.status === 'pago').map(g => ({
+      negocio: g.negocio, data_venda: g.data, valor_bruto: Number(g.valor_bruto) || 0,
+      cliente: [g.cliente, g.produto].filter(Boolean).join(' — '), descricao: g.produto || '' }))];
     const r2 = NF.util.round2;
     // Receita = faturamento: vendas (Yampi) + avulsas ('Pedido Yampi'/'Recebimento…' duplicariam)
     const ehDup = l => (l.categoria || '').startsWith('Recebimento') || l.categoria === 'Pedido Yampi';

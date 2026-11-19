@@ -17,9 +17,11 @@ window.NF_CONFIG = {
     naturefac: { id: 'naturefac', nome: 'NatureFace', accent: '#b08d3f', extras: ['estoque'] },
     academy:   { id: 'academy',   nome: 'Academy',    accent: '#c2a24e', extras: ['alunas'] },
     clinica:   { id: 'clinica',   nome: 'Clínica',    accent: '#a88b54', extras: [] },
-    // Bléfaro Sem Cortes: só controle de despesas (sem receitas/carteira/vendedoras).
-    blefaro:   { id: 'blefaro',   nome: 'Bléfaro Sem Cortes', accent: '#9c8455', extras: [], soDespesas: true },
-    adeusmanchas: { id: 'adeusmanchas', nome: 'Adeus Manchas', accent: '#8f7a4e', extras: [] },
+    // Bléfaro Sem Cortes: despesas + receitas que entram sozinhas pela Greenn
+    // (webhook -> tabela nf_greenn_vendas). Sem carteira/vendedoras.
+    blefaro:   { id: 'blefaro',   nome: 'Bléfaro Sem Cortes', accent: '#9c8455', extras: [], soDespesas: true, receitasGreenn: true },
+    // Adeus Manchas: mesmo modelo do Bléfaro (só despesas, dados separados por `negocio`).
+    adeusmanchas: { id: 'adeusmanchas', nome: 'Adeus Manchas', accent: '#8f7a4e', extras: [], soDespesas: true },
   },
 
   DIAS_ENTRE_PARCELAS: 31,

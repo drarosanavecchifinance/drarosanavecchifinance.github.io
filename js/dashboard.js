@@ -89,12 +89,18 @@ NF.dashboard = (() => {
     const alvo = scope === 'consolidado' ? negocios : [scope];
 
     // Carrega tudo e filtra pelo escopo.
-    const [lancAll, cartAll, vendasAll, vendedoras] = await Promise.all([
+    const [lancAll, cartAll, vendasNf, vendedoras, greennAll] = await Promise.all([
       NF.data.list('lancamentos'), NF.data.list('carteira'),
-      NF.data.list('vendas'), NF.data.list('vendedoras'),
+      NF.data.list('vendas'), NF.data.list('vendedoras'), NF.data.list('greenn_vendas'),
     ]);
     const inScope = r => alvo.includes(r.negocio);
-    const lanc = lancAll.filter(inScope), cart = cartAll.filter(inScope), vendas = vendasAll.filter(inScope);
+    const lanc = lancAll.filter(inScope), cart = cartAll.filter(inScope), vendasSo = vendasNf.filter(inScope);
+    // Receitas da Greenn (Bléfaro, só pagas) somam nas vendas dos cards e no faturamento
+    // por negócio, mas NÃO nos gráficos de vendedora (não têm vendedora).
+    const greennVendas = greennAll.filter(g => g.status === 'pago').map(g => ({
+      negocio: g.negocio, data_venda: g.data, valor_bruto: Number(g.valor_bruto) || 0 }));
+    const vendasAll = [...vendasNf, ...greennVendas];
+    const vendas = vendasAll.filter(inScope);
 
     // --- Filtro de escopo ---
     const filtro = el('div', { class: 'nf-scope' },
@@ -126,7 +132,7 @@ NF.dashboard = (() => {
     // --- Grid de gráficos ---
     const grid = el('div', { class: 'nf-charts' });
     mount.append(grid);
-    montarGraficos(grid, { lanc, cart, vendas, vendedoras }, { detalhesEm: mount });
+    montarGraficos(grid, { lanc, cart, vendas: vendasSo, vendedoras }, { detalhesEm: mount });
     const canvasBox = (titulo) => {
       const box = el('div', { class: 'nf-chart-box' }, el('h4', {}, titulo));
       const cv = el('canvas'); box.append(cv); grid.append(box); return cv;
