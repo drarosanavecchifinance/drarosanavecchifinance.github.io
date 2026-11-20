@@ -154,10 +154,10 @@ NF.export = (() => {
     const [lanc, cart, vendasNf, greenn] = await Promise.all([
       NF.data.list('lancamentos'), NF.data.list('carteira'), NF.data.list('vendas'), NF.data.list('greenn_vendas'),
     ]);
-    // Receitas da Greenn (pagas) entram como vendas, no valor bruto.
-    const vendas = [...vendasNf, ...greenn.filter(g => g.status === 'pago').map(g => ({
-      negocio: g.negocio, data_venda: g.data, valor_bruto: Number(g.valor_bruto) || 0,
-      cliente: [g.cliente, g.produto].filter(Boolean).join(' — '), descricao: g.produto || '' }))];
+    // Receitas da Greenn entram como vendas (bruto, inclusive as estornadas) e os
+    // estornos entram como despesa (categoria "Estornos") — desconta uma vez só.
+    const vendas = [...vendasNf, ...NF.util.vendasGreenn(greenn)];
+    lanc.push(...NF.util.estornosComoDespesa(greenn));
     const r2 = NF.util.round2;
     // Receita = faturamento: vendas (Yampi) + avulsas ('Pedido Yampi'/'Recebimento…' duplicariam)
     const ehDup = l => (l.categoria || '').startsWith('Recebimento') || l.categoria === 'Pedido Yampi';

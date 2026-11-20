@@ -571,7 +571,10 @@ NF.finance = (() => {
   };
 
   async function viewDespesas(negocio, body, mesSel, filtroStatus, cursoSel) {
-    const todasDesp = (await NF.data.list('lancamentos', { negocio })).filter(l => l.tipo === 'despesa');
+    // Negócios da Greenn: os estornos entram como despesa (categoria "Estornos", só leitura).
+    const estornos = NF_CONFIG.NEGOCIOS[negocio]?.receitasGreenn
+      ? NF.util.estornosComoDespesa(await NF.data.list('greenn_vendas', { negocio })) : [];
+    const todasDesp = [...(await NF.data.list('lancamentos', { negocio })).filter(l => l.tipo === 'despesa'), ...estornos];
     const cursos = negocio === 'academy' ? await NF.data.list('cursos', { negocio }) : [];
     const cMap = Object.fromEntries(cursos.map(c => [c.id, c.titulo]));
     const hoje = NF.util.hoje();
@@ -754,19 +757,21 @@ NF.finance = (() => {
     }
 
     const statusBadge = (d) => {
+      if (d.estorno) return '<span class="nf-badge atrasado">estorno</span>';
       if (isPago(d)) return '<span class="nf-badge recebido">paga</span>';
       if (vencOf(d) < hoje) return '<span class="nf-badge atrasado">vencida</span>';
       return '<span class="nf-badge previsto">a vencer</span>';
     };
     tabela = NF.ui.table([
       { key: 'vencimento', label: 'Vencimento', fmt: (_, r) => NF.util.dataBR(vencOf(r)) },
-      { key: 'descricao', label: 'Descrição' },
+      // Estorno: texto vindo da Greenn entra como TEXTO (nó DOM), nunca como HTML.
+      { key: 'descricao', label: 'Descrição', fmt: (v, r) => r.estorno ? el('span', {}, v || '') : (v ?? '') },
       { key: 'categoria', label: 'Categoria' },
       ...(negocio === 'academy' ? [{ key: 'curso_id', label: 'Curso', fmt: v => v ? (cMap[v] || '—') : 'Extra' }] : []),
       { key: 'valor', label: 'Valor', fmt: v => NF.util.brl(v) },
       { key: 'comprovante_url', label: 'Anexo', fmt: v => v ? `<a href="#" onclick="NF.ui.viewer('${String(v).replace(/'/g, '%27')}');return false">📎 abrir</a>` : '—' },
       { key: 'status', label: 'Status', fmt: (_, r) => statusBadge(r) },
-    ], lista, (r) => [
+    ], lista, (r) => r.estorno ? [] : [
       isPago(r)
         ? null
         : NF.ui.iconBtn('Pagar', '', async () => { await NF.data.update('lancamentos', r.id, { pago: true, data_pagamento: NF.util.hoje() }); NF.ui.toast('Marcada como paga'); reload(); }),
@@ -788,7 +793,7 @@ NF.finance = (() => {
     const origemDe = r => r.oferta && r.oferta !== r.produto ? `${prodDe(r)} · ${r.oferta}` : prodDe(r);
     const doMes = mes === 'todos' ? todas : todas.filter(r => NF.util.mesDe(r.data) === mes);
     const rows = prodSel ? doMes.filter(r => prodDe(r) === prodSel) : doMes;
-    const pagas = rows.filter(r => r.status === 'pago');
+    const vendidas = rows.filter(r => r.status === 'pago' || r.status === 'estornado');   // pagas + estornadas
     const estornadas = rows.filter(r => r.status === 'estornado');
     const sum = (arr, k) => NF.util.round2(arr.reduce((s, r) => s + (Number(r[k]) || 0), 0));
     const reload = (m, p) => viewReceitasGreenn(negocio, NF.ui.clear(body), m, p);
@@ -817,23 +822,27 @@ NF.finance = (() => {
       buscaInput));
 
     // Regra da usuária: receitas sempre pelo valor BRUTO; sem taxa/líquido por enquanto.
+    // Vendido = todas as vendas (pagas + estornadas); o estorno entra na aba Despesas
+    // (categoria "Estornos"), então o saldo desconta o valor uma vez só.
     const card = (lbl, valor, cls, sub) => el('div', { class: `nf-mini ${cls}` },
       el('span', { class: 'lbl' }, lbl), el('strong', {}, NF.util.brl(valor)), sub ? el('span', { class: 'nf-mini-sub' }, sub) : null);
     body.append(el('div', { class: 'nf-mini-grid' },
-      card('Vendido (bruto)', sum(pagas, 'valor_bruto'), 'accent', `${pagas.length} venda(s)`),
-      card('Estornado', sum(estornadas, 'valor_bruto'), 'neg'),
+      card('Vendido (bruto)', sum(vendidas, 'valor_bruto'), 'accent', `${vendidas.length} venda(s)`),
+      card('Estornado', sum(estornadas, 'valor_bruto'), 'neg', `${estornadas.length} estorno(s) · entra em Despesas`),
     ));
 
     // Totais por produto/origem (separa a venda direta das outras).
     const porProd = {};
-    rows.forEach(r => {
+    vendidas.forEach(r => {
       const k = origemDe(r);
       const t = porProd[k] || (porProd[k] = { origem: k, n: 0, bruto: 0, estornado: 0 });
-      if (r.status === 'pago') { t.n++; t.bruto += Number(r.valor_bruto) || 0; }
-      else t.estornado += Number(r.valor_bruto) || 0;
+      t.n++; t.bruto += Number(r.valor_bruto) || 0;
+      if (r.status === 'estornado') t.estornado += Number(r.valor_bruto) || 0;
     });
     const linhasProd = Object.values(porProd).sort((a, b) => b.bruto - a.bruto);
     if (linhasProd.length > 1) {
+      // Linha de total: bate com os cards de cima (cada estorno fica na linha da sua origem).
+      linhasProd.push({ origem: 'Total', n: vendidas.length, bruto: sum(vendidas, 'valor_bruto'), estornado: sum(estornadas, 'valor_bruto') });
       body.append(el('div', { class: 'nf-row-head' }, el('h4', {}, 'Totais por produto / origem')));
       body.append(el('div', { style: 'overflow-x:auto;' }, NF.ui.table([
         { key: 'origem', label: 'Produto / Origem', fmt: v => txt(v) },

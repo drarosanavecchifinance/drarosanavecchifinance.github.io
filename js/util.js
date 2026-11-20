@@ -112,6 +112,33 @@ NF.util = {
     return parcelas;
   },
 
+  // ---- GREENN: vendas e estornos ----
+  // Regra: a venda estornada continua na RECEITA (bruto, mês da venda) e o estorno
+  // entra como DESPESA (categoria "Estornos", mês do estorno). Assim o estorno
+  // aparece nas despesas e o saldo desconta o valor UMA vez só.
+  vendasGreenn(greenn) {
+    return (greenn || []).filter(g => g.status === 'pago' || g.status === 'estornado').map(g => ({
+      negocio: g.negocio, data_venda: g.data, valor_bruto: Number(g.valor_bruto) || 0,
+      cliente: [g.cliente, g.produto].filter(Boolean).join(' — '), descricao: g.produto || '' }));
+  },
+  // Estornos como "lançamentos" de despesa SÓ DE LEITURA (estorno: true; não vão ao banco).
+  estornosComoDespesa(greenn) {
+    const diaLocal = ts => {   // estornado_em é timestamp UTC → dia no calendário local
+      const d = new Date(ts);
+      if (isNaN(d)) return null;
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+    return (greenn || []).filter(g => g.status === 'estornado').map(g => {
+      const dia = (g.estornado_em && diaLocal(g.estornado_em)) || g.data;
+      return {
+        id: 'estorno-' + g.id, estorno: true, negocio: g.negocio, tipo: 'despesa',
+        data: dia, vencimento: dia, pago: true, data_pagamento: dia,
+        valor: Number(g.valor_bruto) || 0, categoria: 'Estornos',
+        descricao: `Estorno Greenn — ${g.cliente || g.cliente_email || 'cliente'}${g.produto ? ' · ' + g.produto : ''}`,
+      };
+    });
+  },
+
   // Marca parcelas vencidas e não recebidas como 'atrasado' (não persiste; visual).
   statusParcela(p) {
     if (p.status === 'recebido') return 'recebido';

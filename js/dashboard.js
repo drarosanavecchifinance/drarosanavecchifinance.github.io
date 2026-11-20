@@ -94,11 +94,13 @@ NF.dashboard = (() => {
       NF.data.list('vendas'), NF.data.list('vendedoras'), NF.data.list('greenn_vendas'),
     ]);
     const inScope = r => alvo.includes(r.negocio);
-    const lanc = lancAll.filter(inScope), cart = cartAll.filter(inScope), vendasSo = vendasNf.filter(inScope);
-    // Receitas da Greenn (Bléfaro, só pagas) somam nas vendas dos cards e no faturamento
-    // por negócio, mas NÃO nos gráficos de vendedora (não têm vendedora).
-    const greennVendas = greennAll.filter(g => g.status === 'pago').map(g => ({
-      negocio: g.negocio, data_venda: g.data, valor_bruto: Number(g.valor_bruto) || 0 }));
+    // Estornos da Greenn entram como DESPESA (categoria "Estornos") em cards e gráficos.
+    const lanc = [...lancAll, ...NF.util.estornosComoDespesa(greennAll)].filter(inScope);
+    const cart = cartAll.filter(inScope), vendasSo = vendasNf.filter(inScope);
+    // Receitas da Greenn somam nas vendas dos cards e no faturamento por negócio, mas
+    // NÃO nos gráficos de vendedora (não têm vendedora). Vendas estornadas seguem na
+    // receita (bruto) porque o estorno já entra na despesa — não desconta em dobro.
+    const greennVendas = NF.util.vendasGreenn(greennAll);
     const vendasAll = [...vendasNf, ...greennVendas];
     const vendas = vendasAll.filter(inScope);
 
